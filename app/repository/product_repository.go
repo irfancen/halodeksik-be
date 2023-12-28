@@ -38,13 +38,13 @@ func (repo *ProductRepositoryImpl) Create(ctx context.Context, product entity.Pr
 		RETURNING id, name, generic_name, content, manufacturer_id, description, drug_classification_id, product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image, price, created_at, updated_at, deleted_at`
 
 	row := repo.db.QueryRowContext(ctx, create,
-		product.Name, product.GenericName, product.Content, product.ManufacturerID, product.Description, product.DrugClassificationID, product.ProductCategoryID,
+		product.Name, product.GenericName, product.Content, product.ManufacturerId, product.Description, product.DrugClassificationId, product.ProductCategoryId,
 		product.DrugForm, product.UnitInPack, product.SellingUnit, product.Weight, product.Length, product.Width, product.Height, product.Image, product.Price,
 	)
 
 	var created *entity.Product
 	err := row.Scan(
-		&created.ID, &created.Name, &created.GenericName, &created.Content, &created.ManufacturerID, &created.Description, &created.DrugClassificationID, &created.ProductCategoryID, &created.DrugForm,
+		&created.Id, &created.Name, &created.GenericName, &created.Content, &created.ManufacturerId, &created.Description, &created.DrugClassificationId, &created.ProductCategoryId, &created.DrugForm,
 		&created.UnitInPack, &created.SellingUnit, &created.Weight, &created.Length, &created.Width, &created.Height, &created.Image, &created.Price, &created.CreatedAt, &created.UpdatedAt, &created.DeletedAt,
 	)
 	return created, err
@@ -59,7 +59,7 @@ func (repo *ProductRepositoryImpl) FindById(ctx context.Context, id int64) (*ent
 
 	var product entity.Product
 	err := row.Scan(
-		&product.ID, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerID, &product.Description, &product.DrugClassificationID, &product.ProductCategoryID, &product.DrugForm,
+		&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
 		&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image, &product.Price, &product.CreatedAt, &product.UpdatedAt, &product.DeletedAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -139,7 +139,7 @@ func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *querypara
 	for rows.Next() {
 		var product *entity.Product
 		if err := rows.Scan(
-			&product.ID, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerID, &product.Description, &product.DrugClassificationID, &product.ProductCategoryID, &product.DrugForm,
+			&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
 			&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image, &product.Price, &product.CreatedAt, &product.UpdatedAt, &product.DeletedAt,
 		); err != nil {
 			return nil, err
@@ -164,12 +164,12 @@ func (repo *ProductRepositoryImpl) Update(ctx context.Context, product entity.Pr
 		`
 
 	row := repo.db.QueryRowContext(ctx, updateById,
-		product.Name, product.GenericName, product.Content, product.ManufacturerID, product.Description, product.DrugClassificationID, product.ProductCategoryID, product.DrugForm,
-		product.UnitInPack, product.SellingUnit, product.Weight, product.Length, product.Width, product.Height, product.Image, product.Price, product.ID,
+		product.Name, product.GenericName, product.Content, product.ManufacturerId, product.Description, product.DrugClassificationId, product.ProductCategoryId, product.DrugForm,
+		product.UnitInPack, product.SellingUnit, product.Weight, product.Length, product.Width, product.Height, product.Image, product.Price, product.Id,
 	)
 	var updated *entity.Product
 	err := row.Scan(
-		&updated.ID, &updated.Name, &updated.GenericName, &updated.Content, &updated.ManufacturerID, &updated.Description, &updated.DrugClassificationID, &updated.ProductCategoryID, &updated.DrugForm,
+		&updated.Id, &updated.Name, &updated.GenericName, &updated.Content, &updated.ManufacturerId, &updated.Description, &updated.DrugClassificationId, &updated.ProductCategoryId, &updated.DrugForm,
 		&updated.UnitInPack, &updated.SellingUnit, &updated.Weight, &updated.Length, &updated.Width, &updated.Height, &updated.Image, &updated.Price, &updated.CreatedAt, &updated.UpdatedAt, &updated.DeletedAt,
 	)
 	return updated, err
