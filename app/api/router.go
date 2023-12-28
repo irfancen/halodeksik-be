@@ -65,6 +65,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			products.GET("/:id", rOpts.ProductHandler.GetById)
 			products.GET("", rOpts.ProductHandler.GetAll)
 			products.POST("", rOpts.ProductHandler.Add)
+			products.DELETE("/:id", rOpts.ProductHandler.Remove)
 		}
 	}
 

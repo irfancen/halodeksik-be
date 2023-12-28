@@ -57,5 +57,14 @@ func (uc *ProductUseCaseImpl) Edit(ctx context.Context, product entity.Product) 
 }
 
 func (uc *ProductUseCaseImpl) Remove(ctx context.Context, id int64) error {
-	panic("Implement me")
+	_, err := uc.GetById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	err = uc.repo.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

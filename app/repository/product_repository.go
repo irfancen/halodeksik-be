@@ -193,7 +193,7 @@ func (repo *ProductRepositoryImpl) Delete(ctx context.Context, id int64) error {
 	const deleteById = `
 		UPDATE products
 		SET deleted_at = now()
-		WHERE id = $1
+		WHERE id = $1 AND deleted_at IS NULL
 		`
 
 	_, err := repo.db.ExecContext(ctx, deleteById, id)
