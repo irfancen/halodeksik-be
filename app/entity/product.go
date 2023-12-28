@@ -2,6 +2,7 @@ package entity
 
 import (
 	"database/sql"
+	"reflect"
 	"time"
 )
 
@@ -26,4 +27,16 @@ type Product struct {
 	CreatedAt            time.Time    `json:"created_at"`
 	UpdatedAt            time.Time    `json:"updated_at"`
 	DeletedAt            sql.NullTime `json:"deleted_at"`
+}
+
+func (u *Product) GetEntityName() string {
+	return "users"
+}
+
+func (u *Product) GetFieldStructTag(fieldName string, structTag string) string {
+	field, ok := reflect.TypeOf(u).Elem().FieldByName(fieldName)
+	if !ok {
+		return ""
+	}
+	return field.Tag.Get(structTag)
 }
