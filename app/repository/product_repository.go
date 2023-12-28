@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/jackc/pgx/v5/pgconn"
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
@@ -41,13 +42,20 @@ func (repo *ProductRepositoryImpl) Create(ctx context.Context, product entity.Pr
 		product.Name, product.GenericName, product.Content, product.ManufacturerId, product.Description, product.DrugClassificationId, product.ProductCategoryId,
 		product.DrugForm, product.UnitInPack, product.SellingUnit, product.Weight, product.Length, product.Width, product.Height, product.Image, product.Price,
 	)
+	if row.Err() != nil {
+		var errPgConn *pgconn.PgError
+		if errors.As(row.Err(), &errPgConn) && errPgConn.Code == apperror.PgconnErrCodeUniqueConstraintViolation {
+			return nil, apperror.ErrProductUniqueConstraint
+		}
+		return nil, row.Err()
+	}
 
-	var created *entity.Product
+	var created entity.Product
 	err := row.Scan(
 		&created.Id, &created.Name, &created.GenericName, &created.Content, &created.ManufacturerId, &created.Description, &created.DrugClassificationId, &created.ProductCategoryId, &created.DrugForm,
 		&created.UnitInPack, &created.SellingUnit, &created.Weight, &created.Length, &created.Width, &created.Height, &created.Image, &created.Price, &created.CreatedAt, &created.UpdatedAt, &created.DeletedAt,
 	)
-	return created, err
+	return &created, err
 }
 
 func (repo *ProductRepositoryImpl) FindById(ctx context.Context, id int64) (*entity.Product, error) {

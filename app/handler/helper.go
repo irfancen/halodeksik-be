@@ -29,14 +29,14 @@ func wrapError(err error, customCode ...int) error {
 	}
 
 	var (
-		errJsonSyntax        *json.SyntaxError
-		errJsonUnmarshall    *json.UnmarshalTypeError
-		errTimeParse         *time.ParseError
-		errValidation        validator.ValidationErrors
-		errNotFound          *apperror.NotFound
-		errAlreadyExist      *apperror.AlreadyExist
-		errNotMatch          *apperror.NotMatch
-		errForbidden         *apperror.Forbidden
+		errJsonSyntax     *json.SyntaxError
+		errJsonUnmarshall *json.UnmarshalTypeError
+		errTimeParse      *time.ParseError
+		errValidation     validator.ValidationErrors
+		errNotFound       *apperror.NotFound
+		errAlreadyExist   *apperror.AlreadyExist
+		errNotMatch       *apperror.NotMatch
+		errForbidden      *apperror.Forbidden
 	)
 
 	switch {
@@ -79,6 +79,12 @@ func wrapError(err error, customCode ...int) error {
 		errWrapper.Code = http.StatusBadRequest
 
 	case errors.As(errWrapper.ErrorStored, &errNotMatch):
+		errWrapper.Code = http.StatusBadRequest
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidDecimal):
+		errWrapper.Code = http.StatusBadRequest
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductUniqueConstraint):
 		errWrapper.Code = http.StatusBadRequest
 
 	default:

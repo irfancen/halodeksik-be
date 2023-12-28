@@ -3,6 +3,7 @@ package entity
 import (
 	"database/sql"
 	"github.com/shopspring/decimal"
+	"halodeksik-be/app/dto/responsedto"
 	"reflect"
 	"time"
 )
@@ -27,17 +28,39 @@ type Product struct {
 	Price                decimal.Decimal `json:"price"`
 	CreatedAt            time.Time       `json:"created_at"`
 	UpdatedAt            time.Time       `json:"updated_at"`
-	DeletedAt            sql.NullTime    `json:"deleted_at"`
+	DeletedAt            sql.NullTime    `json:"-"`
 }
 
-func (u *Product) GetEntityName() string {
-	return "users"
+func (p *Product) GetEntityName() string {
+	return "products"
 }
 
-func (u *Product) GetFieldStructTag(fieldName string, structTag string) string {
-	field, ok := reflect.TypeOf(u).Elem().FieldByName(fieldName)
+func (p *Product) GetFieldStructTag(fieldName string, structTag string) string {
+	field, ok := reflect.TypeOf(p).Elem().FieldByName(fieldName)
 	if !ok {
 		return ""
 	}
 	return field.Tag.Get(structTag)
+}
+
+func (p *Product) ToProductResponse() *responsedto.ProductResponse {
+	return &responsedto.ProductResponse{
+		Id:                   p.Id,
+		Name:                 p.Name,
+		GenericName:          p.GenericName,
+		Content:              p.Content,
+		ManufacturerId:       p.ManufacturerId,
+		Description:          p.Description,
+		DrugClassificationId: p.DrugClassificationId,
+		ProductCategoryId:    p.ProductCategoryId,
+		DrugForm:             p.DrugForm,
+		UnitInPack:           p.UnitInPack,
+		SellingUnit:          p.SellingUnit,
+		Weight:               p.Weight,
+		Length:               p.Length,
+		Width:                p.Width,
+		Height:               p.Height,
+		Image:                p.Image,
+		Price:                p.Price,
+	}
 }

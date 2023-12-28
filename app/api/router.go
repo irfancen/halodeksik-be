@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"halodeksik-be/app/applogger"
+	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
 	"halodeksik-be/app/handler"
 	"halodeksik-be/app/handler/middleware"
@@ -17,7 +18,7 @@ type RouterOpts struct {
 
 func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 	return &RouterOpts{
-		ProductHandler: handler.NewProductHandler(allUC.ProductUseCase),
+		ProductHandler: handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
 	}
 }
 
@@ -62,6 +63,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		products := v1.Group("/products")
 		{
 			products.GET("", rOpts.ProductHandler.GetAll)
+			products.POST("", rOpts.ProductHandler.Add)
 		}
 	}
 

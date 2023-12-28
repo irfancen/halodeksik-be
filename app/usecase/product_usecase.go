@@ -24,7 +24,11 @@ func NewProductUseCaseImpl(repo repository.ProductRepository) *ProductUseCaseImp
 }
 
 func (uc *ProductUseCaseImpl) Add(ctx context.Context, product entity.Product) (*entity.Product, error) {
-	panic("Implement me")
+	created, err := uc.repo.Create(ctx, product)
+	if err != nil {
+		return nil, err
+	}
+	return created, nil
 }
 
 func (uc *ProductUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.Product, error) {

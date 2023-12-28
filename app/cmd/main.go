@@ -4,6 +4,7 @@ import (
 	"halodeksik-be/app/api"
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/applogger"
+	"halodeksik-be/app/appvalidator"
 )
 
 func main() {
@@ -12,6 +13,9 @@ func main() {
 		defer logFile.Close()
 	}
 	applogger.SetLogger(logger)
+
+	appValidator := appvalidator.NewAppValidatorImpl()
+	appvalidator.SetValidator(appValidator)
 
 	db, dbErr := appdb.Connect()
 	if dbErr != nil {
