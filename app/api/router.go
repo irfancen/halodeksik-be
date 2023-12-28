@@ -62,6 +62,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 	{
 		products := v1.Group("/products")
 		{
+			products.GET("/:id", rOpts.ProductHandler.GetById)
 			products.GET("", rOpts.ProductHandler.GetAll)
 			products.POST("", rOpts.ProductHandler.Add)
 		}

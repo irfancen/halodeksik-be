@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"errors"
+	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
@@ -32,7 +34,14 @@ func (uc *ProductUseCaseImpl) Add(ctx context.Context, product entity.Product) (
 }
 
 func (uc *ProductUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.Product, error) {
-	panic("Implement me")
+	product, err := uc.repo.FindById(ctx, id)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound(product, "Id", id)
+		}
+		return nil, err
+	}
+	return product, nil
 }
 
 func (uc *ProductUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error) {

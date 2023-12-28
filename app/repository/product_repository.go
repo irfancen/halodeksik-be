@@ -64,14 +64,20 @@ func (repo *ProductRepositoryImpl) FindById(ctx context.Context, id int64) (*ent
 		WHERE id = $1 AND deleted_at IS NULL`
 
 	row := repo.db.QueryRowContext(ctx, getById, id)
+	if row.Err()!= nil {
+		return nil, row.Err()
+	}
 
 	var product entity.Product
 	err := row.Scan(
 		&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
 		&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image, &product.Price, &product.CreatedAt, &product.UpdatedAt, &product.DeletedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, apperror.ErrRecordNotFound
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
 	}
 	return &product, err
 }
