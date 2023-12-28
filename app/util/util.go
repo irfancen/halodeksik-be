@@ -3,11 +3,10 @@ package util
 import (
 	"crypto/rand"
 	"fmt"
+	"halodeksik-be/app/appconstant"
 	"strings"
 	"time"
 	"unicode"
-
-	"git.garena.com/sea-labs-id/bootcamp/batch-02/matthew-alfredo/assignment-go-grpc/constant"
 )
 
 func IsEmptyString(str string) bool {
@@ -23,7 +22,7 @@ func ParseDateTime(timeStr string, timeFormat ...string) (time.Time, error) {
 	if len(timeFormat) > 0 {
 		return time.Parse(timeFormat[0], timeStr)
 	}
-	return time.Parse(constant.TimeFormatQueryParam, timeStr)
+	return time.Parse(appconstant.TimeFormatQueryParam, timeStr)
 }
 
 func RandomToken(marker string) (string, error) {
