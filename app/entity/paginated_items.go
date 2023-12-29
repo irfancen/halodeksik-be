@@ -1,4 +1,4 @@
-package dto
+package entity
 
 type PaginatedItems struct {
 	TotalItems            int64 `json:"total_items"`

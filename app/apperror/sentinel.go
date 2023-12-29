@@ -8,4 +8,8 @@ var (
 	ErrForgotPasswordTokenExpired = errors.New("token is already expired")
 	ErrMissingAuthorizationToken  = errors.New("missing authorization token")
 	ErrParsingBearerToken         = errors.New("failed to parse bearer token")
+
+	ErrInvalidDecimal = errors.New("invalid decimal")
+
+	ErrProductUniqueConstraint = errors.New("name, generic_name, content, and manufacturer_id combinations violate unique constraint")
 )
