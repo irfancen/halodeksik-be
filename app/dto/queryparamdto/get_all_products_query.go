@@ -67,7 +67,7 @@ func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 	pageSize := appconstant.DefaultGetAllPageSize
 	if !util.IsEmptyString(q.Limit) {
 		noPageSize, err := strconv.Atoi(q.Limit)
-		if err == nil {
+		if err == nil && noPageSize > 0 {
 			pageSize = noPageSize
 		}
 	}
@@ -76,7 +76,7 @@ func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 	pageId := 1
 	if !util.IsEmptyString(q.Page) {
 		noPageId, err := strconv.Atoi(q.Page)
-		if err == nil {
+		if err == nil && noPageId > 0 {
 			pageId = noPageId
 		}
 	}
