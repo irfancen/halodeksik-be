@@ -13,11 +13,13 @@ import (
 )
 
 type RouterOpts struct {
-	ProductHandler *handler.ProductHandler
+	ManufacturerHandler *handler.ManufacturerHandler
+	ProductHandler      *handler.ProductHandler
 }
 
 func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 	return &RouterOpts{
+		ManufacturerHandler: handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
 		ProductHandler: handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
 	}
 }
@@ -60,6 +62,11 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 
 	v1 := router.Group("/v1")
 	{
+		manufacturers := v1.Group("/manufacturers")
+		{
+			manufacturers.GET("", rOpts.ManufacturerHandler.GetAllWithoutParams)
+		}
+
 		products := v1.Group("/products")
 		{
 			products.GET("/:id", rOpts.ProductHandler.GetById)
