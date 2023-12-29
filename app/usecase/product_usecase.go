@@ -13,7 +13,7 @@ type ProductUseCase interface {
 	Add(ctx context.Context, product entity.Product) (*entity.Product, error)
 	GetById(ctx context.Context, id int64) (*entity.Product, error)
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
-	Edit(ctx context.Context, product entity.Product) (*entity.Product, error)
+	Edit(ctx context.Context, id int64, product entity.Product) (*entity.Product, error)
 	Remove(ctx context.Context, id int64) error
 }
 
@@ -52,17 +52,24 @@ func (uc *ProductUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.G
 	return products, nil
 }
 
-func (uc *ProductUseCaseImpl) Edit(ctx context.Context, product entity.Product) (*entity.Product, error) {
-	panic("Implement me")
+func (uc *ProductUseCaseImpl) Edit(ctx context.Context, id int64, product entity.Product) (*entity.Product, error) {
+	if _, err := uc.GetById(ctx, id); err != nil {
+		return nil, err
+	}
+	product.Id = id
+	updated, err := uc.repo.Update(ctx, product)
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (uc *ProductUseCaseImpl) Remove(ctx context.Context, id int64) error {
-	_, err := uc.GetById(ctx, id)
-	if err != nil {
+	if _, err := uc.GetById(ctx, id); err != nil {
 		return err
 	}
 
-	err = uc.repo.Delete(ctx, id)
+	err := uc.repo.Delete(ctx, id)
 	if err != nil {
 		return err
 	}

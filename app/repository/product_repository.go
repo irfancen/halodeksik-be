@@ -181,12 +181,20 @@ func (repo *ProductRepositoryImpl) Update(ctx context.Context, product entity.Pr
 		product.Name, product.GenericName, product.Content, product.ManufacturerId, product.Description, product.DrugClassificationId, product.ProductCategoryId, product.DrugForm,
 		product.UnitInPack, product.SellingUnit, product.Weight, product.Length, product.Width, product.Height, product.Image, product.Price, product.Id,
 	)
-	var updated *entity.Product
+	if row.Err() != nil {
+		var errPgConn *pgconn.PgError
+		if errors.As(row.Err(), &errPgConn) && errPgConn.Code == apperror.PgconnErrCodeUniqueConstraintViolation {
+			return nil, apperror.ErrProductUniqueConstraint
+		}
+		return nil, row.Err()
+	}
+
+	var updated entity.Product
 	err := row.Scan(
 		&updated.Id, &updated.Name, &updated.GenericName, &updated.Content, &updated.ManufacturerId, &updated.Description, &updated.DrugClassificationId, &updated.ProductCategoryId, &updated.DrugForm,
 		&updated.UnitInPack, &updated.SellingUnit, &updated.Weight, &updated.Length, &updated.Width, &updated.Height, &updated.Image, &updated.Price, &updated.CreatedAt, &updated.UpdatedAt, &updated.DeletedAt,
 	)
-	return updated, err
+	return &updated, err
 }
 
 func (repo *ProductRepositoryImpl) Delete(ctx context.Context, id int64) error {

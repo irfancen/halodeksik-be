@@ -6,7 +6,7 @@ import (
 	"halodeksik-be/app/entity"
 )
 
-type AddProduct struct {
+type AddEditProduct struct {
 	Name                 string  `json:"name" validate:"required"`
 	GenericName          string  `json:"generic_name" validate:"required"`
 	Content              string  `json:"content" validate:"required"`
@@ -21,11 +21,11 @@ type AddProduct struct {
 	Length               float64 `json:"length" validate:"required"`
 	Width                float64 `json:"width" validate:"required"`
 	Height               float64 `json:"height" validate:"required"`
-	Image                string  `json:"image" validate:"required"`
+	Image                string  `json:"image"`
 	Price                string  `json:"price" validate:"required"`
 }
 
-func (r AddProduct) ToProduct() (entity.Product, error) {
+func (r AddEditProduct) ToProduct() (entity.Product, error) {
 	price, err := decimal.NewFromString(r.Price)
 	if err != nil {
 		return entity.Product{}, apperror.ErrInvalidDecimal

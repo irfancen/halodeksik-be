@@ -29,7 +29,7 @@ func (h *ProductHandler) Add(ctx *gin.Context) {
 		}
 	}()
 
-	req := requestdto.AddProduct{}
+	req := requestdto.AddEditProduct{}
 	err = ctx.ShouldBindJSON(&req)
 	if err != nil {
 		return
@@ -101,6 +101,50 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 	}
 
 	resp.Data = products
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *ProductHandler) Edit(ctx *gin.Context) {
+	var err error
+
+	defer func() {
+		if err != nil {
+			err = wrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	req := requestdto.AddEditProduct{}
+	err = ctx.ShouldBindJSON(&req)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(req)
+	if err != nil {
+		return
+	}
+
+	toUpdate, err := req.ToProduct()
+	if err != nil {
+		return
+	}
+	updated, err := h.uc.Edit(ctx.Request.Context(), uri.Id, toUpdate)
+	if err != nil {
+		return
+	}
+	resp := dto.ResponseDto{Data: updated}
 	ctx.JSON(http.StatusOK, resp)
 }
 
