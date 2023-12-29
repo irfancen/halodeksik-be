@@ -15,6 +15,7 @@ import (
 type RouterOpts struct {
 	DrugClassificationHandler *handler.DrugClassificationHandler
 	ManufacturerHandler       *handler.ManufacturerHandler
+	ProductCategoryHandler    *handler.ProductCategoryHandler
 	ProductHandler            *handler.ProductHandler
 }
 
@@ -22,6 +23,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 	return &RouterOpts{
 		DrugClassificationHandler: handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
 		ManufacturerHandler:       handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
+		ProductCategoryHandler:    handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase),
 		ProductHandler:            handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
 	}
 }
@@ -72,6 +74,11 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		manufacturers := v1.Group("/manufacturers")
 		{
 			manufacturers.GET("", rOpts.ManufacturerHandler.GetAllWithoutParams)
+		}
+
+		productCategories := v1.Group("/product-categories")
+		{
+			productCategories.GET("", rOpts.ProductCategoryHandler.GetAllWithoutParams)
 		}
 
 		products := v1.Group("/products")
