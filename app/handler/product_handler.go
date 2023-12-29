@@ -93,14 +93,14 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 		return
 	}
 
-	products, err := h.uc.GetAll(ctx.Request.Context(), param)
+	paginatedItems, err := h.uc.GetAll(ctx.Request.Context(), param)
 	if err != nil {
 		err = wrapError(err)
 		_ = ctx.Error(err)
 		return
 	}
 
-	resp.Data = products
+	resp.Data = paginatedItems
 	ctx.JSON(http.StatusOK, resp)
 }
 

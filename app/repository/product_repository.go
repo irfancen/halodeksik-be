@@ -18,7 +18,7 @@ import (
 type ProductRepository interface {
 	Create(ctx context.Context, product entity.Product) (*entity.Product, error)
 	FindById(ctx context.Context, id int64) (*entity.Product, error)
-	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
+	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, int64, int64, error)
 	Update(ctx context.Context, product entity.Product) (*entity.Product, error)
 	Delete(ctx context.Context, id int64) error
 }
@@ -120,12 +120,12 @@ func buildQuery(initQuery string, param *queryparamdto.GetAllParams) (string, []
 		values = append(values, whereClause.Value)
 	}
 
-	query.WriteString(" ORDER BY ")
+	query.WriteString(" GROUP BY id ")
 
+	query.WriteString(" ORDER BY ")
 	for _, sortClause := range param.SortClauses {
 		query.WriteString(fmt.Sprintf("%s %s,", sortClause.Column, sortClause.Order))
 	}
-
 	query.WriteString(` id ASC `)
 
 	if param.PageId != nil && param.PageSize != nil {
@@ -139,33 +139,42 @@ func buildQuery(initQuery string, param *queryparamdto.GetAllParams) (string, []
 	return query.String(), values
 }
 
-func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error) {
-	initQuery := `SELECT id, name, generic_name, content, manufacturer_id, description, drug_classification_id, product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image, price FROM products WHERE deleted_at IS NULL `
+func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, int64, int64, error) {
+	initQuery := `SELECT count(*) as _count, id, name, generic_name, content, manufacturer_id, description, drug_classification_id, product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image, price FROM products WHERE deleted_at IS NULL `
 	query, values := buildQuery(initQuery, param)
+
+	var (
+		totalItems int64
+		totalPages int64
+	)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
-		return nil, err
+		return nil, totalItems, totalPages, err
 	}
 	defer rows.Close()
 
 	items := make([]*entity.Product, 0)
 	for rows.Next() {
-		var product *entity.Product
+		var product entity.Product
 		if err := rows.Scan(
-			&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
-			&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image, &product.Price, &product.CreatedAt, &product.UpdatedAt, &product.DeletedAt,
+			&totalItems, &product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
+			&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image, &product.Price,
 		); err != nil {
-			return nil, err
+			return nil, 0, 0, err
 		}
-		items = append(items, product)
+		items = append(items, &product)
+	}
+	totalPages = totalItems / int64(*param.PageSize)
+	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
+		totalPages += 1
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, totalItems, totalPages, err
 	}
 
-	return items, nil
+	return items, totalItems, totalPages, nil
 }
 
 func (repo *ProductRepositoryImpl) Update(ctx context.Context, product entity.Product) (*entity.Product, error) {

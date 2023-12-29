@@ -12,7 +12,7 @@ import (
 type ProductUseCase interface {
 	Add(ctx context.Context, product entity.Product) (*entity.Product, error)
 	GetById(ctx context.Context, id int64) (*entity.Product, error)
-	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
+	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, id int64, product entity.Product) (*entity.Product, error)
 	Remove(ctx context.Context, id int64) error
 }
@@ -44,12 +44,21 @@ func (uc *ProductUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.Pr
 	return product, nil
 }
 
-func (uc *ProductUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error) {
-	products, err := uc.repo.FindAll(ctx, param)
+func (uc *ProductUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	products, totalItems, totalPages, err := uc.repo.FindAll(ctx, param)
 	if err != nil {
 		return nil, err
 	}
-	return products, nil
+	paginatedItems := new(entity.PaginatedItems)
+	paginatedItems.Items = products
+	paginatedItems.TotalItems = totalItems
+	paginatedItems.TotalPages = totalPages
+	paginatedItems.CurrentPageTotalItems = int64(len(products))
+	paginatedItems.CurrentPage = int64(*param.PageId)
+	if totalPages == 0 {
+		paginatedItems.CurrentPage = 0
+	}
+	return paginatedItems, nil
 }
 
 func (uc *ProductUseCaseImpl) Edit(ctx context.Context, id int64, product entity.Product) (*entity.Product, error) {
