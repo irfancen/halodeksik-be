@@ -12,11 +12,16 @@ import (
 const projectDirName = "halodeksik-be"
 
 func loadEnv() error {
+	err := godotenv.Load()
+	if err == nil {
+		return nil
+	}
+
 	projectName := regexp.MustCompile(`^(.*` + projectDirName + `)`)
 	currentWorkDirectory, _ := os.Getwd()
 	rootPath := projectName.Find([]byte(currentWorkDirectory))
 
-	err := godotenv.Load(string(rootPath) + `/.env`)
+	err = godotenv.Load(string(rootPath) + `/.env`)
 
 	if err != nil {
 		return fmt.Errorf("error loading .env file: %v", err)
