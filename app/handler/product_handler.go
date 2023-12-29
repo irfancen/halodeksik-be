@@ -6,7 +6,9 @@ import (
 	"halodeksik-be/app/dto"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/dto/requestdto"
+	"halodeksik-be/app/dto/responsedto"
 	"halodeksik-be/app/dto/uriparamdto"
+	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"net/http"
 )
@@ -81,26 +83,33 @@ func (h *ProductHandler) GetById(ctx *gin.Context) {
 }
 
 func (h *ProductHandler) GetAll(ctx *gin.Context) {
-	resp := dto.ResponseDto{}
+	var err error
+	defer func() {
+		if err != nil {
+			err = wrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
 
 	getAllProductQuery := queryparamdto.GetAllProductsQuery{}
 	_ = ctx.ShouldBindQuery(&getAllProductQuery)
 
 	param, err := getAllProductQuery.ToGetAllParams()
 	if err != nil {
-		err = wrapError(err)
-		_ = ctx.Error(err)
 		return
 	}
 
 	paginatedItems, err := h.uc.GetAll(ctx.Request.Context(), param)
 	if err != nil {
-		err = wrapError(err)
-		_ = ctx.Error(err)
 		return
 	}
 
-	resp.Data = paginatedItems
+	resps := make([]*responsedto.ProductResponse, 0)
+	for _, product := range paginatedItems.Items.([]*entity.Product) {
+		resps = append(resps, product.ToProductResponse())
+	}
+
+	resp := dto.ResponseDto{Data: paginatedItems}
 	ctx.JSON(http.StatusOK, resp)
 }
 
