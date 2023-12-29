@@ -4,19 +4,19 @@ import (
 	"fmt"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/appdb"
+	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
 	"strconv"
 	"strings"
 )
 
 type GetAllProductsQuery struct {
-	Search   string `form:"search"`
-	SortBy   string `form:"sort_by"`
-	Sort     string `form:"sort"`
-	FilterBy string `form:"filter_by"`
-	Filter   string `form:"filter"`
-	Limit    string `form:"limit"`
-	Page     string `form:"page"`
+	Search              string `form:"search"`
+	SortBy              string `form:"sort_by"`
+	Sort                string `form:"sort"`
+	DrugClassifications string `form:"drug_class"`
+	Limit               string `form:"limit"`
+	Page                string `form:"page"`
 }
 
 func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
@@ -58,15 +58,10 @@ func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 		param.SortClauses = append(param.SortClauses, sortClause)
 	}
 
-	switch q.FilterBy {
-	case "drug_class":
-		q.FilterBy = "products.drug_classification_id"
-	default:
-		q.FilterBy = ""
-	}
-	if !util.IsEmptyString(q.FilterBy) {
-		q.Filter = fmt.Sprintf("%v", q.Filter)
-		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(q.FilterBy, appdb.In, q.Filter))
+	prod := new(entity.Product)
+	if !util.IsEmptyString(q.DrugClassifications) {
+		column := fmt.Sprintf("%s.%s", prod.GetEntityName(), prod.GetFieldStructTag("DrugClassificationId", appconstant.JsonStructTag))
+		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.In, q.DrugClassifications))
 	}
 
 	pageSize := appconstant.DefaultGetAllPageSize
