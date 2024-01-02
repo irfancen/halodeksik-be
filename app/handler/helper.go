@@ -10,6 +10,7 @@ import (
 	"halodeksik-be/app/util"
 	"io"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 
@@ -117,9 +118,15 @@ func createErrValidationMsgTag(fieldError validator.FieldError) string {
 	case "len":
 		return fmt.Sprintf("field '%s' must have exactly %s characters long", fieldName, fieldError.Param())
 	case "min":
-		return fmt.Sprintf("field '%s' must have at least either %s characters long if string, or value of %s if number", fieldName, fieldError.Param(), fieldError.Param())
+		if fieldError.Type().Kind() == reflect.String {
+			return fmt.Sprintf("field '%s' must be at least %s characters long", fieldName, fieldError.Param())
+		}
+		return fmt.Sprintf("field '%s' must be at least %s", fieldName, fieldError.Param())
 	case "max":
-		return fmt.Sprintf("field '%s' must have at maximum either %s characters long if string, or value of %s if number", fieldName, fieldError.Param(), fieldError.Param())
+		if fieldError.Type().Kind() == reflect.String {
+			return fmt.Sprintf("field '%s' must be at maximum %s characters long", fieldName, fieldError.Param())
+		}
+		return fmt.Sprintf("field '%s' must be at maximum %s", fieldName, fieldError.Param())
 	default:
 		msg := fmt.Sprintf("field '%s' failed on validation %s %s", fieldName, fieldError.Tag(), fieldError.Param())
 		return strings.TrimSpace(msg)
