@@ -6,8 +6,9 @@ import (
 	"halodeksik-be/app/util"
 )
 
+var appClients string
+
 func CORSMiddleware(ctx *gin.Context) {
-	appClients := ""
 	if util.IsEmptyString(appClients) {
 		env.Get("APP_CLIENT")
 	}
