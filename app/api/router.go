@@ -68,17 +68,17 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 	{
 		drugClassifications := v1.Group("/drug-classifications")
 		{
-			drugClassifications.GET("", rOpts.DrugClassificationHandler.GetAllWithoutParams)
+			drugClassifications.GET("/no-params", rOpts.DrugClassificationHandler.GetAllWithoutParams)
 		}
 
 		manufacturers := v1.Group("/manufacturers")
 		{
-			manufacturers.GET("", rOpts.ManufacturerHandler.GetAllWithoutParams)
+			manufacturers.GET("/no-params", rOpts.ManufacturerHandler.GetAllWithoutParams)
 		}
 
 		productCategories := v1.Group("/product-categories")
 		{
-			productCategories.GET("", rOpts.ProductCategoryHandler.GetAllWithoutParams)
+			productCategories.GET("/no-params", rOpts.ProductCategoryHandler.GetAllWithoutParams)
 		}
 
 		products := v1.Group("/products")

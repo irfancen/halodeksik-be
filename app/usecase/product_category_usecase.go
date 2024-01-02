@@ -7,7 +7,7 @@ import (
 )
 
 type ProductCategoryUseCase interface {
-	GetAllWithoutParams(ctx context.Context) ([]*entity.ProductCategory, error)
+	GetAllProductCategoriesWithoutParams(ctx context.Context) (*entity.PaginatedItems, error)
 }
 
 type ProductCategoryUseCaseImpl struct {
@@ -18,11 +18,18 @@ func NewProductCategoryUseCaseImpl(repo repository.ProductCategoryRepository) *P
 	return &ProductCategoryUseCaseImpl{repo: repo}
 }
 
-func (uc *ProductCategoryUseCaseImpl) GetAllWithoutParams(ctx context.Context) ([]*entity.ProductCategory, error) {
+func (uc *ProductCategoryUseCaseImpl) GetAllProductCategoriesWithoutParams(ctx context.Context) (*entity.PaginatedItems, error) {
 	categories, err := uc.repo.FindAllWithoutParams(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return categories, nil
-}
 
+	paginatedItems := new(entity.PaginatedItems)
+	paginatedItems.Items = categories
+	paginatedItems.TotalItems = int64(len(categories))
+	paginatedItems.TotalPages = 1
+	paginatedItems.CurrentPageTotalItems = int64(len(categories))
+	paginatedItems.CurrentPage = 1
+
+	return paginatedItems, nil
+}

@@ -108,6 +108,7 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 	for _, product := range paginatedItems.Items.([]*entity.Product) {
 		resps = append(resps, product.ToProductResponse())
 	}
+	paginatedItems.Items = resps
 
 	resp := dto.ResponseDto{Data: paginatedItems}
 	ctx.JSON(http.StatusOK, resp)

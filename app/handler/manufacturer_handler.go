@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"halodeksik-be/app/dto"
 	"halodeksik-be/app/dto/responsedto"
+	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"net/http"
 )
@@ -24,15 +25,17 @@ func (h *ManufacturerHandler) GetAllWithoutParams(ctx *gin.Context) {
 			_ = ctx.Error(err)
 		}
 	}()
-	manufacturers, err := h.uc.GetAllWithoutParams(ctx.Request.Context())
+	paginatedItems, err := h.uc.GetAllManufacturersWithoutParams(ctx.Request.Context())
 	if err != nil {
 		return
 	}
 
 	resps := make([]*responsedto.ManufacturerResponse, 0)
-	for _, m := range manufacturers {
-		resps = append(resps, m.ToResponse())
+	for _, manufacturer := range paginatedItems.Items.([]*entity.Manufacturer) {
+		resps = append(resps, manufacturer.ToResponse())
 	}
-	resp := dto.ResponseDto{Data: resps}
+	paginatedItems.Items = resps
+
+	resp := dto.ResponseDto{Data: paginatedItems}
 	ctx.JSON(http.StatusOK, resp)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type DrugClassificationUseCase interface {
-	GetAllWithoutParams(ctx context.Context) ([]*entity.DrugClassification, error)
+	GetAllDrugsWithoutParams(ctx context.Context) (*entity.PaginatedItems, error)
 }
 
 type DrugClassificationUseCaseImpl struct {
@@ -18,11 +18,18 @@ func NewDrugClassificationUseCaseImpl(repo repository.DrugClassificationReposito
 	return &DrugClassificationUseCaseImpl{repo: repo}
 }
 
-func (uc *DrugClassificationUseCaseImpl) GetAllWithoutParams(ctx context.Context) ([]*entity.DrugClassification, error) {
+func (uc *DrugClassificationUseCaseImpl) GetAllDrugsWithoutParams(ctx context.Context) (*entity.PaginatedItems, error) {
 	drugClassifications, err := uc.repo.FindAllWithoutParams(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return drugClassifications, nil
-}
 
+	paginatedItems := new(entity.PaginatedItems)
+	paginatedItems.Items = drugClassifications
+	paginatedItems.TotalItems = int64(len(drugClassifications))
+	paginatedItems.TotalPages = 1
+	paginatedItems.CurrentPageTotalItems = int64(len(drugClassifications))
+	paginatedItems.CurrentPage = 1
+
+	return paginatedItems, nil
+}

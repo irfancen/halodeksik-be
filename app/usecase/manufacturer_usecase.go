@@ -7,7 +7,7 @@ import (
 )
 
 type ManufacturerUseCase interface {
-	GetAllWithoutParams(ctx context.Context) ([]*entity.Manufacturer, error)
+	GetAllManufacturersWithoutParams(ctx context.Context) (*entity.PaginatedItems, error)
 }
 
 type ManufacturerUseCaseImpl struct {
@@ -18,10 +18,18 @@ func NewManufacturerUseCaseImpl(repo repository.ManufacturerRepository) *Manufac
 	return &ManufacturerUseCaseImpl{repo: repo}
 }
 
-func (uc *ManufacturerUseCaseImpl) GetAllWithoutParams(ctx context.Context) ([]*entity.Manufacturer, error) {
+func (uc *ManufacturerUseCaseImpl) GetAllManufacturersWithoutParams(ctx context.Context) (*entity.PaginatedItems, error) {
 	manufacturers, err := uc.repo.FindAllWithoutParams(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return manufacturers, nil
+
+	paginatedItems := new(entity.PaginatedItems)
+	paginatedItems.Items = manufacturers
+	paginatedItems.TotalItems = int64(len(manufacturers))
+	paginatedItems.TotalPages = 1
+	paginatedItems.CurrentPageTotalItems = int64(len(manufacturers))
+	paginatedItems.CurrentPage = 1
+
+	return paginatedItems, nil
 }
