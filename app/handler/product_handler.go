@@ -42,11 +42,7 @@ func (h *ProductHandler) Add(ctx *gin.Context) {
 		return
 	}
 
-	toAdd, err := req.ToProduct()
-	if err != nil {
-		return
-	}
-	added, err := h.uc.Add(ctx.Request.Context(), toAdd)
+	added, err := h.uc.Add(ctx.Request.Context(), req.ToProduct())
 	if err != nil {
 		return
 	}
@@ -146,11 +142,7 @@ func (h *ProductHandler) Edit(ctx *gin.Context) {
 		return
 	}
 
-	toUpdate, err := req.ToProduct()
-	if err != nil {
-		return
-	}
-	updated, err := h.uc.Edit(ctx.Request.Context(), uri.Id, toUpdate)
+	updated, err := h.uc.Edit(ctx.Request.Context(), uri.Id, req.ToProduct())
 	if err != nil {
 		return
 	}

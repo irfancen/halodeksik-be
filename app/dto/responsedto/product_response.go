@@ -1,7 +1,6 @@
 package responsedto
 
 import (
-	"github.com/shopspring/decimal"
 	"time"
 )
 
@@ -22,7 +21,6 @@ type ProductResponse struct {
 	Width                float64         `json:"width"`
 	Height               float64         `json:"height"`
 	Image                string          `json:"image"`
-	Price                decimal.Decimal `json:"price"`
 	CreatedAt            time.Time       `json:"created_at"`
 	UpdatedAt            time.Time       `json:"updated_at"`
 }

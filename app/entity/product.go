@@ -2,7 +2,6 @@ package entity
 
 import (
 	"database/sql"
-	"github.com/shopspring/decimal"
 	"halodeksik-be/app/dto/responsedto"
 	"reflect"
 	"time"
@@ -25,7 +24,6 @@ type Product struct {
 	Width                float64         `json:"width"`
 	Height               float64         `json:"height"`
 	Image                string          `json:"image"`
-	Price                decimal.Decimal `json:"price"`
 	CreatedAt            time.Time       `json:"created_at"`
 	UpdatedAt            time.Time       `json:"updated_at"`
 	DeletedAt            sql.NullTime    `json:"-"`
@@ -61,6 +59,5 @@ func (p *Product) ToProductResponse() *responsedto.ProductResponse {
 		Width:                p.Width,
 		Height:               p.Height,
 		Image:                p.Image,
-		Price:                p.Price,
 	}
 }
