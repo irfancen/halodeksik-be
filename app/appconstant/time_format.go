@@ -1,5 +1,5 @@
 package appconstant
 
-const(
+const (
 	TimeFormatQueryParam = "2006-01-02"
 )

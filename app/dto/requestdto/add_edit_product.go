@@ -1,8 +1,6 @@
 package requestdto
 
 import (
-	"github.com/shopspring/decimal"
-	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/entity"
 )
 
@@ -22,14 +20,9 @@ type AddEditProduct struct {
 	Width                float64 `json:"width" validate:"required"`
 	Height               float64 `json:"height" validate:"required"`
 	Image                string  `json:"image"`
-	Price                string  `json:"price" validate:"required"`
 }
 
-func (r AddEditProduct) ToProduct() (entity.Product, error) {
-	price, err := decimal.NewFromString(r.Price)
-	if err != nil {
-		return entity.Product{}, apperror.ErrInvalidDecimal
-	}
+func (r AddEditProduct) ToProduct() entity.Product {
 	return entity.Product{
 		Name:                 r.Name,
 		GenericName:          r.GenericName,
@@ -46,6 +39,5 @@ func (r AddEditProduct) ToProduct() (entity.Product, error) {
 		Width:                r.Width,
 		Height:               r.Height,
 		Image:                r.Image,
-		Price:                price,
-	}, nil
+	}
 }

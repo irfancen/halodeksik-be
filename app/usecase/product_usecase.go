@@ -45,19 +45,22 @@ func (uc *ProductUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.Pr
 }
 
 func (uc *ProductUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
-	products, totalItems, totalPages, err := uc.repo.FindAll(ctx, param)
+	products, err := uc.repo.FindAll(ctx, param)
 	if err != nil {
 		return nil, err
 	}
+
+	totalItems, totalPages, err := uc.repo.CountFindAll(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
 	paginatedItems := new(entity.PaginatedItems)
 	paginatedItems.Items = products
 	paginatedItems.TotalItems = totalItems
 	paginatedItems.TotalPages = totalPages
 	paginatedItems.CurrentPageTotalItems = int64(len(products))
 	paginatedItems.CurrentPage = int64(*param.PageId)
-	if totalPages == 0 {
-		paginatedItems.CurrentPage = 0
-	}
 	return paginatedItems, nil
 }
 

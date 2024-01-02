@@ -6,11 +6,17 @@ import (
 )
 
 type AllRepositories struct {
-	ProductRepository repository.ProductRepository
+	DrugClassificationRepository repository.DrugClassificationRepository
+	ManufacturerRepository       repository.ManufacturerRepository
+	ProductCategoryRepository    repository.ProductCategoryRepository
+	ProductRepository            repository.ProductRepository
 }
 
 func InitializeRepositories(db *sql.DB) *AllRepositories {
 	return &AllRepositories{
-		ProductRepository: repository.NewProductRepositoryImpl(db),
+		DrugClassificationRepository: repository.NewDrugClassificationRepositoryImpl(db),
+		ManufacturerRepository:       repository.NewManufacturerRepositoryImpl(db),
+		ProductCategoryRepository:    repository.NewProductCategoryRepositoryImpl(db),
+		ProductRepository:            repository.NewProductRepositoryImpl(db),
 	}
 }
