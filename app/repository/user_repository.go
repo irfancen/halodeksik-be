@@ -10,6 +10,7 @@ import (
 
 type UserRepository interface {
 	Create(ctx context.Context, user entity.User) (*entity.User, error)
+	FindById(ctx context.Context, id int64) (*entity.User, error)
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 }
 
@@ -48,6 +49,26 @@ RETURNING id, email, password, user_role_id, is_verified, created_at, updated_at
 	)
 
 	return &createdUser, err
+}
+
+func (repo *UserRepositoryImpl) FindById(ctx context.Context, id int64) (*entity.User, error) {
+	const getById = `SELECT id, email, password, user_role_id, is_verified, created_at, updated_at, deleted_at
+	FROM users WHERE id = $1
+`
+
+	row := repo.db.QueryRowContext(ctx, getById, id)
+	var user entity.User
+	err := row.Scan(
+		&user.Id, &user.Email, &user.Password, &user.UserRoleId,
+		&user.IsVerified, &user.CreatedAt, &user.UpdatedAt, &user.DeletedAt,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, apperror.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &user, err
 }
 
 func (repo *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*entity.User, error) {

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
@@ -10,6 +11,7 @@ import (
 
 type UserUseCase interface {
 	AddAdmin(ctx context.Context, admin entity.User) (*entity.User, error)
+	GetById(ctx context.Context, id int64) (*entity.User, error)
 }
 
 type UserUseCaseImpl struct {
@@ -39,4 +41,15 @@ func (uc *UserUseCaseImpl) AddAdmin(ctx context.Context, admin entity.User) (*en
 		return nil, err
 	}
 	return created, nil
+}
+
+func (uc *UserUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.User, error) {
+	user, err := uc.repo.FindById(ctx, id)
+	if errors.Is(err, apperror.ErrRecordNotFound) {
+		return nil, apperror.NewNotFound(user, "Id", id)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
