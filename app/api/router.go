@@ -3,7 +3,9 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"halodeksik-be/app/applogger"
+	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
+	"halodeksik-be/app/handler"
 	"halodeksik-be/app/handler/middleware"
 	"net/http"
 	"net/http/pprof"
@@ -11,10 +13,19 @@ import (
 )
 
 type RouterOpts struct {
+	DrugClassificationHandler *handler.DrugClassificationHandler
+	ManufacturerHandler       *handler.ManufacturerHandler
+	ProductCategoryHandler    *handler.ProductCategoryHandler
+	ProductHandler            *handler.ProductHandler
 }
 
 func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
-	return &RouterOpts{}
+	return &RouterOpts{
+		DrugClassificationHandler: handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
+		ManufacturerHandler:       handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
+		ProductCategoryHandler:    handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase),
+		ProductHandler:            handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
+	}
 }
 
 func GetGinMode() string {
@@ -53,6 +64,33 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		}
 		ctx.JSON(http.StatusNotFound, resp)
 	})
+
+	v1 := router.Group("/v1")
+	{
+		drugClassifications := v1.Group("/drug-classifications")
+		{
+			drugClassifications.GET("/no-params", rOpts.DrugClassificationHandler.GetAllWithoutParams)
+		}
+
+		manufacturers := v1.Group("/manufacturers")
+		{
+			manufacturers.GET("/no-params", rOpts.ManufacturerHandler.GetAllWithoutParams)
+		}
+
+		productCategories := v1.Group("/product-categories")
+		{
+			productCategories.GET("/no-params", rOpts.ProductCategoryHandler.GetAllWithoutParams)
+		}
+
+		products := v1.Group("/products")
+		{
+			products.GET("/:id", rOpts.ProductHandler.GetById)
+			products.GET("", rOpts.ProductHandler.GetAll)
+			products.POST("", rOpts.ProductHandler.Add)
+			products.PUT("/:id", rOpts.ProductHandler.Edit)
+			products.DELETE("/:id", rOpts.ProductHandler.Remove)
+		}
+	}
 
 	return router
 }

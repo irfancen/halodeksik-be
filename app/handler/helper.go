@@ -1,4 +1,4 @@
-package rest
+package handler
 
 import (
 	"bytes"
@@ -79,6 +79,12 @@ func wrapError(err error, customCode ...int) error {
 		errWrapper.Code = http.StatusBadRequest
 
 	case errors.As(errWrapper.ErrorStored, &errNotMatch):
+		errWrapper.Code = http.StatusBadRequest
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidDecimal):
+		errWrapper.Code = http.StatusBadRequest
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductUniqueConstraint):
 		errWrapper.Code = http.StatusBadRequest
 
 	default:
