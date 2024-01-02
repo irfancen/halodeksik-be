@@ -14,6 +14,7 @@ type UserUseCase interface {
 	AddAdmin(ctx context.Context, admin entity.User) (*entity.User, error)
 	GetById(ctx context.Context, id int64) (*entity.User, error)
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	Edit(ctx context.Context, id int64, user entity.User) (*entity.User, error)
 }
 
 type UserUseCaseImpl struct {
@@ -72,4 +73,33 @@ func (uc *UserUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetA
 	)
 
 	return paginatedItems, nil
+}
+
+func (uc *UserUseCaseImpl) Edit(ctx context.Context, id int64, user entity.User) (*entity.User, error) {
+	userdb, err := uc.GetById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if user.Email == "" && user.Password == "" {
+		return userdb, nil
+	}
+
+	if user.Email != "" {
+		userdb.Email = user.Email
+	}
+
+	if user.Password != "" {
+		newPassword, err := uc.util.HashAndSalt(user.Password)
+		if err != nil {
+			return nil, err
+		}
+		userdb.Password = newPassword
+	}
+
+	updated, err := uc.repo.Update(ctx, *userdb)
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }

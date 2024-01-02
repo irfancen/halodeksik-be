@@ -110,3 +110,43 @@ func (h *UserHandler) GetAll(ctx *gin.Context) {
 	resp := dto.ResponseDto{Data: paginatedItems}
 	ctx.JSON(http.StatusOK, resp)
 }
+
+func (h *UserHandler) Edit(ctx *gin.Context) {
+	var err error
+
+	defer func() {
+		if err != nil {
+			err = wrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	req := requestdto.EditAdmin{}
+	err = ctx.ShouldBindJSON(&req)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(req)
+	if err != nil {
+		return
+	}
+
+	updated, err := h.uc.Edit(ctx.Request.Context(), uri.Id, req.ToUser())
+	if err != nil {
+		return
+	}
+	resp := dto.ResponseDto{Data: updated.ToUserResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}

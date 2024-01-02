@@ -15,6 +15,7 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, int64, error)
+	Update(ctx context.Context, user entity.User) (*entity.User, error)
 }
 
 type UserRepositoryImpl struct {
@@ -153,4 +154,32 @@ func (repo *UserRepositoryImpl) CountFindAll(ctx context.Context, param *querypa
 	}
 
 	return totalItems, totalPages, nil
+}
+
+func (repo *UserRepositoryImpl) Update(ctx context.Context, user entity.User) (*entity.User, error) {
+	const updateById = `UPDATE users
+SET email = $1, password = $2, user_role_id = $3, is_verified = $4, updated_at = now()
+WHERE id = $5
+RETURNING id, email, password, user_role_id, is_verified, created_at, updated_at, deleted_at
+`
+
+	row := repo.db.QueryRowContext(ctx, updateById,
+		user.Email,
+		user.Password,
+		user.UserRoleId,
+		user.IsVerified,
+		user.Id,
+	)
+	var updated entity.User
+	err := row.Scan(
+		&updated.Id,
+		&updated.Email,
+		&updated.Password,
+		&updated.UserRoleId,
+		&updated.IsVerified,
+		&updated.CreatedAt,
+		&updated.UpdatedAt,
+		&updated.DeletedAt,
+	)
+	return &updated, err
 }
