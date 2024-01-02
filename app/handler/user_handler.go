@@ -3,8 +3,11 @@ package handler
 import (
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
+	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/dto/requestdto"
+	"halodeksik-be/app/dto/responsedto"
 	"halodeksik-be/app/dto/uriparamdto"
+	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"net/http"
 
@@ -73,5 +76,37 @@ func (h *UserHandler) GetById(ctx *gin.Context) {
 		return
 	}
 	resp := dto.ResponseDto{Data: user.ToUserResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *UserHandler) GetAll(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = wrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	getAllUserQuery := queryparamdto.GetAllUsersQuery{}
+	_ = ctx.ShouldBindQuery(&getAllUserQuery)
+
+	param, err := getAllUserQuery.ToGetAllParams()
+	if err != nil {
+		return
+	}
+
+	paginatedItems, err := h.uc.GetAll(ctx.Request.Context(), param)
+	if err != nil {
+		return
+	}
+
+	resps := make([]*responsedto.UserResponse, 0)
+	for _, user := range paginatedItems.Items.([]*entity.User) {
+		resps = append(resps, user.ToUserResponse())
+	}
+	paginatedItems.Items = resps
+
+	resp := dto.ResponseDto{Data: paginatedItems}
 	ctx.JSON(http.StatusOK, resp)
 }

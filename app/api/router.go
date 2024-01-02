@@ -97,6 +97,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		users := v1.Group("/users")
 		{
 			users.GET("/:id", rOpts.UserHandler.GetById)
+			users.GET("", rOpts.UserHandler.GetAll)
 			users.POST("/admin", rOpts.UserHandler.AddAdmin)
 		}
 	}

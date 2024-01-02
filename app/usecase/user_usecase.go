@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"halodeksik-be/app/apperror"
+	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
 	"halodeksik-be/app/util"
@@ -12,6 +13,7 @@ import (
 type UserUseCase interface {
 	AddAdmin(ctx context.Context, admin entity.User) (*entity.User, error)
 	GetById(ctx context.Context, id int64) (*entity.User, error)
+	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 }
 
 type UserUseCaseImpl struct {
@@ -52,4 +54,22 @@ func (uc *UserUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.User,
 		return nil, err
 	}
 	return user, nil
+}
+
+func (uc *UserUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	users, err := uc.repo.FindAll(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	totalItems, totalPages, err := uc.repo.CountFindAll(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	paginatedItems := entity.NewPaginationInfo(
+		totalItems, totalPages, int64(len(users)), int64(*param.PageId), users,
+	)
+
+	return paginatedItems, nil
 }

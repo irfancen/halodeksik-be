@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"halodeksik-be/app/apperror"
+	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 )
 
@@ -12,6 +13,8 @@ type UserRepository interface {
 	Create(ctx context.Context, user entity.User) (*entity.User, error)
 	FindById(ctx context.Context, id int64) (*entity.User, error)
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
+	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error)
+	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, int64, error)
 }
 
 type UserRepositoryImpl struct {
@@ -89,4 +92,65 @@ WHERE email = $1
 		return nil, err
 	}
 	return &user, err
+}
+
+func (repo *UserRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error) {
+	initQuery := `SELECT id, email, user_role_id, is_verified FROM users WHERE deleted_at IS NULL `
+	query, values := buildQuery(initQuery, param)
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*entity.User, 0)
+	for rows.Next() {
+		var user entity.User
+		if err := rows.Scan(
+			&user.Id, &user.Email, &user.UserRoleId, &user.IsVerified,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &user)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (repo *UserRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, int64, error) {
+	initQuery := `SELECT count(id) FROM users WHERE deleted_at IS NULL `
+	query, values := buildQuery(initQuery, param, false)
+
+	var (
+		totalItems int64
+		totalPages int64
+	)
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return totalItems, totalPages, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(
+			&totalItems,
+		); err != nil {
+			return totalItems, totalPages, err
+		}
+	}
+	totalPages = totalItems / int64(*param.PageSize)
+	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
+		totalPages += 1
+	}
+
+	if err := rows.Err(); err != nil {
+		return totalItems, totalPages, err
+	}
+
+	return totalItems, totalPages, nil
 }
