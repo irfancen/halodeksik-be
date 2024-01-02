@@ -16,6 +16,7 @@ type UserRepository interface {
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, int64, error)
 	Update(ctx context.Context, user entity.User) (*entity.User, error)
+	Delete(ctx context.Context, id int64) error
 }
 
 type UserRepositoryImpl struct {
@@ -182,4 +183,12 @@ RETURNING id, email, password, user_role_id, is_verified, created_at, updated_at
 		&updated.DeletedAt,
 	)
 	return &updated, err
+}
+
+func (repo *UserRepositoryImpl) Delete(ctx context.Context, id int64) error {
+	const deleteById = `DELETE FROM users WHERE id = $1
+`
+
+	_, err := repo.db.ExecContext(ctx, deleteById, id)
+	return err
 }

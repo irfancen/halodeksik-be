@@ -100,6 +100,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			users.GET("", rOpts.UserHandler.GetAll)
 			users.POST("/admin", rOpts.UserHandler.AddAdmin)
 			users.PATCH("/admin/:id", rOpts.UserHandler.Edit)
+			users.DELETE("/admin/:id", rOpts.UserHandler.Remove)
 		}
 	}
 

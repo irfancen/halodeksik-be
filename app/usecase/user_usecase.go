@@ -15,6 +15,7 @@ type UserUseCase interface {
 	GetById(ctx context.Context, id int64) (*entity.User, error)
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, id int64, user entity.User) (*entity.User, error)
+	Remove(ctx context.Context, id int64) error
 }
 
 type UserUseCaseImpl struct {
@@ -102,4 +103,16 @@ func (uc *UserUseCaseImpl) Edit(ctx context.Context, id int64, user entity.User)
 		return nil, err
 	}
 	return updated, nil
+}
+
+func (uc *UserUseCaseImpl) Remove(ctx context.Context, id int64) error {
+	if _, err := uc.GetById(ctx, id); err != nil {
+		return err
+	}
+
+	err := uc.repo.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
