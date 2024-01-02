@@ -10,6 +10,7 @@ type AllRepositories struct {
 	ManufacturerRepository       repository.ManufacturerRepository
 	ProductCategoryRepository    repository.ProductCategoryRepository
 	ProductRepository            repository.ProductRepository
+	UserRepository               repository.UserRepository
 }
 
 func InitializeRepositories(db *sql.DB) *AllRepositories {
@@ -18,5 +19,6 @@ func InitializeRepositories(db *sql.DB) *AllRepositories {
 		ManufacturerRepository:       repository.NewManufacturerRepositoryImpl(db),
 		ProductCategoryRepository:    repository.NewProductCategoryRepositoryImpl(db),
 		ProductRepository:            repository.NewProductRepositoryImpl(db),
+		UserRepository:               repository.NewUserRepository(db),
 	}
 }

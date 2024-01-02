@@ -18,6 +18,7 @@ type RouterOpts struct {
 	ManufacturerHandler       *handler.ManufacturerHandler
 	ProductCategoryHandler    *handler.ProductCategoryHandler
 	ProductHandler            *handler.ProductHandler
+	UserHandler               *handler.UserHandler
 }
 
 func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
@@ -26,6 +27,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		ManufacturerHandler:       handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
 		ProductCategoryHandler:    handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase),
 		ProductHandler:            handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
+		UserHandler:               handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
 	}
 }
 
@@ -90,6 +92,11 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			products.POST("", rOpts.ProductHandler.Add)
 			products.PUT("/:id", rOpts.ProductHandler.Edit)
 			products.DELETE("/:id", rOpts.ProductHandler.Remove)
+		}
+
+		users := v1.Group("/users")
+		{
+			users.POST("/admin", rOpts.UserHandler.AddAdmin)
 		}
 	}
 
