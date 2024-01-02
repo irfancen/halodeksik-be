@@ -40,6 +40,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 	router.GET("/debug/pprof/goroutine", gin.WrapH(http.HandlerFunc(pprof.Handler("goroutine").ServeHTTP)))
 
 	router.Use(gin.Recovery())
+	router.Use(middleware.CORSMiddleware)
 	router.Use(middleware.TimeoutHandler)
 	router.Use(middleware.LogHandler)
 	router.Use(middleware.ErrorHandler)
