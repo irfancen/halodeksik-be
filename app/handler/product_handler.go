@@ -26,7 +26,7 @@ func (h *ProductHandler) Add(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
-			err = wrapError(err)
+			err = WrapError(err)
 			_ = ctx.Error(err)
 		}
 	}()
@@ -54,7 +54,7 @@ func (h *ProductHandler) GetById(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
-			err = wrapError(err)
+			err = WrapError(err)
 			_ = ctx.Error(err)
 		}
 	}()
@@ -82,7 +82,7 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
-			err = wrapError(err)
+			err = WrapError(err)
 			_ = ctx.Error(err)
 		}
 	}()
@@ -115,7 +115,7 @@ func (h *ProductHandler) Edit(ctx *gin.Context) {
 
 	defer func() {
 		if err != nil {
-			err = wrapError(err)
+			err = WrapError(err)
 			_ = ctx.Error(err)
 		}
 	}()
@@ -154,7 +154,7 @@ func (h *ProductHandler) Remove(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
-			err = wrapError(err)
+			err = WrapError(err)
 			_ = ctx.Error(err)
 		}
 	}()

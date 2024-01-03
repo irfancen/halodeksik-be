@@ -124,9 +124,10 @@ CREATE TABLE pharmacy_shipping_methods
 CREATE TABLE verification_tokens
 (
     id         BIGSERIAL PRIMARY KEY,
-    is_valid   BOOLEAN     DEFAULT TRUE  NOT NULL,
-    expired_at TIMESTAMPTZ               NOT NULL,
-    email      VARCHAR                   NOT NULL,
+    token      VARCHAR              NOT NULL,
+    is_valid   BOOLEAN DEFAULT TRUE NOT NULL,
+    expired_at TIMESTAMPTZ          NOT NULL,
+    email      VARCHAR              NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     deleted_at TIMESTAMPTZ DEFAULT NULL

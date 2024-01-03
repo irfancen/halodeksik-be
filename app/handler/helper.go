@@ -16,7 +16,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func wrapError(err error, customCode ...int) error {
+func WrapError(err error, customCode ...int) error {
 	errWrapper := &apperror.Wrapper{}
 
 	if ok := errors.As(err, &errWrapper); !ok {
@@ -37,6 +37,7 @@ func wrapError(err error, customCode ...int) error {
 		errAlreadyExist   *apperror.AlreadyExist
 		errNotMatch       *apperror.NotMatch
 		errForbidden      *apperror.Forbidden
+		errAuth           *apperror.AuthError
 	)
 
 	switch {
@@ -62,7 +63,10 @@ func wrapError(err error, customCode ...int) error {
 	case errWrapper.ErrorStored.Error() == "invalid request":
 		errWrapper.Code = http.StatusBadRequest
 
-	case errors.Is(errWrapper.ErrorStored, apperror.ErrForgotPasswordTokenInvalid) || errors.Is(errWrapper.ErrorStored, apperror.ErrForgotPasswordTokenExpired):
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrForgotPasswordTokenInvalid), errors.Is(errWrapper.ErrorStored, apperror.ErrForgotPasswordTokenExpired):
+		errWrapper.Code = http.StatusBadRequest
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrRegisterTokenInvalid), errors.Is(errWrapper.ErrorStored, apperror.ErrRegisterTokenExpired):
 		errWrapper.Code = http.StatusBadRequest
 
 	case errors.As(errWrapper.ErrorStored, &errValidation):
@@ -81,10 +85,19 @@ func wrapError(err error, customCode ...int) error {
 	case errors.As(errWrapper.ErrorStored, &errNotMatch):
 		errWrapper.Code = http.StatusBadRequest
 
+	case errors.As(errWrapper.ErrorStored, &errAuth):
+		errWrapper.Code = http.StatusUnauthorized
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidDecimal):
 		errWrapper.Code = http.StatusBadRequest
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductUniqueConstraint):
+		errWrapper.Code = http.StatusBadRequest
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidRegisterRole):
+		errWrapper.Code = http.StatusBadRequest
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrWrongCredentials):
 		errWrapper.Code = http.StatusBadRequest
 
 	default:
