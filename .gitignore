@@ -1,3 +1,5 @@
 .env
 *.log
 .idea/
+/app/appdb/sqlc
+/app/appdb/query

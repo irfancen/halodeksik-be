@@ -23,7 +23,8 @@ func main() {
 	}
 
 	allRepositories := api.InitializeRepositories(db)
-	allUseCases := api.InitializeUseCases(allRepositories)
+	allUtil := api.InitializeUtil()
+	allUseCases := api.InitializeUseCases(allRepositories, allUtil)
 	routerOpts := api.InitializeAllRouterOpts(allUseCases)
 
 	ginMode := api.GetGinMode()
