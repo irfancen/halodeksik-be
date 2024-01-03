@@ -13,7 +13,7 @@ type PharmacyRepository interface {
 	Create(ctx context.Context, pharmacy entity.Pharmacy) (*entity.Pharmacy, error)
 	FindById(ctx context.Context, id int64) (*entity.Pharmacy, error)
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Pharmacy, error)
-	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, int64, error)
+	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 	Update(ctx context.Context, pharmacy entity.Pharmacy) (*entity.Pharmacy, error)
 	Delete(ctx context.Context, id int64) error
 }
@@ -108,38 +108,24 @@ func (repo *PharmacyRepositoryImpl) FindAll(ctx context.Context, param *querypar
 	return items, nil
 }
 
-func (repo *PharmacyRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, int64, error) {
+func (repo *PharmacyRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
 	initQuery := `SELECT count(id) FROM pharmacies WHERE deleted_at IS NULL `
 	query, values := buildQuery(initQuery, param, false)
 
-	var (
-		totalItems int64
-		totalPages int64
-	)
+	var totalItems int64
 
-	rows, err := repo.db.QueryContext(ctx, query, values...)
-	if err != nil {
-		return totalItems, totalPages, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		if err := rows.Scan(
-			&totalItems,
-		); err != nil {
-			return totalItems, totalPages, err
-		}
-	}
-	totalPages = totalItems / int64(*param.PageSize)
-	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
-		totalPages += 1
+	row := repo.db.QueryRowContext(ctx, query, values...)
+	if row.Err() != nil {
+		return totalItems, row.Err()
 	}
 
-	if err := rows.Err(); err != nil {
-		return totalItems, totalPages, err
+	if err := row.Scan(
+		&totalItems,
+	); err != nil {
+		return totalItems, err
 	}
 
-	return totalItems, totalPages, nil
+	return totalItems, nil
 }
 
 func (repo *PharmacyRepositoryImpl) Update(ctx context.Context, pharmacy entity.Pharmacy) (*entity.Pharmacy, error) {
