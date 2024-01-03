@@ -64,9 +64,14 @@ func (uc *UserUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetA
 		return nil, err
 	}
 
-	totalItems, totalPages, err := uc.repo.CountFindAll(ctx, param)
+	totalItems, err := uc.repo.CountFindAll(ctx, param)
 	if err != nil {
 		return nil, err
+	}
+
+	totalPages := totalItems / int64(*param.PageSize)
+	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
+		totalPages += 1
 	}
 
 	paginatedItems := entity.NewPaginationInfo(
