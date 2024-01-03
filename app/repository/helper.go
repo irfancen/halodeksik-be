@@ -5,7 +5,6 @@ import (
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/util"
-	"log"
 	"strings"
 )
 
@@ -71,6 +70,6 @@ func buildQuery(initQuery string, param *queryparamdto.GetAllParams, isLimitSet 
 		query.WriteString(fmt.Sprintf("LIMIT $%d OFFSET $%d", indexPreparedStatement+1, indexPreparedStatement+2))
 		values = append(values, size, offset)
 	}
-	log.Println(query.String())
+
 	return query.String(), values
 }

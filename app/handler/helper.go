@@ -50,12 +50,13 @@ func WrapError(err error, customCode ...int) error {
 		errWrapper.Code = http.StatusBadRequest
 
 	case errors.Is(errWrapper.ErrorStored, io.ErrUnexpectedEOF):
-		errWrapper.Code = http.StatusBadRequest
+		fallthrough
 
 	case errors.As(errWrapper.ErrorStored, &errJsonSyntax):
-		errWrapper.Code = http.StatusBadRequest
+		fallthrough
 
 	case errors.As(errWrapper.ErrorStored, &errJsonUnmarshall):
+		errWrapper.ErrorStored = fmt.Errorf("invalid JSON syntax or format")
 		errWrapper.Code = http.StatusBadRequest
 
 	case errors.As(errWrapper.ErrorStored, &errTimeParse):
@@ -99,6 +100,7 @@ func WrapError(err error, customCode ...int) error {
 		errWrapper.Code = http.StatusBadRequest
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrWrongCredentials):
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductImageDoesNotExistInContext):
 		errWrapper.Code = http.StatusBadRequest
 
 	default:
@@ -111,7 +113,7 @@ func WrapError(err error, customCode ...int) error {
 func handleErrValidation(ve validator.ValidationErrors) string {
 	buff := bytes.NewBufferString("")
 
-	for i, _ := range ve {
+	for i := range ve {
 		buff.WriteString(createErrValidationMsgTag(ve[i]))
 		buff.WriteString("\n")
 	}
@@ -158,6 +160,11 @@ func createErrValidationMsgTag(fieldError validator.FieldError) string {
 	case "gtfield":
 		otherFieldName := util.PascalToSnake(fieldError.Param())
 		return fmt.Sprintf("field '%s' must be greater than '%s' field", fieldName, otherFieldName)
+	case "filesize":
+		return fmt.Sprintf("field '%s' must have a file size at maximum %v KB", fieldName, fieldError.Param())
+	case "filetype":
+		param := strings.ReplaceAll(fieldError.Param(), " ", ", ")
+		return fmt.Sprintf("field '%s' must have a file with type as one of %s", fieldName, param)
 	default:
 		msg := fmt.Sprintf("field '%s' failed on validation %s %s", fieldName, fieldError.Tag(), fieldError.Param())
 		return strings.TrimSpace(msg)

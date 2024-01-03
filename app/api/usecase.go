@@ -1,6 +1,7 @@
 package api
 
 import (
+	"halodeksik-be/app/appcloud"
 	"halodeksik-be/app/usecase"
 	"halodeksik-be/app/util"
 )
@@ -22,7 +23,7 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 		ManufacturerUseCase:       usecase.NewManufacturerUseCaseImpl(allRepo.ManufacturerRepository),
 		PharmacyUseCase:           usecase.NewPharmacyUseCseImpl(allRepo.PharmacyRepository),
 		ProductCategoryUseCase:    usecase.NewProductCategoryUseCaseImpl(allRepo.ProductCategoryRepository),
-		ProductUseCase:            usecase.NewProductUseCaseImpl(allRepo.ProductRepository),
+		ProductUseCase:            usecase.NewProductUseCaseImpl(allRepo.ProductRepository, appcloud.AppFileUploader),
 		UserUseCase:               usecase.NewUserUseCaseImpl(allRepo.UserRepository, util.NewAuthUtil()),
 	}
 }

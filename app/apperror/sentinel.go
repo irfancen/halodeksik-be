@@ -23,4 +23,5 @@ var (
 	ErrInvalidDecimal = errors.New("invalid decimal")
 
 	ErrProductUniqueConstraint = errors.New("name, generic_name, content, and manufacturer_id combinations violate unique constraint")
+	ErrProductImageDoesNotExistInContext = errors.New("product image does not exist in context")
 )

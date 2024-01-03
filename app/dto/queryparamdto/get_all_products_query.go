@@ -20,7 +20,13 @@ type GetAllProductsQuery struct {
 }
 
 func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
+	const (
+		sortByName = "name"
+		sortByDate = "date"
+	)
+
 	param := NewGetAllParams()
+	product := new(entity.Product)
 
 	if q.Search != "" {
 		words := strings.Split(q.Search, " ")
@@ -30,21 +36,19 @@ func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 		}
 		param.WhereClauses = append(
 			param.WhereClauses,
-			appdb.NewWhere("products.name", appdb.ILike, wordToSearch, appdb.OR),
-			appdb.NewWhere("products.generic_name", appdb.ILike, wordToSearch, appdb.OR),
-			appdb.NewWhere("products.description", appdb.ILike, wordToSearch, appdb.OR),
-			appdb.NewWhere("products.content", appdb.ILike, wordToSearch),
+			appdb.NewWhere(product.GetSqlColumnFromField("Name"), appdb.ILike, wordToSearch, appdb.OR),
+			appdb.NewWhere(product.GetSqlColumnFromField("GenericName"), appdb.ILike, wordToSearch, appdb.OR),
+			appdb.NewWhere(product.GetSqlColumnFromField("Description"), appdb.ILike, wordToSearch, appdb.OR),
+			appdb.NewWhere(product.GetSqlColumnFromField("Content"), appdb.ILike, wordToSearch),
 		)
 	}
 
 	switch q.SortBy {
-	case "name":
-		q.SortBy = "products.name"
-	case "price":
-		q.SortBy = "products.price"
-	case "date":
-		q.SortBy = "products.created_at"
-	case "":
+	case sortByName:
+		q.SortBy = product.GetSqlColumnFromField("Name")
+	case sortByDate:
+		q.SortBy = product.GetSqlColumnFromField("CreatedAt")
+	default:
 		q.SortBy = ""
 	}
 	sortClause := appdb.NewSort(q.SortBy)
@@ -58,9 +62,8 @@ func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 		param.SortClauses = append(param.SortClauses, sortClause)
 	}
 
-	prod := new(entity.Product)
 	if !util.IsEmptyString(q.DrugClassifications) {
-		column := fmt.Sprintf("%s.%s", prod.GetEntityName(), prod.GetFieldStructTag("DrugClassificationId", appconstant.JsonStructTag))
+		column := fmt.Sprintf("%s.%s", product.GetEntityName(), product.GetFieldStructTag("DrugClassificationId", appconstant.JsonStructTag))
 		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.In, q.DrugClassifications))
 	}
 

@@ -3,3 +3,8 @@
 .idea/
 /app/appdb/sqlc
 /app/appdb/query
+*.json
+*.png
+*.jpeg
+*.jpg
+*.txt

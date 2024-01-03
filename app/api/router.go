@@ -29,7 +29,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		DrugClassificationHandler: handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
 		ManufacturerHandler:       handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
 		PharmacyHandler:           handler.NewPharmacyHandler(allUC.PharmacyUseCase, appvalidator.Validator),
-		ProductCategoryHandler:    handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase),
+		ProductCategoryHandler:    handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase, appvalidator.Validator),
 		ProductHandler:            handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
 		UserHandler:               handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
 	}
@@ -103,7 +103,12 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 
 		productCategories := v1.Group("/product-categories")
 		{
+			productCategories.GET("/:id", rOpts.ProductCategoryHandler.GetById)
 			productCategories.GET("/no-params", rOpts.ProductCategoryHandler.GetAllWithoutParams)
+			productCategories.GET("", rOpts.ProductCategoryHandler.GetAll)
+			productCategories.POST("", rOpts.ProductCategoryHandler.Add)
+			productCategories.PUT("/:id", rOpts.ProductCategoryHandler.Edit)
+			productCategories.DELETE("/:id", rOpts.ProductCategoryHandler.Remove)
 		}
 
 		products := v1.Group("/products")

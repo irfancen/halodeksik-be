@@ -15,7 +15,7 @@ type ProductRepository interface {
 	Create(ctx context.Context, product entity.Product) (*entity.Product, error)
 	FindById(ctx context.Context, id int64) (*entity.Product, error)
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
-	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, int64, error)
+	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 	Update(ctx context.Context, product entity.Product) (*entity.Product, error)
 	Delete(ctx context.Context, id int64) error
 }
@@ -56,19 +56,29 @@ func (repo *ProductRepositoryImpl) Create(ctx context.Context, product entity.Pr
 }
 
 func (repo *ProductRepositoryImpl) FindById(ctx context.Context, id int64) (*entity.Product, error) {
-	var getById = `SELECT id, name, generic_name, content, manufacturer_id, description, drug_classification_id, product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image, created_at, updated_at, deleted_at
-		FROM products
-		WHERE id = $1 AND deleted_at IS NULL`
+	const getById = `
+SELECT p.id, p.name, p.generic_name, p.content, p.manufacturer_id, p.description, p.drug_classification_id, p.product_category_id, p.drug_form, p.unit_in_pack, p.selling_unit, p.weight, p.length, p.width, p.height, p.image, p.created_at, p.updated_at, p.deleted_at, pc.name, m.name, dc.name
+FROM products p
+         INNER JOIN product_categories pc ON p.product_category_id = pc.id
+         INNER JOIN manufacturers m ON p.manufacturer_id = m.id
+         INNER JOIN drug_classifications dc ON p.drug_classification_id = dc.id
+WHERE p.id = $1`
 
 	row := repo.db.QueryRowContext(ctx, getById, id)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
 
-	var product entity.Product
+	var (
+		product            entity.Product
+		productCategory    entity.ProductCategory
+		manufacturer       entity.Manufacturer
+		drugClassification entity.DrugClassification
+	)
 	err := row.Scan(
 		&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
 		&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image, &product.CreatedAt, &product.UpdatedAt, &product.DeletedAt,
+		&productCategory.Name, &manufacturer.Name, &drugClassification.Name,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -76,6 +86,9 @@ func (repo *ProductRepositoryImpl) FindById(ctx context.Context, id int64) (*ent
 		}
 		return nil, err
 	}
+	product.ProductCategory = &productCategory
+	product.Manufacturer = &manufacturer
+	product.DrugClassification = &drugClassification
 	return &product, err
 }
 
@@ -107,18 +120,15 @@ func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *querypara
 	return items, nil
 }
 
-func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, int64, error) {
+func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
 	initQuery := `SELECT count(id) FROM products WHERE deleted_at IS NULL `
 	query, values := buildQuery(initQuery, param, false)
 
-	var (
-		totalItems int64
-		totalPages int64
-	)
+	var totalItems int64
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
-		return totalItems, totalPages, err
+		return totalItems, err
 	}
 	defer rows.Close()
 
@@ -126,19 +136,14 @@ func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *quer
 		if err := rows.Scan(
 			&totalItems,
 		); err != nil {
-			return totalItems, totalPages, err
+			return totalItems, err
 		}
-	}
-	totalPages = totalItems / int64(*param.PageSize)
-	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
-		totalPages += 1
 	}
 
 	if err := rows.Err(); err != nil {
-		return totalItems, totalPages, err
+		return totalItems, err
 	}
-
-	return totalItems, totalPages, nil
+	return totalItems, nil
 }
 
 func (repo *ProductRepositoryImpl) Update(ctx context.Context, product entity.Product) (*entity.Product, error) {

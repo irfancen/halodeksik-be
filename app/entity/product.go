@@ -2,6 +2,8 @@ package entity
 
 import (
 	"database/sql"
+	"fmt"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/dto/responsedto"
 	"reflect"
 	"time"
@@ -27,6 +29,9 @@ type Product struct {
 	CreatedAt            time.Time    `json:"created_at"`
 	UpdatedAt            time.Time    `json:"updated_at"`
 	DeletedAt            sql.NullTime `json:"-"`
+	Manufacturer         *Manufacturer
+	DrugClassification   *DrugClassification
+	ProductCategory      *ProductCategory
 }
 
 func (p *Product) GetEntityName() string {
@@ -41,23 +46,30 @@ func (p *Product) GetFieldStructTag(fieldName string, structTag string) string {
 	return field.Tag.Get(structTag)
 }
 
+func (p *Product) GetSqlColumnFromField(fieldName string) string {
+	return fmt.Sprintf("%s.%s", p.GetEntityName(), p.GetFieldStructTag(fieldName, appconstant.JsonStructTag))
+}
+
 func (p *Product) ToProductResponse() *responsedto.ProductResponse {
 	return &responsedto.ProductResponse{
-		Id:                   p.Id,
-		Name:                 p.Name,
-		GenericName:          p.GenericName,
-		Content:              p.Content,
-		ManufacturerId:       p.ManufacturerId,
-		Description:          p.Description,
-		DrugClassificationId: p.DrugClassificationId,
-		ProductCategoryId:    p.ProductCategoryId,
-		DrugForm:             p.DrugForm,
-		UnitInPack:           p.UnitInPack,
-		SellingUnit:          p.SellingUnit,
-		Weight:               p.Weight,
-		Length:               p.Length,
-		Width:                p.Width,
-		Height:               p.Height,
-		Image:                p.Image,
+		Id:                         p.Id,
+		Name:                       p.Name,
+		GenericName:                p.GenericName,
+		Content:                    p.Content,
+		ManufacturerId:             p.ManufacturerId,
+		Description:                p.Description,
+		DrugClassificationId:       p.DrugClassificationId,
+		ProductCategoryId:          p.ProductCategoryId,
+		DrugForm:                   p.DrugForm,
+		UnitInPack:                 p.UnitInPack,
+		SellingUnit:                p.SellingUnit,
+		Weight:                     p.Weight,
+		Length:                     p.Length,
+		Width:                      p.Width,
+		Height:                     p.Height,
+		Image:                      p.Image,
+		ManufacturerResponse:       p.Manufacturer.ToResponse(),
+		DrugClassificationResponse: p.DrugClassification.ToResponse(),
+		ProductCategoryResponse:    p.ProductCategory.ToResponse(),
 	}
 }

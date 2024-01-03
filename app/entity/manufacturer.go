@@ -15,6 +15,9 @@ type Manufacturer struct {
 }
 
 func (e *Manufacturer) ToResponse() *responsedto.ManufacturerResponse {
+	if e == nil {
+		return nil
+	}
 	return &responsedto.ManufacturerResponse{
 		Id:   e.Id,
 		Name: e.Name,

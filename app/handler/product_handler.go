@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"context"
+	"errors"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
 	"halodeksik-be/app/dto/queryparamdto"
@@ -32,8 +35,8 @@ func (h *ProductHandler) Add(ctx *gin.Context) {
 		}
 	}()
 
-	req := requestdto.AddEditProduct{}
-	err = ctx.ShouldBindJSON(&req)
+	req := requestdto.AddProduct{}
+	err = ctx.ShouldBind(&req)
 	if err != nil {
 		return
 	}
@@ -42,6 +45,15 @@ func (h *ProductHandler) Add(ctx *gin.Context) {
 	if err != nil {
 		return
 	}
+
+	fileHeader, err := ctx.FormFile(appconstant.FormImage)
+	if err != nil {
+		return
+	}
+
+	reqCtx1 := ctx.Request.Context()
+	reqCtx2 := context.WithValue(reqCtx1, appconstant.FormImage, fileHeader)
+	ctx.Request = ctx.Request.WithContext(reqCtx2)
 
 	added, err := h.uc.Add(ctx.Request.Context(), req.ToProduct())
 	if err != nil {
@@ -132,8 +144,8 @@ func (h *ProductHandler) Edit(ctx *gin.Context) {
 		return
 	}
 
-	req := requestdto.AddEditProduct{}
-	err = ctx.ShouldBindJSON(&req)
+	req := requestdto.EditProduct{}
+	err = ctx.ShouldBind(&req)
 	if err != nil {
 		return
 	}
@@ -143,11 +155,32 @@ func (h *ProductHandler) Edit(ctx *gin.Context) {
 		return
 	}
 
+	fileHeader, err := ctx.FormFile(appconstant.FormImage)
+	if err != nil && !errors.Is(err, http.ErrMissingFile) {
+		return
+	}
+	if fileHeader != nil {
+		reqImage := requestdto.EditProductImage{}
+		err = ctx.ShouldBind(&reqImage)
+		if err != nil {
+			return
+		}
+
+		err = h.validator.Validate(reqImage)
+		if err != nil {
+			return
+		}
+
+		reqCtx1 := ctx.Request.Context()
+		reqCtx2 := context.WithValue(reqCtx1, appconstant.FormImage, fileHeader)
+		ctx.Request = ctx.Request.WithContext(reqCtx2)
+	}
+
 	updated, err := h.uc.Edit(ctx.Request.Context(), uri.Id, req.ToProduct())
 	if err != nil {
 		return
 	}
-	resp := dto.ResponseDto{Data: updated}
+	resp := dto.ResponseDto{Data: updated.ToProductResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }
 

@@ -2,6 +2,8 @@ package entity
 
 import (
 	"database/sql"
+	"fmt"
+	"halodeksik-be/app/appconstant"
 	"reflect"
 	"time"
 )
@@ -27,4 +29,8 @@ func (v *VerificationToken) GetFieldStructTag(fieldName string, structTag string
 		return ""
 	}
 	return field.Tag.Get(structTag)
+}
+
+func (v *VerificationToken) GetSqlColumnFromField(fieldName string) string {
+	return fmt.Sprintf("%s.%s", v.GetEntityName(), v.GetFieldStructTag(fieldName, appconstant.JsonStructTag))
 }

@@ -8,6 +8,7 @@ import (
 	"halodeksik-be/app/dto/requestdto"
 	"halodeksik-be/app/dto/responsedto"
 	"halodeksik-be/app/usecase"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -138,6 +139,8 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 	if err != nil {
 		return
 	}
+
+	log.Println(h.uc)
 
 	user, token, err := h.uc.Login(ctx, req)
 	if errors.Is(err, apperror.ErrRecordNotFound) {

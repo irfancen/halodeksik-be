@@ -2,6 +2,8 @@ package entity
 
 import (
 	"database/sql"
+	"fmt"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/dto/responsedto"
 	"reflect"
 	"strconv"
@@ -41,6 +43,10 @@ func (p *Pharmacy) GetFieldStructTag(fieldName string, structTag string) string 
 		return ""
 	}
 	return field.Tag.Get(structTag)
+}
+
+func (p *Pharmacy) GetSqlColumnFromField(fieldName string) string {
+	return fmt.Sprintf("%s.%s", p.GetEntityName(), p.GetFieldStructTag(fieldName, appconstant.JsonStructTag))
 }
 
 func (p *Pharmacy) ToPharmacyResponse() *responsedto.PharmacyResponse {

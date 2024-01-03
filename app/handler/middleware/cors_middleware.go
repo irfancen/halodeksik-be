@@ -10,7 +10,7 @@ var appClients string
 
 func CORSMiddleware(ctx *gin.Context) {
 	if util.IsEmptyString(appClients) {
-		env.Get("APP_CLIENT")
+		appClients = env.Get("APP_CLIENT")
 	}
 
 	ctx.Writer.Header().Set("Access-Control-Allow-Origin", appClients)

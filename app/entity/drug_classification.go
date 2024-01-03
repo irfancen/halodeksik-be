@@ -15,6 +15,9 @@ type DrugClassification struct {
 }
 
 func (e *DrugClassification) ToResponse() *responsedto.DrugClassificationResponse {
+	if e == nil {
+		return nil
+	}
 	return &responsedto.DrugClassificationResponse{
 		Id:   e.Id,
 		Name: e.Name,
