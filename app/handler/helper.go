@@ -113,20 +113,38 @@ func createErrValidationMsgTag(fieldError validator.FieldError) string {
 		return fmt.Sprintf("field '%s' is required", fieldName)
 	case "email":
 		return fmt.Sprintf("field '%s' must be in the format of an email", fieldName)
-	case "numeric":
+	case "number":
 		return fmt.Sprintf("field '%s' must be a number", fieldName)
+	case "numeric":
+		return fmt.Sprintf("field '%s' must be numeric", fieldName)
 	case "len":
 		return fmt.Sprintf("field '%s' must have exactly %s characters long", fieldName, fieldError.Param())
 	case "min":
-		if fieldError.Type().Kind() == reflect.String {
+		switch fieldError.Type().Kind() {
+		case reflect.String:
 			return fmt.Sprintf("field '%s' must be at least %s characters long", fieldName, fieldError.Param())
+		case reflect.Slice:
+			return fmt.Sprintf("field '%s' must have at least %s item", fieldName, fieldError.Param())
 		}
-		return fmt.Sprintf("field '%s' must be at least %s", fieldName, fieldError.Param())
+		return fmt.Sprintf("field '%s' have a minimum value of %s", fieldName, fieldError.Param())
 	case "max":
-		if fieldError.Type().Kind() == reflect.String {
+		switch fieldError.Type().Kind() {
+		case reflect.String:
 			return fmt.Sprintf("field '%s' must be at maximum %s characters long", fieldName, fieldError.Param())
+		case reflect.Slice:
+			return fmt.Sprintf("field '%s' must have at maximum %s item", fieldName, fieldError.Param())
 		}
-		return fmt.Sprintf("field '%s' must be at maximum %s", fieldName, fieldError.Param())
+		return fmt.Sprintf("field '%s' have maximum value of %s", fieldName, fieldError.Param())
+	case "oneof":
+		params := strings.ReplaceAll(fieldError.Param(), " ", ", ")
+		return fmt.Sprintf("item '%s' on field '%s' must be one of %s", fieldError.Value(), fieldName, params)
+	case "latitude":
+		return fmt.Sprintf("field '%s' must be a valid latitude", fieldName)
+	case "longitude":
+		return fmt.Sprintf("field '%s' must be a valid longitude", fieldName)
+	case "gtfield":
+		otherFieldName := util.PascalToSnake(fieldError.Param())
+		return fmt.Sprintf("field '%s' must be greater than '%s' field", fieldName, otherFieldName)
 	default:
 		msg := fmt.Sprintf("field '%s' failed on validation %s %s", fieldName, fieldError.Tag(), fieldError.Param())
 		return strings.TrimSpace(msg)

@@ -16,6 +16,7 @@ import (
 type RouterOpts struct {
 	DrugClassificationHandler *handler.DrugClassificationHandler
 	ManufacturerHandler       *handler.ManufacturerHandler
+	PharmacyHandler           *handler.PharmacyHandler
 	ProductCategoryHandler    *handler.ProductCategoryHandler
 	ProductHandler            *handler.ProductHandler
 	UserHandler               *handler.UserHandler
@@ -25,6 +26,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 	return &RouterOpts{
 		DrugClassificationHandler: handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
 		ManufacturerHandler:       handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
+		PharmacyHandler:           handler.NewPharmacyHandler(allUC.PharmacyUseCase, appvalidator.Validator),
 		ProductCategoryHandler:    handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase),
 		ProductHandler:            handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
 		UserHandler:               handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
@@ -78,6 +80,11 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		manufacturers := v1.Group("/manufacturers")
 		{
 			manufacturers.GET("/no-params", rOpts.ManufacturerHandler.GetAllWithoutParams)
+		}
+
+		pharmacy := v1.Group("/pharmacies")
+		{
+			pharmacy.POST("", rOpts.PharmacyHandler.Add)
 		}
 
 		productCategories := v1.Group("/product-categories")
