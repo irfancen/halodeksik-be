@@ -6,6 +6,7 @@ import (
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/dto/requestdto"
 	"halodeksik-be/app/dto/responsedto"
+	"halodeksik-be/app/dto/uriparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"net/http"
@@ -47,6 +48,34 @@ func (h *PharmacyHandler) Add(ctx *gin.Context) {
 		return
 	}
 	resp := dto.ResponseDto{Data: added.ToPharmacyResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *PharmacyHandler) GetById(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = wrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	pharmacy, err := h.uc.GetById(ctx.Request.Context(), uri.Id)
+	if err != nil {
+		return
+	}
+	resp := dto.ResponseDto{Data: pharmacy.ToPharmacyResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }
 

@@ -3,12 +3,15 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 )
 
 type PharmacyRepository interface {
 	Create(ctx context.Context, pharmacy entity.Pharmacy) (*entity.Pharmacy, error)
+	FindById(ctx context.Context, id int64) (*entity.Pharmacy, error)
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Pharmacy, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, int64, error)
 }
@@ -44,6 +47,33 @@ RETURNING id, name, address, sub_district, district, city, province, postal_code
 		&created.CreatedAt, &created.UpdatedAt, &created.DeletedAt,
 	)
 	return &created, err
+}
+
+func (repo *PharmacyRepositoryImpl) FindById(ctx context.Context, id int64) (*entity.Pharmacy, error) {
+	var getById = `SELECT id, name, address, sub_district, district, city, province, postal_code, latitude, longitude, pharmacist_name, pharmacist_license_no, pharmacist_phone_no, operational_hours, operational_days, pharmacy_admin_id
+		FROM pharmacies
+		WHERE id = $1 AND deleted_at IS NULL`
+
+	row := repo.db.QueryRowContext(ctx, getById, id)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	var pharmacy entity.Pharmacy
+	err := row.Scan(
+		&pharmacy.Id, &pharmacy.Name,
+		&pharmacy.Address, &pharmacy.SubDistrict, &pharmacy.District, &pharmacy.City, &pharmacy.Province, &pharmacy.PostalCode, &pharmacy.Latitude, &pharmacy.Longitude,
+		&pharmacy.PharmacistName, &pharmacy.PharmacistLicenseNo, &pharmacy.PharmacistPhoneNo,
+		&pharmacy.OperationalHours, &pharmacy.OperationalDays, &pharmacy.PharmacyAdminId,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+
+	return &pharmacy, nil
 }
 
 func (repo *PharmacyRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Pharmacy, error) {

@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"errors"
+	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
@@ -9,6 +11,7 @@ import (
 
 type PharmacyUseCase interface {
 	Add(ctx context.Context, pharmacy entity.Pharmacy) (*entity.Pharmacy, error)
+	GetById(ctx context.Context, id int64) (*entity.Pharmacy, error)
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 }
 
@@ -26,6 +29,17 @@ func (uc *PharmacyUseCaseImpl) Add(ctx context.Context, pharmacy entity.Pharmacy
 		return nil, err
 	}
 	return created, nil
+}
+
+func (uc *PharmacyUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.Pharmacy, error) {
+	pharmacy, err := uc.repo.FindById(ctx, id)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound(pharmacy, "Id", id)
+		}
+		return nil, err
+	}
+	return pharmacy, nil
 }
 
 func (uc *PharmacyUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
