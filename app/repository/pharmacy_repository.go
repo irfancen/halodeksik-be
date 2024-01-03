@@ -15,6 +15,7 @@ type PharmacyRepository interface {
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Pharmacy, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, int64, error)
 	Update(ctx context.Context, pharmacy entity.Pharmacy) (*entity.Pharmacy, error)
+	Delete(ctx context.Context, id int64) error
 }
 
 type PharmacyRepositoryImpl struct {
@@ -168,4 +169,15 @@ func (repo *PharmacyRepositoryImpl) Update(ctx context.Context, pharmacy entity.
 		&updated.OperationalHours, &updated.OperationalDays, &updated.PharmacyAdminId,
 	)
 	return &updated, err
+}
+
+func (repo *PharmacyRepositoryImpl) Delete(ctx context.Context, id int64) error {
+	const deleteById = `
+		UPDATE pharmacies
+		SET deleted_at = now()
+		WHERE id = $1 AND deleted_at IS NULL
+		`
+
+	_, err := repo.db.ExecContext(ctx, deleteById, id)
+	return err
 }

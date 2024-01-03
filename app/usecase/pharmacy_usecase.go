@@ -14,6 +14,7 @@ type PharmacyUseCase interface {
 	GetById(ctx context.Context, id int64) (*entity.Pharmacy, error)
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, id int64, pharmacy entity.Pharmacy) (*entity.Pharmacy, error)
+	Remove(ctx context.Context, id int64) error
 }
 
 type PharmacyUseCaseImpl struct {
@@ -73,4 +74,16 @@ func (uc *PharmacyUseCaseImpl) Edit(ctx context.Context, id int64, pharmacy enti
 		return nil, err
 	}
 	return updated, nil
+}
+
+func (uc *PharmacyUseCaseImpl) Remove(ctx context.Context, id int64) error {
+	if _, err := uc.GetById(ctx, id); err != nil {
+		return err
+	}
+
+	err := uc.repo.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
