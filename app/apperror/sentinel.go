@@ -18,6 +18,8 @@ var (
 	ErrLoginTokenNotValid    = errors.New("login token is invalid")
 	ErrUnauthorized          = errors.New("you don't have permission to access this endpoint")
 
+	ErrPasswordTooLong = errors.New("password too long")
+
 	ErrInvalidDecimal = errors.New("invalid decimal")
 
 	ErrProductUniqueConstraint = errors.New("name, generic_name, content, and manufacturer_id combinations violate unique constraint")

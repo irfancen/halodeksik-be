@@ -1,10 +1,13 @@
 package util
 
 import (
+	"errors"
+	"halodeksik-be/app/apperror"
+	"os"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"os"
 )
 
 type AuthUtil interface {
@@ -48,6 +51,9 @@ func (u *authUtil) SignToken(token *jwt.Token) (string, error) {
 
 func (u *authUtil) HashAndSalt(pwd string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.MinCost)
+	if errors.Is(err, bcrypt.ErrPasswordTooLong) {
+		return "", apperror.ErrPasswordTooLong
+	}
 	if err != nil {
 		return "", err
 	}

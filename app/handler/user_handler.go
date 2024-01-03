@@ -14,16 +14,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ProductHandler struct {
-	uc        usecase.ProductUseCase
+type UserHandler struct {
+	uc        usecase.UserUseCase
 	validator appvalidator.AppValidator
 }
 
-func NewProductHandler(uc usecase.ProductUseCase, validator appvalidator.AppValidator) *ProductHandler {
-	return &ProductHandler{uc: uc, validator: validator}
+func NewUserHandler(uc usecase.UserUseCase, validator appvalidator.AppValidator) *UserHandler {
+	return &UserHandler{uc: uc, validator: validator}
 }
 
-func (h *ProductHandler) Add(ctx *gin.Context) {
+func (h *UserHandler) AddAdmin(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -32,7 +32,7 @@ func (h *ProductHandler) Add(ctx *gin.Context) {
 		}
 	}()
 
-	req := requestdto.AddEditProduct{}
+	req := requestdto.AddAdmin{}
 	err = ctx.ShouldBindJSON(&req)
 	if err != nil {
 		return
@@ -43,15 +43,15 @@ func (h *ProductHandler) Add(ctx *gin.Context) {
 		return
 	}
 
-	added, err := h.uc.Add(ctx.Request.Context(), req.ToProduct())
+	added, err := h.uc.AddAdmin(ctx.Request.Context(), req.ToUser())
 	if err != nil {
 		return
 	}
-	resp := dto.ResponseDto{Data: added.ToProductResponse()}
+	resp := dto.ResponseDto{Data: added.ToUserResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h *ProductHandler) GetById(ctx *gin.Context) {
+func (h *UserHandler) GetById(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -71,15 +71,15 @@ func (h *ProductHandler) GetById(ctx *gin.Context) {
 		return
 	}
 
-	product, err := h.uc.GetById(ctx.Request.Context(), uri.Id)
+	user, err := h.uc.GetById(ctx.Request.Context(), uri.Id)
 	if err != nil {
 		return
 	}
-	resp := dto.ResponseDto{Data: product.ToProductResponse()}
+	resp := dto.ResponseDto{Data: user.ToUserResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h *ProductHandler) GetAll(ctx *gin.Context) {
+func (h *UserHandler) GetAll(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -88,10 +88,10 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 		}
 	}()
 
-	getAllProductQuery := queryparamdto.GetAllProductsQuery{}
-	_ = ctx.ShouldBindQuery(&getAllProductQuery)
+	getAllUserQuery := queryparamdto.GetAllUsersQuery{}
+	_ = ctx.ShouldBindQuery(&getAllUserQuery)
 
-	param, err := getAllProductQuery.ToGetAllParams()
+	param, err := getAllUserQuery.ToGetAllParams()
 	if err != nil {
 		return
 	}
@@ -101,9 +101,9 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 		return
 	}
 
-	resps := make([]*responsedto.ProductResponse, 0)
-	for _, product := range paginatedItems.Items.([]*entity.Product) {
-		resps = append(resps, product.ToProductResponse())
+	resps := make([]*responsedto.UserResponse, 0)
+	for _, user := range paginatedItems.Items.([]*entity.User) {
+		resps = append(resps, user.ToUserResponse())
 	}
 	paginatedItems.Items = resps
 
@@ -111,7 +111,7 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h *ProductHandler) Edit(ctx *gin.Context) {
+func (h *UserHandler) Edit(ctx *gin.Context) {
 	var err error
 
 	defer func() {
@@ -132,7 +132,7 @@ func (h *ProductHandler) Edit(ctx *gin.Context) {
 		return
 	}
 
-	req := requestdto.AddEditProduct{}
+	req := requestdto.EditAdmin{}
 	err = ctx.ShouldBindJSON(&req)
 	if err != nil {
 		return
@@ -143,15 +143,15 @@ func (h *ProductHandler) Edit(ctx *gin.Context) {
 		return
 	}
 
-	updated, err := h.uc.Edit(ctx.Request.Context(), uri.Id, req.ToProduct())
+	updated, err := h.uc.Edit(ctx.Request.Context(), uri.Id, req.ToUser())
 	if err != nil {
 		return
 	}
-	resp := dto.ResponseDto{Data: updated}
+	resp := dto.ResponseDto{Data: updated.ToUserResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h *ProductHandler) Remove(ctx *gin.Context) {
+func (h *UserHandler) Remove(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {

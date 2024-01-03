@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
@@ -10,6 +9,8 @@ import (
 	"halodeksik-be/app/dto/responsedto"
 	"halodeksik-be/app/usecase"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type AuthHandler struct {
@@ -114,7 +115,7 @@ func (h *AuthHandler) Register(ctx *gin.Context) {
 	if err != nil {
 		return
 	}
-	resp := dto.ResponseDto{Data: user.ModelToResponse()}
+	resp := dto.ResponseDto{Data: user.ToUserResponse()}
 	ctx.JSON(http.StatusOK, resp)
 
 }

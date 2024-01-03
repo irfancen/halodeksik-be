@@ -14,16 +14,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ProductHandler struct {
-	uc        usecase.ProductUseCase
+type PharmacyHandler struct {
+	uc        usecase.PharmacyUseCase
 	validator appvalidator.AppValidator
 }
 
-func NewProductHandler(uc usecase.ProductUseCase, validator appvalidator.AppValidator) *ProductHandler {
-	return &ProductHandler{uc: uc, validator: validator}
+func NewPharmacyHandler(uc usecase.PharmacyUseCase, validator appvalidator.AppValidator) *PharmacyHandler {
+	return &PharmacyHandler{uc: uc, validator: validator}
 }
 
-func (h *ProductHandler) Add(ctx *gin.Context) {
+func (h *PharmacyHandler) Add(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -32,7 +32,7 @@ func (h *ProductHandler) Add(ctx *gin.Context) {
 		}
 	}()
 
-	req := requestdto.AddEditProduct{}
+	req := requestdto.AddEditPharmacy{}
 	err = ctx.ShouldBindJSON(&req)
 	if err != nil {
 		return
@@ -43,15 +43,15 @@ func (h *ProductHandler) Add(ctx *gin.Context) {
 		return
 	}
 
-	added, err := h.uc.Add(ctx.Request.Context(), req.ToProduct())
+	added, err := h.uc.Add(ctx.Request.Context(), req.ToPharmacy())
 	if err != nil {
 		return
 	}
-	resp := dto.ResponseDto{Data: added.ToProductResponse()}
+	resp := dto.ResponseDto{Data: added.ToPharmacyResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h *ProductHandler) GetById(ctx *gin.Context) {
+func (h *PharmacyHandler) GetById(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -71,15 +71,15 @@ func (h *ProductHandler) GetById(ctx *gin.Context) {
 		return
 	}
 
-	product, err := h.uc.GetById(ctx.Request.Context(), uri.Id)
+	pharmacy, err := h.uc.GetById(ctx.Request.Context(), uri.Id)
 	if err != nil {
 		return
 	}
-	resp := dto.ResponseDto{Data: product.ToProductResponse()}
+	resp := dto.ResponseDto{Data: pharmacy.ToPharmacyResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h *ProductHandler) GetAll(ctx *gin.Context) {
+func (h *PharmacyHandler) GetAll(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -88,10 +88,10 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 		}
 	}()
 
-	getAllProductQuery := queryparamdto.GetAllProductsQuery{}
-	_ = ctx.ShouldBindQuery(&getAllProductQuery)
+	getAllPharmacyQuery := queryparamdto.GetAllPharmaciesQuery{}
+	_ = ctx.ShouldBindQuery(&getAllPharmacyQuery)
 
-	param, err := getAllProductQuery.ToGetAllParams()
+	param, err := getAllPharmacyQuery.ToGetAllParams()
 	if err != nil {
 		return
 	}
@@ -101,9 +101,9 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 		return
 	}
 
-	resps := make([]*responsedto.ProductResponse, 0)
-	for _, product := range paginatedItems.Items.([]*entity.Product) {
-		resps = append(resps, product.ToProductResponse())
+	resps := make([]*responsedto.PharmacyResponse, 0)
+	for _, pharmacy := range paginatedItems.Items.([]*entity.Pharmacy) {
+		resps = append(resps, pharmacy.ToPharmacyResponse())
 	}
 	paginatedItems.Items = resps
 
@@ -111,7 +111,7 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h *ProductHandler) Edit(ctx *gin.Context) {
+func (h *PharmacyHandler) Edit(ctx *gin.Context) {
 	var err error
 
 	defer func() {
@@ -132,7 +132,7 @@ func (h *ProductHandler) Edit(ctx *gin.Context) {
 		return
 	}
 
-	req := requestdto.AddEditProduct{}
+	req := requestdto.AddEditPharmacy{}
 	err = ctx.ShouldBindJSON(&req)
 	if err != nil {
 		return
@@ -143,15 +143,15 @@ func (h *ProductHandler) Edit(ctx *gin.Context) {
 		return
 	}
 
-	updated, err := h.uc.Edit(ctx.Request.Context(), uri.Id, req.ToProduct())
+	updated, err := h.uc.Edit(ctx.Request.Context(), uri.Id, req.ToPharmacy())
 	if err != nil {
 		return
 	}
-	resp := dto.ResponseDto{Data: updated}
+	resp := dto.ResponseDto{Data: updated.ToPharmacyResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h *ProductHandler) Remove(ctx *gin.Context) {
+func (h *PharmacyHandler) Remove(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {

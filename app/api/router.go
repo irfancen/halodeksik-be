@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
 	"halodeksik-be/app/applogger"
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
@@ -10,23 +9,29 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 type RouterOpts struct {
+	AuthHandler               *handler.AuthHandler
 	DrugClassificationHandler *handler.DrugClassificationHandler
 	ManufacturerHandler       *handler.ManufacturerHandler
+	PharmacyHandler           *handler.PharmacyHandler
 	ProductCategoryHandler    *handler.ProductCategoryHandler
 	ProductHandler            *handler.ProductHandler
-	AuthHandler               *handler.AuthHandler
+	UserHandler               *handler.UserHandler
 }
 
 func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 	return &RouterOpts{
+		AuthHandler:               handler.NewAuthHandler(allUC.AuthUsecase, appvalidator.Validator),
 		DrugClassificationHandler: handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
 		ManufacturerHandler:       handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
+		PharmacyHandler:           handler.NewPharmacyHandler(allUC.PharmacyUseCase, appvalidator.Validator),
 		ProductCategoryHandler:    handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase),
 		ProductHandler:            handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
-		AuthHandler:               handler.NewAuthHandler(allUC.AuthUsecase, appvalidator.Validator),
+		UserHandler:               handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
 	}
 }
 
@@ -69,6 +74,14 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 
 	v1 := router.Group("/v1")
 	{
+		auth := v1.Group("/auth")
+		{
+			auth.POST("/register-token", rOpts.AuthHandler.SendRegisterToken)
+			auth.GET("/verify-register", rOpts.AuthHandler.VerifyRegisterToken)
+			auth.POST("/register", rOpts.AuthHandler.Register)
+			auth.POST("/login", rOpts.AuthHandler.Login)
+		}
+
 		drugClassifications := v1.Group("/drug-classifications")
 		{
 			drugClassifications.GET("/no-params", rOpts.DrugClassificationHandler.GetAllWithoutParams)
@@ -77,6 +90,15 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		manufacturers := v1.Group("/manufacturers")
 		{
 			manufacturers.GET("/no-params", rOpts.ManufacturerHandler.GetAllWithoutParams)
+		}
+
+		pharmacy := v1.Group("/pharmacies")
+		{
+			pharmacy.GET("", rOpts.PharmacyHandler.GetAll)
+			pharmacy.GET("/:id", rOpts.PharmacyHandler.GetById)
+			pharmacy.POST("", rOpts.PharmacyHandler.Add)
+			pharmacy.PUT("/:id", rOpts.PharmacyHandler.Edit)
+			pharmacy.DELETE("/:id", rOpts.PharmacyHandler.Remove)
 		}
 
 		productCategories := v1.Group("/product-categories")
@@ -93,14 +115,14 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			products.DELETE("/:id", rOpts.ProductHandler.Remove)
 		}
 
-		auth := v1.Group("/auth")
+		users := v1.Group("/users")
 		{
-			auth.POST("/register-token", rOpts.AuthHandler.SendRegisterToken)
-			auth.GET("/verify-register", rOpts.AuthHandler.VerifyRegisterToken)
-			auth.POST("/register", rOpts.AuthHandler.Register)
-			auth.POST("/login", rOpts.AuthHandler.Login)
+			users.GET("/:id", rOpts.UserHandler.GetById)
+			users.GET("", rOpts.UserHandler.GetAll)
+			users.POST("/admin", rOpts.UserHandler.AddAdmin)
+			users.PATCH("/admin/:id", rOpts.UserHandler.Edit)
+			users.DELETE("/admin/:id", rOpts.UserHandler.Remove)
 		}
-
 	}
 
 	return router

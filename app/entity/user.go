@@ -30,10 +30,11 @@ func (u *User) GetFieldStructTag(fieldName string, structTag string) string {
 	return field.Tag.Get(structTag)
 }
 
-func (u *User) ModelToResponse() responsedto.ResponseUser {
-	return responsedto.ResponseUser{
+func (u *User) ToUserResponse() *responsedto.UserResponse {
+	return &responsedto.UserResponse{
 		Id:         u.Id,
 		Email:      u.Email,
-		UserRoleID: u.UserRoleId,
+		UserRoleId: u.UserRoleId,
+		IsVerified: u.IsVerified,
 	}
 }
