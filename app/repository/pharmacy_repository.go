@@ -14,6 +14,7 @@ type PharmacyRepository interface {
 	FindById(ctx context.Context, id int64) (*entity.Pharmacy, error)
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Pharmacy, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, int64, error)
+	Update(ctx context.Context, pharmacy entity.Pharmacy) (*entity.Pharmacy, error)
 }
 
 type PharmacyRepositoryImpl struct {
@@ -138,4 +139,33 @@ func (repo *PharmacyRepositoryImpl) CountFindAll(ctx context.Context, param *que
 	}
 
 	return totalItems, totalPages, nil
+}
+
+func (repo *PharmacyRepositoryImpl) Update(ctx context.Context, pharmacy entity.Pharmacy) (*entity.Pharmacy, error) {
+	const updateById = `
+		UPDATE pharmacies
+		SET name=$1, address=$2, sub_district=$3, district=$4, city=$5, province=$6, postal_code=$7,
+		latitude=$8, longitude=$9,
+		pharmacist_name=$10, pharmacist_license_no=$11, pharmacist_phone_no=$12,
+		operational_hours=$13, operational_days=$14, pharmacy_admin_id=$15, updated_at = now()
+		WHERE id = $16
+		RETURNING id, name, address, sub_district, district, city, province, postal_code, latitude, longitude, pharmacist_name, pharmacist_license_no, pharmacist_phone_no, operational_hours, operational_days, pharmacy_admin_id
+		`
+
+	row := repo.db.QueryRowContext(ctx, updateById,
+		pharmacy.Name,
+		pharmacy.Address, pharmacy.SubDistrict, pharmacy.District, pharmacy.City, pharmacy.Province, pharmacy.PostalCode,
+		pharmacy.Latitude, pharmacy.Longitude,
+		pharmacy.PharmacistName, pharmacy.PharmacistLicenseNo, pharmacy.PharmacistPhoneNo,
+		pharmacy.OperationalHours, pharmacy.OperationalDays, pharmacy.PharmacyAdminId, pharmacy.Id,
+	)
+
+	var updated entity.Pharmacy
+	err := row.Scan(
+		&updated.Id, &updated.Name,
+		&updated.Address, &updated.SubDistrict, &updated.District, &updated.City, &updated.Province, &updated.PostalCode, &updated.Latitude, &updated.Longitude,
+		&updated.PharmacistName, &updated.PharmacistLicenseNo, &updated.PharmacistPhoneNo,
+		&updated.OperationalHours, &updated.OperationalDays, &updated.PharmacyAdminId,
+	)
+	return &updated, err
 }

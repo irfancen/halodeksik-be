@@ -13,6 +13,7 @@ type PharmacyUseCase interface {
 	Add(ctx context.Context, pharmacy entity.Pharmacy) (*entity.Pharmacy, error)
 	GetById(ctx context.Context, id int64) (*entity.Pharmacy, error)
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	Edit(ctx context.Context, id int64, pharmacy entity.Pharmacy) (*entity.Pharmacy, error)
 }
 
 type PharmacyUseCaseImpl struct {
@@ -60,4 +61,16 @@ func (uc *PharmacyUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.
 	paginatedItems.CurrentPageTotalItems = int64(len(pharmacies))
 	paginatedItems.CurrentPage = int64(*param.PageId)
 	return paginatedItems, nil
+}
+
+func (uc *PharmacyUseCaseImpl) Edit(ctx context.Context, id int64, pharmacy entity.Pharmacy) (*entity.Pharmacy, error) {
+	if _, err := uc.GetById(ctx, id); err != nil {
+		return nil, err
+	}
+	pharmacy.Id = id
+	updated, err := uc.repo.Update(ctx, pharmacy)
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
