@@ -3,7 +3,10 @@ package handler
 import (
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
+	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/dto/requestdto"
+	"halodeksik-be/app/dto/responsedto"
+	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"net/http"
 
@@ -44,5 +47,37 @@ func (h *PharmacyHandler) Add(ctx *gin.Context) {
 		return
 	}
 	resp := dto.ResponseDto{Data: added.ToPharmacyResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *PharmacyHandler) GetAll(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = wrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	getAllPharmacyQuery := queryparamdto.GetAllPharmaciesQuery{}
+	_ = ctx.ShouldBindQuery(&getAllPharmacyQuery)
+
+	param, err := getAllPharmacyQuery.ToGetAllParams()
+	if err != nil {
+		return
+	}
+
+	paginatedItems, err := h.uc.GetAll(ctx.Request.Context(), param)
+	if err != nil {
+		return
+	}
+
+	resps := make([]*responsedto.PharmacyResponse, 0)
+	for _, pharmacy := range paginatedItems.Items.([]*entity.Pharmacy) {
+		resps = append(resps, pharmacy.ToPharmacyResponse())
+	}
+	paginatedItems.Items = resps
+
+	resp := dto.ResponseDto{Data: paginatedItems}
 	ctx.JSON(http.StatusOK, resp)
 }
