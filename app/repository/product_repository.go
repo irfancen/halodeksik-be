@@ -94,7 +94,7 @@ WHERE p.id = $1`
 
 func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error) {
 	initQuery := `SELECT id, name, generic_name, content, manufacturer_id, description, drug_classification_id, product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image FROM products WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, param)
+	query, values := buildQuery(initQuery, &entity.Product{}, param)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -122,7 +122,7 @@ func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *querypara
 
 func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
 	initQuery := `SELECT count(id) FROM products WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, param, false)
+	query, values := buildQuery(initQuery, &entity.Product{}, param, false)
 
 	var totalItems int64
 

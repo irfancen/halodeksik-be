@@ -80,7 +80,7 @@ func (repo *PharmacyRepositoryImpl) FindById(ctx context.Context, id int64) (*en
 
 func (repo *PharmacyRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Pharmacy, error) {
 	initQuery := `SELECT id, name, address, sub_district, district, city, province, postal_code, latitude, longitude, pharmacist_name, pharmacist_license_no, pharmacist_phone_no, operational_hours, operational_days, pharmacy_admin_id FROM pharmacies WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, param)
+	query, values := buildQuery(initQuery, &entity.Pharmacy{}, param)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -110,7 +110,7 @@ func (repo *PharmacyRepositoryImpl) FindAll(ctx context.Context, param *querypar
 
 func (repo *PharmacyRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
 	initQuery := `SELECT count(id) FROM pharmacies WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, param, false)
+	query, values := buildQuery(initQuery, &entity.Pharmacy{}, param, false)
 
 	var totalItems int64
 
