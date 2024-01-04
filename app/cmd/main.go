@@ -28,16 +28,7 @@ func main() {
 	applogger.SetLogger(logger)
 
 	validator := appvalidator.NewAppValidatorImpl()
-	err = validator.AddNewCustomValidation("filesize", appvalidator.FileSizeValidation)
-	if err != nil {
-		applogger.Log.Error(err)
-	}
-	err = validator.AddNewCustomValidation("filetype", appvalidator.FileTypeValidation)
-	if err != nil {
-		applogger.Log.Error(err)
-	}
-	err = validator.AddNewCustomValidation("numericgt", appvalidator.StringNumericGreaterThanValidation)
-	if err != nil {
+	if err := appvalidator.AddCustomValidators(validator); err != nil {
 		applogger.Log.Error(err)
 	}
 	appvalidator.SetValidator(validator)
