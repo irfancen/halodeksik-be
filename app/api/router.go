@@ -107,9 +107,24 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			productCategories.GET("/:id", rOpts.ProductCategoryHandler.GetById)
 			productCategories.GET("/no-params", rOpts.ProductCategoryHandler.GetAllWithoutParams)
 			productCategories.GET("", rOpts.ProductCategoryHandler.GetAll)
-			productCategories.POST("", rOpts.ProductCategoryHandler.Add)
-			productCategories.PUT("/:id", rOpts.ProductCategoryHandler.Edit)
-			productCategories.DELETE("/:id", rOpts.ProductCategoryHandler.Remove)
+			productCategories.POST(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				rOpts.ProductCategoryHandler.Add,
+			)
+			productCategories.PUT(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				rOpts.ProductCategoryHandler.Edit,
+			)
+			productCategories.DELETE(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				rOpts.ProductCategoryHandler.Remove,
+			)
 		}
 
 		products := v1.Group("/products")
