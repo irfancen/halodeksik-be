@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"halodeksik-be/app/apperror"
+	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
 )
 
 type PharmacyProductUseCase interface {
 	Add(ctx context.Context, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error)
+	GetAllByPharmacy(ctx context.Context, pharmacy_id int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 }
 
 type PharmacyProductUseCaseImpl struct {
@@ -50,4 +52,32 @@ func (uc *PharmacyProductUseCaseImpl) Add(ctx context.Context, pharmacyProduct e
 		return nil, err
 	}
 	return created, nil
+}
+
+func (uc *PharmacyProductUseCaseImpl) GetAllByPharmacy(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	if pharmacy, err := uc.pharmacyRepo.FindById(ctx, pharmacyId); err != nil {
+		return nil, apperror.NewNotFound(pharmacy, "Id", pharmacyId)
+	}
+
+	pharmacyProducts, err := uc.pharmacyProductRepo.FindAllJoinProducts(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	totalItems, err := uc.pharmacyProductRepo.CountFindAll(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	totalPages := totalItems / int64(*param.PageSize)
+	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
+		totalPages += 1
+	}
+
+	paginatedItems := new(entity.PaginatedItems)
+	paginatedItems.Items = pharmacyProducts
+	paginatedItems.TotalItems = totalItems
+	paginatedItems.TotalPages = totalPages
+	paginatedItems.CurrentPageTotalItems = int64(len(pharmacyProducts))
+	paginatedItems.CurrentPage = int64(*param.PageId)
+	return paginatedItems, nil
 }

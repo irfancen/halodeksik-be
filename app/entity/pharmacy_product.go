@@ -21,6 +21,7 @@ type PharmacyProduct struct {
 	CreatedAt  time.Time       `json:"created_at"`
 	UpdatedAt  time.Time       `json:"updated_at"`
 	DeletedAt  sql.NullTime    `json:"deleted_at"`
+	Product    *Product
 }
 
 func (pp *PharmacyProduct) GetEntityName() string {
@@ -41,11 +42,12 @@ func (pp *PharmacyProduct) GetSqlColumnFromField(fieldName string) string {
 
 func (pp *PharmacyProduct) ToPharmacyProductResponse() *responsedto.PharmacyProductResponse {
 	return &responsedto.PharmacyProductResponse{
-		Id:         pp.Id,
-		PharmacyId: pp.PharmacyId,
-		ProductId:  pp.ProductId,
-		IsActive:   pp.IsActive,
-		Price:      pp.Price,
-		Stock:      pp.Stock,
+		Id:              pp.Id,
+		PharmacyId:      pp.PharmacyId,
+		ProductId:       pp.ProductId,
+		IsActive:        pp.IsActive,
+		Price:           pp.Price,
+		Stock:           pp.Stock,
+		ProductResponse: pp.Product.ToProductResponse(),
 	}
 }
