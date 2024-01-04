@@ -18,6 +18,7 @@ type RouterOpts struct {
 	DrugClassificationHandler *handler.DrugClassificationHandler
 	ManufacturerHandler       *handler.ManufacturerHandler
 	PharmacyHandler           *handler.PharmacyHandler
+	PharmacyProductsHandler   *handler.PharmacyProductHandler
 	ProductCategoryHandler    *handler.ProductCategoryHandler
 	ProductHandler            *handler.ProductHandler
 	UserHandler               *handler.UserHandler
@@ -29,6 +30,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		DrugClassificationHandler: handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
 		ManufacturerHandler:       handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
 		PharmacyHandler:           handler.NewPharmacyHandler(allUC.PharmacyUseCase, appvalidator.Validator),
+		PharmacyProductsHandler:   handler.NewPharmacyProductHAndler(allUC.PharmacyProductUseCase, appvalidator.Validator),
 		ProductCategoryHandler:    handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase, appvalidator.Validator),
 		ProductHandler:            handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
 		UserHandler:               handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
@@ -99,6 +101,11 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			pharmacy.POST("", rOpts.PharmacyHandler.Add)
 			pharmacy.PUT("/:id", rOpts.PharmacyHandler.Edit)
 			pharmacy.DELETE("/:id", rOpts.PharmacyHandler.Remove)
+		}
+
+		pharmacyProducts := v1.Group("/pharmacy-products")
+		{
+			pharmacyProducts.POST("", rOpts.PharmacyProductsHandler.Add)
 		}
 
 		productCategories := v1.Group("/product-categories")

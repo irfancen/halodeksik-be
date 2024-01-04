@@ -22,6 +22,8 @@ var (
 
 	ErrInvalidDecimal = errors.New("invalid decimal")
 
-	ErrProductUniqueConstraint = errors.New("name, generic_name, content, and manufacturer_id combinations violate unique constraint")
+	ErrPharmacyProductUniqueConstraint = errors.New("pharmacy_id and product_id combinations violate unique constraint")
+
+	ErrProductUniqueConstraint           = errors.New("name, generic_name, content, and manufacturer_id combinations violate unique constraint")
 	ErrProductImageDoesNotExistInContext = errors.New("product image does not exist in context")
 )

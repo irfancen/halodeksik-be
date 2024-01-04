@@ -33,6 +33,13 @@ func main() {
 		applogger.Log.Error(err)
 	}
 	err = validator.AddNewCustomValidation("filetype", appvalidator.FileTypeValidation)
+	if err != nil {
+		applogger.Log.Error(err)
+	}
+	err = validator.AddNewCustomValidation("numericgt", appvalidator.StringNumericGreaterThanValidation)
+	if err != nil {
+		applogger.Log.Error(err)
+	}
 	appvalidator.SetValidator(validator)
 
 	fileUploader := appcloud.NewFileUploaderImpl()
