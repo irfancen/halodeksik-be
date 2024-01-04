@@ -6,6 +6,7 @@ import (
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
 	"halodeksik-be/app/dto/requestdto"
+	"halodeksik-be/app/dto/uriparamdto"
 	"halodeksik-be/app/usecase"
 	"net/http"
 
@@ -35,7 +36,14 @@ func (h *PharmacyProductHandler) Add(ctx *gin.Context) {
 		}
 	}()
 
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
 	req := requestdto.AddPharmacyProduct{}
+	req.PharmacyId = uri.Id
 	err = ctx.ShouldBindJSON(&req)
 	if err != nil {
 		return
