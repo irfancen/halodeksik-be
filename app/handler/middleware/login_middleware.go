@@ -60,8 +60,8 @@ func LoginMiddleware() gin.HandlerFunc {
 
 func AllowRoles(auths ...int64) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		roleId, exist := ctx.Get("role_id")
-		if !exist {
+		roleId := ctx.Request.Context().Value("role_id")
+		if roleId == nil {
 			_ = ctx.Error(handler.WrapError(&apperror.AuthError{Err: apperror.ErrUnauthorized}))
 			ctx.Abort()
 			return
