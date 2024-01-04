@@ -1,6 +1,7 @@
 package api
 
 import (
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/applogger"
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
@@ -115,9 +116,24 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		{
 			products.GET("/:id", rOpts.ProductHandler.GetById)
 			products.GET("", rOpts.ProductHandler.GetAll)
-			products.POST("", rOpts.ProductHandler.Add)
-			products.PUT("/:id", rOpts.ProductHandler.Edit)
-			products.DELETE("/:id", rOpts.ProductHandler.Remove)
+			products.POST(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				rOpts.ProductHandler.Add,
+			)
+			products.PUT(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				rOpts.ProductHandler.Edit,
+			)
+			products.DELETE(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				rOpts.ProductHandler.Remove,
+			)
 		}
 
 		users := v1.Group("/users")
