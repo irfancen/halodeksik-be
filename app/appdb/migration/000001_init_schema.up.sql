@@ -28,21 +28,29 @@ CREATE TABLE users
     deleted_at   TIMESTAMPTZ DEFAULT NULL
 );
 
-CREATE TABLE doctor_profiles
+CREATE TABLE doctor_specializations
 (
-    user_id            BIGSERIAL PRIMARY KEY REFERENCES users (id),
-    name               VARCHAR                   NOT NULL,
-    profile_photo      VARCHAR                   NOT NULL,
-    starting_year      INTEGER                   NOT NULL,
-    doctor_certificate VARCHAR                   NOT NULL,
-    specialization     VARCHAR                   NOT NULL,
-    consultation_fee   NUMERIC                   NOT NULL,
-    is_online          BOOL                      NOT NULL,
-    created_at         TIMESTAMPTZ DEFAULT now() NOT NULL,
-    updated_at         TIMESTAMPTZ DEFAULT now() NOT NULL,
-    deleted_at         TIMESTAMPTZ DEFAULT NULL
+    id         BIGSERIAL PRIMARY KEY,
+    name       VARCHAR                   NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+    deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
+CREATE TABLE doctor_profiles
+(
+    user_id                  BIGSERIAL PRIMARY KEY REFERENCES users (id),
+    name                     VARCHAR                   NOT NULL,
+    profile_photo            VARCHAR                   NOT NULL,
+    starting_year            INTEGER                   NOT NULL,
+    doctor_certificate       VARCHAR                   NOT NULL,
+    doctor_specialization_id BIGINT                    NOT NULL REFERENCES doctor_specializations (id),
+    consultation_fee         NUMERIC                   NOT NULL,
+    is_online                BOOL                      NOT NULL,
+    created_at               TIMESTAMPTZ DEFAULT now() NOT NULL,
+    updated_at               TIMESTAMPTZ DEFAULT now() NOT NULL,
+    deleted_at               TIMESTAMPTZ DEFAULT NULL
+);
 
 CREATE TABLE user_profiles
 (
