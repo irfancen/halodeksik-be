@@ -65,7 +65,7 @@ func (repo *PharmacyProductRepositoryImpl) FindAllJoinProducts(ctx context.Conte
 			INNER JOIN product_categories ON products.product_category_id = product_categories.id
 	        INNER JOIN manufacturers ON products.manufacturer_id = manufacturers.id
 	        INNER JOIN drug_classifications ON products.drug_classification_id = drug_classifications.id
-	WHERE pharmacy_products.deleted_at IS NULL `
+	WHERE pharmacy_products.deleted_at IS NULL AND products.deleted_at IS NULL `
 
 	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param)
 
@@ -110,7 +110,7 @@ func (repo *PharmacyProductRepositoryImpl) CountFindAll(ctx context.Context, par
 	INNER JOIN product_categories ON products.product_category_id = product_categories.id
 	INNER JOIN manufacturers ON products.manufacturer_id = manufacturers.id
 	INNER JOIN drug_classifications ON products.drug_classification_id = drug_classifications.id
-	WHERE pharmacy_products.deleted_at IS NULL `
+	WHERE pharmacy_products.deleted_at IS NULL AND products.deleted_at IS NULL `
 	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, false)
 
 	var totalItems int64
