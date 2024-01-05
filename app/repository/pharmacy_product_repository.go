@@ -13,8 +13,10 @@ import (
 
 type PharmacyProductRepository interface {
 	Create(ctx context.Context, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error)
+	FindById(ctx context.Context, id int64) (*entity.PharmacyProduct, error)
 	FindAllJoinProducts(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
+	Update(ctx context.Context, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error)
 }
 
 type PharmacyProductRepositoryImpl struct {
@@ -53,6 +55,32 @@ RETURNING id, pharmacy_id, product_id, is_active, price, stock
 		&created.IsActive, &created.Price, &created.Stock,
 	)
 	return &created, err
+}
+
+func (repo *PharmacyProductRepositoryImpl) FindById(ctx context.Context, id int64) (*entity.PharmacyProduct, error) {
+	getById := `
+	SELECT id, pharmacy_id, product_id, is_active, price, stock
+	FROM pharmacy_products
+	WHERE id = $1 AND deleted_at IS NULL `
+
+	row := repo.db.QueryRowContext(ctx, getById, id)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	var pharmacyProducts entity.PharmacyProduct
+	err := row.Scan(
+		&pharmacyProducts.Id, &pharmacyProducts.PharmacyId, &pharmacyProducts.ProductId,
+		&pharmacyProducts.IsActive, &pharmacyProducts.Price, &pharmacyProducts.Stock,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+
+	return &pharmacyProducts, nil
 }
 
 func (repo *PharmacyProductRepositoryImpl) FindAllJoinProducts(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error) {
@@ -133,4 +161,29 @@ func (repo *PharmacyProductRepositoryImpl) CountFindAll(ctx context.Context, par
 		return totalItems, err
 	}
 	return totalItems, nil
+}
+
+func (repo *PharmacyProductRepositoryImpl) Update(ctx context.Context, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error) {
+	updateById := `
+		UPDATE pharmacy_products
+		SET is_active = $1, price = $2
+		WHERE id = $3
+		RETURNING id, pharmacy_id, product_id, is_active, price, stock
+	`
+
+	row := repo.db.QueryRowContext(ctx, updateById,
+		pharmacyProduct.IsActive,
+		pharmacyProduct.Price,
+		pharmacyProduct.Id,
+	)
+	var updated entity.PharmacyProduct
+	err := row.Scan(
+		&updated.Id,
+		&updated.PharmacyId,
+		&updated.ProductId,
+		&updated.IsActive,
+		&updated.Price,
+		&updated.Stock,
+	)
+	return &updated, err
 }

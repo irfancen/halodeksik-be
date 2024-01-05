@@ -8,6 +8,7 @@ import (
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/dto/requestdto"
 	"halodeksik-be/app/dto/responsedto"
+	"halodeksik-be/app/dto/uriparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"net/http"
@@ -87,5 +88,45 @@ func (h *PharmacyProductHandler) GetAllByPharmacy(ctx *gin.Context) {
 	paginatedItems.Items = resps
 
 	resp := dto.ResponseDto{Data: paginatedItems}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *PharmacyProductHandler) Edit(ctx *gin.Context) {
+	var err error
+
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	req := requestdto.EditPharmacyProduct{}
+	err = ctx.ShouldBindJSON(&req)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(req)
+	if err != nil {
+		return
+	}
+
+	updated, err := h.uc.Edit(ctx.Request.Context(), uri.Id, req.ToPharmacyProduct())
+	if err != nil {
+		return
+	}
+	resp := dto.ResponseDto{Data: updated.ToPharmacyProductResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }

@@ -11,7 +11,8 @@ import (
 
 type PharmacyProductUseCase interface {
 	Add(ctx context.Context, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error)
-	GetAllByPharmacy(ctx context.Context, pharmacy_id int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	GetAllByPharmacy(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	Edit(ctx context.Context, id int64, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error)
 }
 
 type PharmacyProductUseCaseImpl struct {
@@ -54,6 +55,18 @@ func (uc *PharmacyProductUseCaseImpl) Add(ctx context.Context, pharmacyProduct e
 	return created, nil
 }
 
+func (uc *PharmacyProductUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.PharmacyProduct, error) {
+	pharmacyProduct, err := uc.pharmacyProductRepo.FindById(ctx, id)
+	if errors.Is(err, apperror.ErrRecordNotFound) {
+		return nil, apperror.NewNotFound(pharmacyProduct, "Id", id)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return pharmacyProduct, nil
+}
+
 func (uc *PharmacyProductUseCaseImpl) GetAllByPharmacy(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
 	if pharmacy, err := uc.pharmacyRepo.FindById(ctx, pharmacyId); err != nil {
 		return nil, apperror.NewNotFound(pharmacy, "Id", pharmacyId)
@@ -80,4 +93,16 @@ func (uc *PharmacyProductUseCaseImpl) GetAllByPharmacy(ctx context.Context, phar
 	paginatedItems.CurrentPageTotalItems = int64(len(pharmacyProducts))
 	paginatedItems.CurrentPage = int64(*param.PageId)
 	return paginatedItems, nil
+}
+
+func (uc *PharmacyProductUseCaseImpl) Edit(ctx context.Context, id int64, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error) {
+	if _, err := uc.GetById(ctx, id); err != nil {
+		return nil, err
+	}
+	pharmacyProduct.Id = id
+	updated, err := uc.pharmacyProductRepo.Update(ctx, pharmacyProduct)
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
