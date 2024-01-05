@@ -51,6 +51,9 @@ func (p *Product) GetSqlColumnFromField(fieldName string) string {
 }
 
 func (p *Product) ToProductResponse() *responsedto.ProductResponse {
+	if p == nil {
+		return nil
+	}
 	return &responsedto.ProductResponse{
 		Id:                         p.Id,
 		Name:                       p.Name,

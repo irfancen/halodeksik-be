@@ -93,6 +93,9 @@ func WrapError(err error, customCode ...int) error {
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidDecimal):
 		errWrapper.Code = http.StatusBadRequest
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrPharmacyProductUniqueConstraint):
+		errWrapper.Code = http.StatusBadRequest
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductUniqueConstraint):
 		errWrapper.Code = http.StatusBadRequest
 
@@ -132,6 +135,8 @@ func createErrValidationMsgTag(fieldError validator.FieldError) string {
 		return fmt.Sprintf("field '%s' must be a number", fieldName)
 	case "numeric":
 		return fmt.Sprintf("field '%s' must be numeric", fieldName)
+	case "numericgt":
+		return fmt.Sprintf("field '%s' must be a numeric greater than %s", fieldName, fieldError.Param())
 	case "len":
 		return fmt.Sprintf("field '%s' must have exactly %s characters long", fieldName, fieldError.Param())
 	case "min":

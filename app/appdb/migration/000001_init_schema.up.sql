@@ -237,6 +237,7 @@ CREATE TABLE pharmacy_products
     is_active   BOOL                      NOT NULL,
     price       NUMERIC                   NOT NULL,
     stock       INT                       NOT NULL,
+    UNIQUE (pharmacy_id, product_id),
     created_at  TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at  TIMESTAMPTZ DEFAULT now() NOT NULL,
     deleted_at  TIMESTAMPTZ DEFAULT NULL

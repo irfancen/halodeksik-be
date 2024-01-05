@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/dto/queryparamdto"
+	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
 	"strings"
 )
 
-func buildQuery(initQuery string, param *queryparamdto.GetAllParams, isLimitSet ...bool) (string, []interface{}) {
+func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamdto.GetAllParams, isLimitSet ...bool) (string, []interface{}) {
 	var query strings.Builder
 	var values []interface{}
 
@@ -21,6 +22,9 @@ func buildQuery(initQuery string, param *queryparamdto.GetAllParams, isLimitSet 
 	indexPreparedStatement := 0
 
 	for index, whereClause := range param.WhereClauses {
+		if whereClause.OpenParenthesis {
+			query.WriteString(" ( ")
+		}
 		if whereClause.Condition == appdb.In {
 			query.WriteString(fmt.Sprintf("%s %s (", whereClause.Column, whereClause.Condition))
 			val := strings.Split(whereClause.Value.(string), ",")
@@ -39,6 +43,10 @@ func buildQuery(initQuery string, param *queryparamdto.GetAllParams, isLimitSet 
 		indexPreparedStatement++
 		query.WriteString(fmt.Sprintf("%s %s $%d %s ", whereClause.Column, whereClause.Condition, indexPreparedStatement, whereClause.Logic))
 
+		if whereClause.CloseParenthesis {
+			query.WriteString(" ) ")
+		}
+
 		if index != len(param.WhereClauses)-1 && util.IsEmptyString(string(whereClause.Logic)) {
 			query.WriteString(appdb.AND + " ")
 		}
@@ -52,15 +60,11 @@ func buildQuery(initQuery string, param *queryparamdto.GetAllParams, isLimitSet 
 	}
 
 	if setLimit {
-		query.WriteString(" GROUP BY id ")
-	}
-
-	if setLimit {
 		query.WriteString(" ORDER BY ")
 		for _, sortClause := range param.SortClauses {
 			query.WriteString(fmt.Sprintf("%s %s,", sortClause.Column, sortClause.Order))
 		}
-		query.WriteString(` id ASC `)
+		query.WriteString(fmt.Sprintf(" %s.id ASC ", resourcer.GetEntityName()))
 	}
 
 	if setLimit && param.PageId != nil && param.PageSize != nil {
