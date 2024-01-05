@@ -3,6 +3,7 @@ package queryparamdto
 import (
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/appdb"
+	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
 	"strconv"
 	"strings"
@@ -19,6 +20,7 @@ type GetAllPharmaciesQuery struct {
 
 func (q *GetAllPharmaciesQuery) ToGetAllParams() (*GetAllParams, error) {
 	param := NewGetAllParams()
+	pharmacy := new(entity.Pharmacy)
 
 	if q.Search != "" {
 		words := strings.Split(q.Search, " ")
@@ -28,13 +30,13 @@ func (q *GetAllPharmaciesQuery) ToGetAllParams() (*GetAllParams, error) {
 		}
 		param.WhereClauses = append(
 			param.WhereClauses,
-			appdb.NewWhere("pharmacies.name", appdb.ILike, wordToSearch),
+			appdb.NewWhere(pharmacy.GetSqlColumnFromField("Name"), appdb.ILike, wordToSearch),
 		)
 	}
 
 	switch q.SortBy {
 	case "name":
-		q.SortBy = "pharmacies.name"
+		q.SortBy = pharmacy.GetSqlColumnFromField("Name")
 	default:
 		q.SortBy = ""
 	}
@@ -51,7 +53,7 @@ func (q *GetAllPharmaciesQuery) ToGetAllParams() (*GetAllParams, error) {
 	}
 
 	if !util.IsEmptyString(q.PharmacyAdminId) {
-		column := "pharmacies.pharmacy_admin_id"
+		column := pharmacy.GetSqlColumnFromField("PharmacyAdminId")
 		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.EqualTo, q.PharmacyAdminId))
 	}
 

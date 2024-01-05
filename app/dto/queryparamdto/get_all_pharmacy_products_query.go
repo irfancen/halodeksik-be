@@ -1,7 +1,6 @@
 package queryparamdto
 
 import (
-	"fmt"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/entity"
@@ -68,12 +67,12 @@ func (q *GetAllPharmacyProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 	}
 
 	if q.PharmacyId != 0 {
-		column := fmt.Sprintf("%s.%s", pharmacyProduct.GetEntityName(), pharmacyProduct.GetFieldStructTag("PharmacyId", appconstant.JsonStructTag))
+		column := pharmacyProduct.GetSqlColumnFromField("PharmacyId")
 		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.EqualTo, q.PharmacyId))
 	}
 
 	if !util.IsEmptyString(q.DrugClassifications) {
-		column := fmt.Sprintf("%s.%s", product.GetEntityName(), product.GetFieldStructTag("DrugClassificationId", appconstant.JsonStructTag))
+		column := product.GetSqlColumnFromField("DrugClassificationId")
 		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.In, q.DrugClassifications))
 	}
 

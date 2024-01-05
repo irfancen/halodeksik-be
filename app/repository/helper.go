@@ -64,7 +64,7 @@ func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamd
 		for _, sortClause := range param.SortClauses {
 			query.WriteString(fmt.Sprintf("%s %s,", sortClause.Column, sortClause.Order))
 		}
-		query.WriteString(fmt.Sprintf(" %s.id ASC ", resourcer.GetEntityName()))
+		query.WriteString(fmt.Sprintf(" %s ASC ", resourcer.GetSqlColumnFromField("Id")))
 	}
 
 	if setLimit && param.PageId != nil && param.PageSize != nil {

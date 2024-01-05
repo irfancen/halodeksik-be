@@ -3,6 +3,7 @@ package queryparamdto
 import (
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/appdb"
+	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
 	"strconv"
 	"strings"
@@ -20,6 +21,7 @@ type GetAllUsersQuery struct {
 
 func (q *GetAllUsersQuery) ToGetAllParams() (*GetAllParams, error) {
 	param := NewGetAllParams()
+	user := new(entity.User)
 
 	if q.Search != "" {
 		words := strings.Split(q.Search, " ")
@@ -29,13 +31,13 @@ func (q *GetAllUsersQuery) ToGetAllParams() (*GetAllParams, error) {
 		}
 		param.WhereClauses = append(
 			param.WhereClauses,
-			appdb.NewWhere("users.email", appdb.ILike, wordToSearch),
+			appdb.NewWhere(user.GetSqlColumnFromField("Email"), appdb.ILike, wordToSearch),
 		)
 	}
 
 	switch q.SortBy {
 	case "email":
-		q.SortBy = "users.email"
+		q.SortBy = user.GetSqlColumnFromField("Email")
 	default:
 		q.SortBy = ""
 	}
@@ -51,12 +53,12 @@ func (q *GetAllUsersQuery) ToGetAllParams() (*GetAllParams, error) {
 	}
 
 	if !util.IsEmptyString(q.UserRoleId) {
-		column := "users.user_role_id"
+		column := user.GetSqlColumnFromField("UserRoleId")
 		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.EqualTo, q.UserRoleId))
 	}
 
 	if !util.IsEmptyString(q.IsVerified) {
-		column := "users.is_verified"
+		column := user.GetSqlColumnFromField("IsVerified")
 		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.EqualTo, q.IsVerified))
 	}
 
