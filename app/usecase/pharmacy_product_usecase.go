@@ -11,6 +11,7 @@ import (
 
 type PharmacyProductUseCase interface {
 	Add(ctx context.Context, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error)
+	GetById(ctx context.Context, id int64) (*entity.PharmacyProduct, error)
 	GetAllByPharmacy(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, id int64, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error)
 }

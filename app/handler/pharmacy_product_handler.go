@@ -58,6 +58,34 @@ func (h *PharmacyProductHandler) Add(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+func (h *PharmacyProductHandler) GetById(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	pharmacy, err := h.uc.GetById(ctx.Request.Context(), uri.Id)
+	if err != nil {
+		return
+	}
+	resp := dto.ResponseDto{Data: pharmacy.ToPharmacyProductResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 func (h *PharmacyProductHandler) GetAllByPharmacy(ctx *gin.Context) {
 	var err error
 	defer func() {
