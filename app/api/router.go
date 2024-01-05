@@ -165,13 +165,27 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			)
 		}
 
-		users := v1.Group("/users")
+		users := v1.Group(
+			"/users",
+			middleware.LoginMiddleware(),
+		)
 		{
 			users.GET("/:id", rOpts.UserHandler.GetById)
-			users.GET("", rOpts.UserHandler.GetAll)
-			users.POST("/admin", rOpts.UserHandler.AddAdmin)
-			users.PATCH("/admin/:id", rOpts.UserHandler.Edit)
-			users.DELETE("/admin/:id", rOpts.UserHandler.Remove)
+			users.GET(
+				"",
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.UserHandler.GetAll,
+			)
+
+			admin := users.Group(
+				"/admin",
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+			)
+			{
+				admin.POST("", rOpts.UserHandler.AddAdmin)
+				admin.PATCH("/:id", rOpts.UserHandler.EditAdmin)
+				admin.DELETE("/:id", rOpts.UserHandler.RemoveAdmin)
+			}
 		}
 	}
 

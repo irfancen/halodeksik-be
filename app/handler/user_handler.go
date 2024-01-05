@@ -111,7 +111,7 @@ func (h *UserHandler) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h *UserHandler) Edit(ctx *gin.Context) {
+func (h *UserHandler) EditAdmin(ctx *gin.Context) {
 	var err error
 
 	defer func() {
@@ -143,7 +143,7 @@ func (h *UserHandler) Edit(ctx *gin.Context) {
 		return
 	}
 
-	updated, err := h.uc.Edit(ctx.Request.Context(), uri.Id, req.ToUser())
+	updated, err := h.uc.EditAdmin(ctx.Request.Context(), uri.Id, req.ToUser())
 	if err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (h *UserHandler) Edit(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h *UserHandler) Remove(ctx *gin.Context) {
+func (h *UserHandler) RemoveAdmin(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -171,7 +171,7 @@ func (h *UserHandler) Remove(ctx *gin.Context) {
 		return
 	}
 
-	err = h.uc.Remove(ctx.Request.Context(), uri.Id)
+	err = h.uc.RemoveAdmin(ctx.Request.Context(), uri.Id)
 	if err != nil {
 		return
 	}
