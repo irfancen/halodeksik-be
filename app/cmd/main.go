@@ -28,11 +28,9 @@ func main() {
 	applogger.SetLogger(logger)
 
 	validator := appvalidator.NewAppValidatorImpl()
-	err = validator.AddNewCustomValidation("filesize", appvalidator.FileSizeValidation)
-	if err != nil {
+	if err := appvalidator.AddCustomValidators(validator); err != nil {
 		applogger.Log.Error(err)
 	}
-	err = validator.AddNewCustomValidation("filetype", appvalidator.FileTypeValidation)
 	appvalidator.SetValidator(validator)
 
 	fileUploader := appcloud.NewFileUploaderImpl()
