@@ -151,16 +151,18 @@ func createErrValidationMsgTag(fieldError validator.FieldError) string {
 			return fmt.Sprintf("field '%s' must be at least %s characters long", fieldName, fieldError.Param())
 		case reflect.Slice:
 			return fmt.Sprintf("field '%s' must have at least %s item", fieldName, fieldError.Param())
+		default:
+			return fmt.Sprintf("field '%s' have a minimum value of %s", fieldName, fieldError.Param())
 		}
-		return fmt.Sprintf("field '%s' have a minimum value of %s", fieldName, fieldError.Param())
 	case "max":
 		switch fieldError.Type().Kind() {
 		case reflect.String:
 			return fmt.Sprintf("field '%s' must be at maximum %s characters long", fieldName, fieldError.Param())
 		case reflect.Slice:
 			return fmt.Sprintf("field '%s' must have at maximum %s item", fieldName, fieldError.Param())
+		default:
+			return fmt.Sprintf("field '%s' have maximum value of %s", fieldName, fieldError.Param())
 		}
-		return fmt.Sprintf("field '%s' have maximum value of %s", fieldName, fieldError.Param())
 	case "oneof":
 		params := strings.ReplaceAll(fieldError.Param(), " ", ", ")
 		return fmt.Sprintf("item '%s' on field '%s' must be one of %s", fieldError.Value(), fieldName, params)
