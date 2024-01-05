@@ -18,6 +18,9 @@ var (
 	ErrLoginTokenNotValid    = errors.New("login token is invalid")
 	ErrUnauthorized          = errors.New("you don't have permission to access this endpoint")
 
+	ErrForbiddenViewEntity   = errors.New("you are not allowed to view this entity")
+	ErrForbiddenModifyEntity = errors.New("you are not allowed to modify this entity")
+
 	ErrPasswordTooLong = errors.New("password too long")
 
 	ErrInvalidDecimal = errors.New("invalid decimal")

@@ -90,6 +90,12 @@ func WrapError(err error, customCode ...int) error {
 	case errors.As(errWrapper.ErrorStored, &errAuth):
 		errWrapper.Code = http.StatusUnauthorized
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrForbiddenViewEntity):
+		errWrapper.Code = http.StatusForbidden
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrForbiddenModifyEntity):
+		errWrapper.Code = http.StatusForbidden
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidDecimal):
 		errWrapper.Code = http.StatusBadRequest
 
