@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -47,9 +48,11 @@ func LoginMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set("user_id", claim.UserId)
-		ctx.Set("email", claim.Email)
-		ctx.Set("role_id", claim.RoleId)
+		reqCtx1 := ctx.Request.Context()
+		reqCtx2 := context.WithValue(reqCtx1, "user_id", claim.UserId)
+		reqCtx3 := context.WithValue(reqCtx2, "email", claim.Email)
+		reqCtx4 := context.WithValue(reqCtx3, "role_id", claim.RoleId)
+		ctx.Request = ctx.Request.WithContext(reqCtx4)
 		ctx.Next()
 
 	}
@@ -57,8 +60,8 @@ func LoginMiddleware() gin.HandlerFunc {
 
 func AllowRoles(auths ...int64) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		roleId, exist := ctx.Get("role_id")
-		if !exist {
+		roleId := ctx.Request.Context().Value("role_id")
+		if roleId == nil {
 			_ = ctx.Error(handler.WrapError(&apperror.AuthError{Err: apperror.ErrUnauthorized}))
 			ctx.Abort()
 			return

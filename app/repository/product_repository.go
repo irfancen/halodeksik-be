@@ -62,7 +62,7 @@ FROM products p
          INNER JOIN product_categories pc ON p.product_category_id = pc.id
          INNER JOIN manufacturers m ON p.manufacturer_id = m.id
          INNER JOIN drug_classifications dc ON p.drug_classification_id = dc.id
-WHERE p.id = $1`
+WHERE p.id = $1 AND p.deleted_at IS NULL`
 
 	row := repo.db.QueryRowContext(ctx, getById, id)
 	if row.Err() != nil {

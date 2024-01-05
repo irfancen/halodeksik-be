@@ -30,5 +30,6 @@ DROP TABLE IF EXISTS shipping_methods;
 DROP TABLE IF EXISTS addresses;
 DROP TABLE IF EXISTS user_profiles;
 DROP TABLE IF EXISTS doctor_profiles;
+DROP TABLE IF EXISTS doctor_specializations;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS user_roles;
