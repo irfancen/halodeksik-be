@@ -106,6 +106,12 @@ func WrapError(err error, customCode ...int) error {
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductImageDoesNotExistInContext):
 		errWrapper.Code = http.StatusBadRequest
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductStockNotEnoughToAddToCart):
+		errWrapper.Code = http.StatusBadRequest
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidIntInString):
+		errWrapper.Code = http.StatusBadRequest
+
 	default:
 		errWrapper.Code = http.StatusInternalServerError
 	}

@@ -20,10 +20,13 @@ var (
 
 	ErrPasswordTooLong = errors.New("password too long")
 
-	ErrInvalidDecimal = errors.New("invalid decimal")
+	ErrInvalidDecimal     = errors.New("invalid decimal")
+	ErrInvalidIntInString = errors.New("invalid integer in string")
 
 	ErrPharmacyProductUniqueConstraint = errors.New("pharmacy_id and product_id combinations violate unique constraint")
 
 	ErrProductUniqueConstraint           = errors.New("name, generic_name, content, and manufacturer_id combinations violate unique constraint")
 	ErrProductImageDoesNotExistInContext = errors.New("product image does not exist in context")
+
+	ErrProductStockNotEnoughToAddToCart = errors.New("product stock is not enough to add to cart")
 )
