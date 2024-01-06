@@ -90,7 +90,7 @@ func (h *AuthHandler) Register(ctx *gin.Context) {
 	}()
 
 	req := requestdto.RequestRegisterUser{}
-	err = ctx.ShouldBindJSON(&req)
+	err = ctx.ShouldBind(&req)
 	if err != nil {
 		return
 	}

@@ -15,6 +15,7 @@ type PharmacyProductRepository interface {
 	Create(ctx context.Context, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error)
 	FindById(ctx context.Context, id int64) (*entity.PharmacyProduct, error)
 	FindAllJoinProducts(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error)
+	FindAllByProductId(ctx context.Context, productId int64) ([]*entity.PharmacyProduct, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 	Update(ctx context.Context, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error)
 }
@@ -130,6 +131,37 @@ func (repo *PharmacyProductRepositoryImpl) FindAllJoinProducts(ctx context.Conte
 	}
 
 	return items, nil
+}
+
+func (repo *PharmacyProductRepositoryImpl) FindAllByProductId(ctx context.Context, productId int64) ([]*entity.PharmacyProduct, error) {
+	const findAllByProductId = `SELECT pharmacy_products.id, pharmacy_id, product_id, is_active, price, stock
+	FROM pharmacy_products INNER JOIN products ON pharmacy_products.product_id = products.id
+	WHERE product_id = 1 AND public.pharmacy_products.deleted_at IS NULL AND products.deleted_at IS NULL`
+
+	rows, err := repo.db.QueryContext(ctx, findAllByProductId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	pharmacyProducts := make([]*entity.PharmacyProduct, 0)
+	for rows.Next() {
+		var pharmacyProduct entity.PharmacyProduct
+		if err := rows.Scan(
+			&pharmacyProduct.Id, &pharmacyProduct.PharmacyId, &pharmacyProduct.ProductId,
+			&pharmacyProduct.IsActive, &pharmacyProduct.Price, &pharmacyProduct.Stock,
+		); err != nil {
+			return nil, err
+		}
+		pharmacyProducts = append(pharmacyProducts, &pharmacyProduct)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return pharmacyProducts, nil
 }
 
 func (repo *PharmacyProductRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {

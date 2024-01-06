@@ -16,6 +16,7 @@ import (
 
 type RouterOpts struct {
 	AuthHandler               *handler.AuthHandler
+	CartItemHandler           *handler.CartItemHandler
 	DrugClassificationHandler *handler.DrugClassificationHandler
 	ManufacturerHandler       *handler.ManufacturerHandler
 	PharmacyHandler           *handler.PharmacyHandler
@@ -28,6 +29,7 @@ type RouterOpts struct {
 func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 	return &RouterOpts{
 		AuthHandler:               handler.NewAuthHandler(allUC.AuthUsecase, appvalidator.Validator),
+		CartItemHandler:           handler.NewCartItemHandler(allUC.CartItemUseCase, appvalidator.Validator),
 		DrugClassificationHandler: handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
 		ManufacturerHandler:       handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
 		PharmacyHandler:           handler.NewPharmacyHandler(allUC.PharmacyUseCase, appvalidator.Validator),
@@ -83,6 +85,30 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			auth.GET("/verify-register", rOpts.AuthHandler.VerifyRegisterToken)
 			auth.POST("/register", rOpts.AuthHandler.Register)
 			auth.POST("/login", rOpts.AuthHandler.Login)
+		}
+
+		cartItems := v1.Group("/cart-items")
+		{
+			cartItems.GET(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdUser),
+				rOpts.CartItemHandler.GetAllByUserId,
+			)
+
+			cartItems.POST(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdUser),
+				rOpts.CartItemHandler.Add,
+			)
+
+			cartItems.DELETE(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdUser),
+				rOpts.CartItemHandler.Remove,
+			)
 		}
 
 		drugClassifications := v1.Group("/drug-classifications")

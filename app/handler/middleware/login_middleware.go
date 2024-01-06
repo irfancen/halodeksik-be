@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/handler"
@@ -49,9 +50,9 @@ func LoginMiddleware() gin.HandlerFunc {
 		}
 
 		reqCtx1 := ctx.Request.Context()
-		reqCtx2 := context.WithValue(reqCtx1, "user_id", claim.UserId)
-		reqCtx3 := context.WithValue(reqCtx2, "email", claim.Email)
-		reqCtx4 := context.WithValue(reqCtx3, "role_id", claim.RoleId)
+		reqCtx2 := context.WithValue(reqCtx1, appconstant.ContextKeyUserId, claim.UserId)
+		reqCtx3 := context.WithValue(reqCtx2, appconstant.ContextKeyEmail, claim.Email)
+		reqCtx4 := context.WithValue(reqCtx3, appconstant.ContextKeyRoleId, claim.RoleId)
 		ctx.Request = ctx.Request.WithContext(reqCtx4)
 		ctx.Next()
 

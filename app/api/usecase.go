@@ -8,6 +8,7 @@ import (
 
 type AllUseCases struct {
 	AuthUsecase               usecase.AuthUsecase
+	CartItemUseCase           usecase.CartItemUseCase
 	DrugClassificationUseCase usecase.DrugClassificationUseCase
 	ManufacturerUseCase       usecase.ManufacturerUseCase
 	PharmacyUseCase           usecase.PharmacyUseCase
@@ -20,6 +21,7 @@ type AllUseCases struct {
 func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases {
 	return &AllUseCases{
 		AuthUsecase:               usecase.NewAuthUsecase(allRepo.UserRepository, allRepo.VerifyTokenRepository, allUtil.AuthUtil, allUtil.MailUtil),
+		CartItemUseCase:           usecase.NewCartItemUseCaseImpl(allRepo.CartItemRepository, allRepo.ProductRepository, allRepo.PharmacyProductRepository),
 		DrugClassificationUseCase: usecase.NewDrugClassificationUseCaseImpl(allRepo.DrugClassificationRepository),
 		ManufacturerUseCase:       usecase.NewManufacturerUseCaseImpl(allRepo.ManufacturerRepository),
 		PharmacyUseCase:           usecase.NewPharmacyUseCseImpl(allRepo.PharmacyRepository),

@@ -13,9 +13,9 @@ type RequestTokenUrl struct {
 }
 
 type RequestRegisterUser struct {
-	Email      string `json:"email" validate:"required"`
-	Password   string `json:"password" validate:"required,min=8,max=72"`
-	UserRoleId int64  `json:"user_role_id" validate:"required"`
+	Email      string `json:"email" form:"email" validate:"required"`
+	Password   string `json:"password" form:"password" validate:"required,min=8,max=72"`
+	UserRoleId int64  `json:"user_role_id" form:"user_role_id" validate:"required"`
 }
 
 func (u *RequestRegisterUser) ToUser() entity.User {
