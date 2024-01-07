@@ -101,7 +101,15 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 	}()
 
 	getAllProductQuery := queryparamdto.GetAllProductsQuery{}
-	_ = ctx.ShouldBindQuery(&getAllProductQuery)
+	err = ctx.ShouldBindQuery(&getAllProductQuery)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(getAllProductQuery)
+	if err != nil {
+		return
+	}
 
 	param, err := getAllProductQuery.ToGetAllParams()
 	if err != nil {

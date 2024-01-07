@@ -54,6 +54,16 @@ func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamd
 		values = append(values, whereClause.Value)
 	}
 
+	if len(param.GroupClauses) > 0 {
+		query.WriteString(" GROUP BY ")
+		for index, groupClause := range param.GroupClauses {
+			query.WriteString(fmt.Sprintf("%s", groupClause.Column))
+			if index != len(param.GroupClauses) - 1 {
+				query.WriteString(", ")
+			}
+		}
+	}
+
 	setLimit := true
 	if len(isLimitSet) > 0 {
 		setLimit = isLimitSet[0]

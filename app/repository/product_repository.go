@@ -4,11 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/jackc/pgx/v5/pgconn"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
-
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type ProductRepository interface {
@@ -93,7 +92,11 @@ WHERE p.id = $1 AND p.deleted_at IS NULL`
 }
 
 func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error) {
-	initQuery := `SELECT id, name, generic_name, content, manufacturer_id, description, drug_classification_id, product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image FROM products WHERE deleted_at IS NULL `
+	initQuery := `SELECT products.id, products.name, generic_name, content, manufacturer_id, description, drug_classification_id, product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image 
+	FROM products 
+	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id
+	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+	WHERE products.deleted_at IS NULL `
 	query, values := buildQuery(initQuery, &entity.Product{}, param)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
@@ -121,10 +124,17 @@ func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *querypara
 }
 
 func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
-	initQuery := `SELECT count(id) FROM products WHERE deleted_at IS NULL `
+	initQuery := `SELECT count(products.id) 
+	FROM products 
+	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id
+	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+	WHERE products.deleted_at IS NULL `
 	query, values := buildQuery(initQuery, &entity.Product{}, param, false)
 
-	var totalItems int64
+	var (
+		totalItems int64
+		temp       int64
+	)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -134,10 +144,11 @@ func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *quer
 
 	for rows.Next() {
 		if err := rows.Scan(
-			&totalItems,
+			&temp,
 		); err != nil {
 			return totalItems, err
 		}
+		totalItems++
 	}
 
 	if err := rows.Err(); err != nil {
