@@ -79,7 +79,7 @@ func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 			appdb.NewWhere(
 				fmt.Sprintf("distance(%s, %s, '%s', '%s')", latColName, lonColName, q.Latitude, q.Longitude),
 				appdb.LessOrEqualTo,
-				25,
+				appconstant.ClosestPharmacyRangeRadius,
 			),
 		)
 	}
