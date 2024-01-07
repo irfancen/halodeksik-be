@@ -1,5 +1,5 @@
 -- Put your ddl queries here.
--- NO NEED TO PUT CREATE DATABASE statement here (assuming we already create the database when
+-- NO NEED TO PUT CREATE DATABASE statement here (assuming we already create the database when starting postgres docker container)
 
 CREATE TABLE user_roles
 (
@@ -443,3 +443,37 @@ CREATE TABLE order_details
     updated_at   TIMESTAMPTZ DEFAULT now() NOT NULL,
     deleted_at   TIMESTAMPTZ DEFAULT NULL
 );
+
+-- CREATE FUNCTIONS --
+
+-- SQL code to create a function that calculates the distance in kilometers
+-- using the haversine formula
+
+-- Define the radius of the Earth in kilometers
+CREATE OR REPLACE FUNCTION earth_radius()
+    RETURNS DECIMAL AS $$
+BEGIN
+    RETURN 6371;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create a function that takes two pairs of coordinates as input
+-- and returns the distance between them as output
+CREATE OR REPLACE FUNCTION distance (lat1 VARCHAR, lon1 VARCHAR, lat2 VARCHAR, lon2 VARCHAR) RETURNS DECIMAL AS $$
+DECLARE
+    -- Convert degrees to radians
+    radLat1 DECIMAL := RADIANS(lat1::DECIMAL);
+    radLon1 DECIMAL := RADIANS(lon1::DECIMAL);
+    radLat2 DECIMAL := RADIANS(lat2::DECIMAL);
+    radLon2 DECIMAL := RADIANS(lon2::DECIMAL);
+    -- Calculate the difference between the coordinates
+    dLat DECIMAL := radLat2 - radLat1;
+    dLon DECIMAL := radLon2 - radLon1;
+    -- Apply the haversine formula
+    a DECIMAL := SIN(dLat/2)^2 + COS(radLat1) * COS(radLat2) * SIN(dLon/2)^2;
+    c DECIMAL := 2 * ATAN2(SQRT(a), SQRT(1-a));
+BEGIN
+    -- Calculate the distance in kilometers
+    RETURN earth_radius() * c;
+END
+$$ LANGUAGE plpgsql;
