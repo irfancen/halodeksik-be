@@ -39,10 +39,10 @@ func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 		}
 		param.WhereClauses = append(
 			param.WhereClauses,
-			appdb.NewWhere(product.GetSqlColumnFromField("Name"), appdb.ILike, wordToSearch, appdb.OR),
+			appdb.NewWhereParenthesis(product.GetSqlColumnFromField("Name"), appdb.ILike, wordToSearch, true, false, appdb.OR),
 			appdb.NewWhere(product.GetSqlColumnFromField("GenericName"), appdb.ILike, wordToSearch, appdb.OR),
 			appdb.NewWhere(product.GetSqlColumnFromField("Description"), appdb.ILike, wordToSearch, appdb.OR),
-			appdb.NewWhere(product.GetSqlColumnFromField("Content"), appdb.ILike, wordToSearch),
+			appdb.NewWhereParenthesis(product.GetSqlColumnFromField("Content"), appdb.ILike, wordToSearch, false, true),
 		)
 	}
 
