@@ -136,9 +136,9 @@ func (repo *PharmacyProductRepositoryImpl) FindAllJoinProducts(ctx context.Conte
 func (repo *PharmacyProductRepositoryImpl) FindAllByProductId(ctx context.Context, productId int64) ([]*entity.PharmacyProduct, error) {
 	const findAllByProductId = `SELECT pharmacy_products.id, pharmacy_id, product_id, is_active, price, stock
 	FROM pharmacy_products INNER JOIN products ON pharmacy_products.product_id = products.id
-	WHERE product_id = 1 AND public.pharmacy_products.deleted_at IS NULL AND products.deleted_at IS NULL`
+	WHERE product_id = $1 AND public.pharmacy_products.deleted_at IS NULL AND products.deleted_at IS NULL`
 
-	rows, err := repo.db.QueryContext(ctx, findAllByProductId)
+	rows, err := repo.db.QueryContext(ctx, findAllByProductId, productId)
 	if err != nil {
 		return nil, err
 	}
