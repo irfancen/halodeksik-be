@@ -86,6 +86,11 @@ func (q *GetAllProductsForAdminQuery) ToGetAllParams() (*GetAllParams, error) {
 	default:
 	}
 
+	param.GroupClauses = append(
+		param.GroupClauses,
+		appdb.NewGroupClause(product.GetSqlColumnFromField("Id")),
+	)
+
 	pageSize := appconstant.DefaultGetAllPageSize
 	if !util.IsEmptyString(q.Limit) {
 		noPageSize, err := strconv.Atoi(q.Limit)

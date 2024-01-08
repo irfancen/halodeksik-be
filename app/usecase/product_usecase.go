@@ -111,8 +111,17 @@ func (uc *ProductUseCaseImpl) GetAllForAdminByPharmacyId(ctx context.Context, ph
 		return nil, err
 	}
 
+	totalItems, err := uc.repo.CountFindAllForAdmin(ctx, pharmacyId, param)
+	if err != nil {
+		return nil, err
+	}
+	totalPages := totalItems / int64(*param.PageSize)
+	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
+		totalPages += 1
+	}
+
 	paginatedItems := entity.NewPaginationInfo(
-		int64(len(products)), 1, int64(len(products)), 1, products,
+		totalItems, totalPages, int64(len(products)), int64(*param.PageId), products,
 	)
 	return paginatedItems, nil
 }

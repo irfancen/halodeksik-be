@@ -17,6 +17,7 @@ type ProductRepository interface {
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
 	FindAllForAdmin(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
+	CountFindAllForAdmin(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (int64, error)
 	Update(ctx context.Context, product entity.Product) (*entity.Product, error)
 	Delete(ctx context.Context, id int64) error
 }
@@ -197,6 +198,47 @@ func (repo *ProductRepositoryImpl) FindAllForAdmin(ctx context.Context, pharmacy
 	}
 
 	return items, nil
+}
+
+func (repo *ProductRepositoryImpl) CountFindAllForAdmin(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (int64, error) {
+	initQuery := `
+	SELECT COUNT(products.id)
+			FROM products
+			 LEFT JOIN (
+			pharmacy_products
+			JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+			AND pharmacies.id = $1
+		) ON products.id = pharmacy_products.product_id 
+		WHERE products.deleted_at IS NULL `
+	indexPreparedStatement := 1
+
+	query, values := buildQuery(initQuery, &entity.Product{}, param, false, indexPreparedStatement)
+	values = util.AppendAtIndex(values, 0, interface{}(pharmacyId))
+
+	var (
+		totalItems int64
+		temp       int64
+	)
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return totalItems, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(
+			&temp,
+		); err != nil {
+			return totalItems, err
+		}
+		totalItems++
+	}
+
+	if err := rows.Err(); err != nil {
+		return totalItems, err
+	}
+	return totalItems, nil
 }
 
 func (repo *ProductRepositoryImpl) Update(ctx context.Context, product entity.Product) (*entity.Product, error) {
