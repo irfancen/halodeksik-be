@@ -5,12 +5,14 @@ import (
 	"errors"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
+	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
 )
 
 type ProductStockMutationUseCase interface {
 	Add(ctx context.Context, stockMutation entity.ProductStockMutation) (*entity.ProductStockMutation, error)
+	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 }
 
 type ProductStockMutationUseCaseImpl struct {
@@ -49,4 +51,28 @@ func (uc *ProductStockMutationUseCaseImpl) Add(ctx context.Context, stockMutatio
 		return nil, err
 	}
 	return created, nil
+}
+
+func (uc *ProductStockMutationUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	productStockMutation, err := uc.productStockMutationRepo.FindAllJoin(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	totalItems, err := uc.productStockMutationRepo.CountFindAllJoin(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	totalPages := totalItems / int64(*param.PageSize)
+	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
+		totalPages += 1
+	}
+
+	paginatedItems := new(entity.PaginatedItems)
+	paginatedItems.Items = productStockMutation
+	paginatedItems.TotalItems = totalItems
+	paginatedItems.TotalPages = totalPages
+	paginatedItems.CurrentPageTotalItems = int64(len(productStockMutation))
+	paginatedItems.CurrentPage = int64(*param.PageId)
+	return paginatedItems, nil
 }

@@ -18,7 +18,8 @@ var (
 	ErrLoginTokenNotValid    = errors.New("login token is invalid")
 	ErrUnauthorized          = errors.New("you don't have permission to access this endpoint")
 
-	ErrPasswordTooLong = errors.New("password too long")
+	ErrPasswordTooLong       = errors.New("password too long")
+	ErrStartDateAfterEndDate = errors.New("start date cannot be after end date")
 
 	ErrInvalidDecimal     = errors.New("invalid decimal")
 	ErrInvalidIntInString = errors.New("invalid integer in string")

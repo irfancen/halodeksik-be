@@ -24,6 +24,7 @@ type RouterOpts struct {
 	ProductCategoryHandler      *handler.ProductCategoryHandler
 	ProductHandler              *handler.ProductHandler
 	ProductStockMutationHandler *handler.ProductStockMutationHandler
+	StockReportHandler          *handler.StockReportHandler
 	UserHandler                 *handler.UserHandler
 }
 
@@ -38,6 +39,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		ProductCategoryHandler:      handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase, appvalidator.Validator),
 		ProductHandler:              handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
 		ProductStockMutationHandler: handler.NewProductStockMutationHandler(allUC.ProductStockMutation, appvalidator.Validator),
+		StockReportHandler:          handler.NewStockReportHandler(allUC.ProductStockMutation, appvalidator.Validator),
 		UserHandler:                 handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
 	}
 }
@@ -191,6 +193,11 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
 				rOpts.ProductHandler.Remove,
 			)
+		}
+
+		report := v1.Group("/report-stock-mutations")
+		{
+			report.GET("", rOpts.StockReportHandler.FindAll)
 		}
 
 		stockMutation := v1.Group("/stock-mutations")

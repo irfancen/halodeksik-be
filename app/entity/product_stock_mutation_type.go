@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"halodeksik-be/app/appconstant"
+	"halodeksik-be/app/dto/responsedto"
 	"reflect"
 	"time"
 )
@@ -30,4 +31,11 @@ func (e *ProductStockMutationType) GetFieldStructTag(fieldName string, structTag
 
 func (e *ProductStockMutationType) GetSqlColumnFromField(fieldName string) string {
 	return fmt.Sprintf("%s.%s", e.GetEntityName(), e.GetFieldStructTag(fieldName, appconstant.JsonStructTag))
+}
+
+func (e *ProductStockMutationType) ToResponse() *responsedto.ProductStockMutationTypeResponse {
+	return &responsedto.ProductStockMutationTypeResponse{
+		Id:   e.Id,
+		Name: e.Name,
+	}
 }
