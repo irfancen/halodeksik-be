@@ -15,7 +15,12 @@ func IsEmptyString(str string) bool {
 
 func GetCurrentDateAndTime() time.Time {
 	now := time.Now()
-	return time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, now.Location())
+	return time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, time.UTC)
+}
+
+func GetCurrentDate() time.Time {
+	now := time.Now()
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 }
 
 func ParseDateTime(timeStr string, timeFormat ...string) (time.Time, error) {
