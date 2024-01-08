@@ -163,7 +163,7 @@ func createErrValidationMsgTag(fieldError validator.FieldError) string {
 		return fmt.Sprintf("field '%s' have maximum value of %s", fieldName, fieldError.Param())
 	case "oneof":
 		params := strings.ReplaceAll(fieldError.Param(), " ", ", ")
-		return fmt.Sprintf("item '%s' on field '%s' must be one of %s", fieldError.Value(), fieldName, params)
+		return fmt.Sprintf("item '%v' on field '%s' must be one of %s", fieldError.Value(), fieldName, params)
 	case "latitude":
 		return fmt.Sprintf("field '%s' must be a valid latitude", fieldName)
 	case "longitude":

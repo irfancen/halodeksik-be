@@ -277,6 +277,7 @@ CREATE TABLE product_stock_mutations
     id                             BIGSERIAL PRIMARY KEY,
     pharmacy_product_id            BIGINT                    NOT NULL REFERENCES pharmacy_products (id),
     product_stock_mutation_type_id BIGINT                    NOT NULL REFERENCES product_stock_mutation_types (id),
+    stock                          INT                       NOT NULL,
     created_at                     TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at                     TIMESTAMPTZ DEFAULT now() NOT NULL,
     deleted_at                     TIMESTAMPTZ DEFAULT NULL
