@@ -60,8 +60,7 @@ func (repo *ProductRepositoryImpl) Create(ctx context.Context, product entity.Pr
 
 func (repo *ProductRepositoryImpl) FindById(ctx context.Context, id int64) (*entity.Product, error) {
 	const getById = `SELECT p.id, p.name, p.generic_name, p.content, p.manufacturer_id, p.description, 
-    	p.drug_classification_id, p.product_category_id, p.drug_form, p.unit_in_pack, p.selling_unit, p.weight, p.length, p.width, p.height, p.image, p.created_at, p.updated_at, p.deleted_at, pc.name, m.name, dc.name,
-		min(pharmacy_products.price), max(pharmacy_products.price)
+    	p.drug_classification_id, p.product_category_id, p.drug_form, p.unit_in_pack, p.selling_unit, p.weight, p.length, p.width, p.height, p.image, p.created_at, p.updated_at, p.deleted_at, pc.name, m.name, dc.name
 	FROM products p
 	INNER JOIN product_categories pc ON p.product_category_id = pc.id
 	INNER JOIN manufacturers m ON p.manufacturer_id = m.id
@@ -84,7 +83,7 @@ func (repo *ProductRepositoryImpl) FindById(ctx context.Context, id int64) (*ent
 	err := row.Scan(
 		&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
 		&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image, &product.CreatedAt, &product.UpdatedAt, &product.DeletedAt,
-		&productCategory.Name, &manufacturer.Name, &drugClassification.Name, &product.MinimumPrice, &product.MaximumPrice,
+		&productCategory.Name, &manufacturer.Name, &drugClassification.Name,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

@@ -57,6 +57,16 @@ func (p *Product) ToProductResponse() *responsedto.ProductResponse {
 	if p == nil {
 		return nil
 	}
+	minimumPrice := p.MinimumPrice.String()
+	maximumPrice := p.MaximumPrice.String()
+
+	if p.MinimumPrice.IsZero() {
+		minimumPrice = ""
+	}
+	if p.MaximumPrice.IsZero() {
+		maximumPrice = ""
+	}
+
 	return &responsedto.ProductResponse{
 		Id:                         p.Id,
 		Name:                       p.Name,
@@ -77,7 +87,7 @@ func (p *Product) ToProductResponse() *responsedto.ProductResponse {
 		ManufacturerResponse:       p.Manufacturer.ToResponse(),
 		DrugClassificationResponse: p.DrugClassification.ToResponse(),
 		ProductCategoryResponse:    p.ProductCategory.ToResponse(),
-		MinimumPrice:               p.MinimumPrice.String(),
-		MaximumPrice:               p.MaximumPrice.String(),
+		MinimumPrice:               minimumPrice,
+		MaximumPrice:               maximumPrice,
 	}
 }
