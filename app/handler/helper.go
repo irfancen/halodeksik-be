@@ -108,6 +108,9 @@ func WrapError(err error, customCode ...int) error {
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrStartDateAfterEndDate):
 		fallthrough
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrInsufficientProductStock):
+		fallthrough
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductImageDoesNotExistInContext):
 		fallthrough
 
