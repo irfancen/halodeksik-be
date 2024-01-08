@@ -27,16 +27,23 @@ type ProductUseCase interface {
 }
 
 type ProductUseCaseImpl struct {
-	repo        repository.ProductRepository
-	uploader    appcloud.FileUploader
-	cloudUrl    string
-	cloudFolder string
+	productRepo  repository.ProductRepository
+	pharmacyRepo repository.PharmacyRepository
+	uploader     appcloud.FileUploader
+	cloudUrl     string
+	cloudFolder  string
 }
 
-func NewProductUseCaseImpl(repo repository.ProductRepository, uploader appcloud.FileUploader) *ProductUseCaseImpl {
+func NewProductUseCaseImpl(productRepo repository.ProductRepository, pharmacyRepo repository.PharmacyRepository, uploader appcloud.FileUploader) *ProductUseCaseImpl {
 	cloudUrl := env.Get("GCLOUD_STORAGE_CDN")
 	cloudFolder := env.Get("GCLOUD_STORAGE_FOLDER_PRODUCTS")
-	return &ProductUseCaseImpl{repo: repo, uploader: uploader, cloudUrl: cloudUrl, cloudFolder: cloudFolder}
+	return &ProductUseCaseImpl{
+		productRepo:  productRepo,
+		pharmacyRepo: pharmacyRepo,
+		uploader:     uploader,
+		cloudUrl:     cloudUrl,
+		cloudFolder:  cloudFolder,
+	}
 }
 
 func (uc *ProductUseCaseImpl) Add(ctx context.Context, product entity.Product) (*entity.Product, error) {
@@ -63,7 +70,7 @@ func (uc *ProductUseCaseImpl) Add(ctx context.Context, product entity.Product) (
 	}
 	product.Image = fmt.Sprintf("%s/%s/%s", uc.cloudUrl, uc.cloudFolder, fileName)
 
-	created, err := uc.repo.Create(ctx, product)
+	created, err := uc.productRepo.Create(ctx, product)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +79,7 @@ func (uc *ProductUseCaseImpl) Add(ctx context.Context, product entity.Product) (
 }
 
 func (uc *ProductUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.Product, error) {
-	product, err := uc.repo.FindById(ctx, id)
+	product, err := uc.productRepo.FindById(ctx, id)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFound(product, "Id", id)
@@ -83,7 +90,7 @@ func (uc *ProductUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.Pr
 }
 
 func (uc *ProductUseCaseImpl) GetByIdForUser(ctx context.Context, id int64, params *queryparamdto.GetAllParams) (*entity.Product, error) {
-	product, err := uc.repo.FindByIdForUser(ctx, id, params)
+	product, err := uc.productRepo.FindByIdForUser(ctx, id, params)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFound(product, "Id", id)
@@ -94,12 +101,12 @@ func (uc *ProductUseCaseImpl) GetByIdForUser(ctx context.Context, id int64, para
 }
 
 func (uc *ProductUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
-	products, err := uc.repo.FindAll(ctx, param)
+	products, err := uc.productRepo.FindAll(ctx, param)
 	if err != nil {
 		return nil, err
 	}
 
-	totalItems, err := uc.repo.CountFindAll(ctx, param)
+	totalItems, err := uc.productRepo.CountFindAll(ctx, param)
 	if err != nil {
 		return nil, err
 	}
@@ -118,12 +125,18 @@ func (uc *ProductUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.G
 }
 
 func (uc *ProductUseCaseImpl) GetAllForAdminByPharmacyId(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
-	products, err := uc.repo.FindAllForAdmin(ctx, pharmacyId, param)
+	userId := ctx.Value(appconstant.ContextKeyUserId)
+	pharmacy, err := uc.pharmacyRepo.FindById(ctx, pharmacyId)
+	if pharmacy.PharmacyAdminId != userId {
+		return nil, apperror.NewForbidden(pharmacy, "PharmacyAdminId", pharmacy.PharmacyAdminId, userId)
+	}
+
+	products, err := uc.productRepo.FindAllForAdmin(ctx, pharmacyId, param)
 	if err != nil {
 		return nil, err
 	}
 
-	totalItems, err := uc.repo.CountFindAllForAdmin(ctx, pharmacyId, param)
+	totalItems, err := uc.productRepo.CountFindAllForAdmin(ctx, pharmacyId, param)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +183,7 @@ func (uc *ProductUseCaseImpl) Edit(ctx context.Context, id int64, product entity
 		product.Image = fmt.Sprintf("%s/%s/%s", uc.cloudUrl, uc.cloudFolder, fileName)
 	}
 
-	updated, err := uc.repo.Update(ctx, product)
+	updated, err := uc.productRepo.Update(ctx, product)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +195,7 @@ func (uc *ProductUseCaseImpl) Remove(ctx context.Context, id int64) error {
 		return err
 	}
 
-	err := uc.repo.Delete(ctx, id)
+	err := uc.productRepo.Delete(ctx, id)
 	if err != nil {
 		return err
 	}
