@@ -12,6 +12,7 @@ import (
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -97,7 +98,7 @@ func (h *PharmacyProductHandler) GetAllByPharmacy(ctx *gin.Context) {
 
 	getAllPharmacyProductQuery := queryparamdto.GetAllPharmacyProductsQuery{}
 	_ = ctx.ShouldBindQuery(&getAllPharmacyProductQuery)
-	pharmacyId := getAllPharmacyProductQuery.PharmacyId
+	pharmacyId, _ := strconv.ParseInt(getAllPharmacyProductQuery.PharmacyId, 10, 64)
 
 	param, err := getAllPharmacyProductQuery.ToGetAllParams()
 	if err != nil {
