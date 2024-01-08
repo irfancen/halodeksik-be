@@ -171,6 +171,12 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		{
 			products.GET("/:id", rOpts.ProductHandler.GetById)
 			products.GET("", rOpts.ProductHandler.GetAll)
+			products.GET(
+				"/admin",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				rOpts.ProductHandler.GetAllForAdmin,
+			)
 			products.POST(
 				"",
 				middleware.LoginMiddleware(),

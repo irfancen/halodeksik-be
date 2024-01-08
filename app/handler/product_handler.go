@@ -131,6 +131,46 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+func (h *ProductHandler) GetAllForAdmin(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	getAllProductsForAdminQuery := queryparamdto.GetAllProductsForAdminQuery{}
+	err = ctx.ShouldBindQuery(&getAllProductsForAdminQuery)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(getAllProductsForAdminQuery)
+	if err != nil {
+		return
+	}
+
+	param, err := getAllProductsForAdminQuery.ToGetAllParams()
+	if err != nil {
+		return
+	}
+
+	paginatedItems, err := h.uc.GetAllForAdminByPharmacyId(ctx.Request.Context(), getAllProductsForAdminQuery.GetPharmacyId(), param)
+	if err != nil {
+		return
+	}
+
+	resps := make([]*responsedto.ProductResponse, 0)
+	for _, product := range paginatedItems.Items.([]*entity.Product) {
+		resps = append(resps, product.ToProductResponse())
+	}
+	paginatedItems.Items = resps
+
+	resp := dto.ResponseDto{Data: paginatedItems}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 func (h *ProductHandler) Edit(ctx *gin.Context) {
 	var err error
 

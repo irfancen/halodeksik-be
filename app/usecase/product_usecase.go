@@ -20,6 +20,7 @@ type ProductUseCase interface {
 	Add(ctx context.Context, product entity.Product) (*entity.Product, error)
 	GetById(ctx context.Context, id int64) (*entity.Product, error)
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	GetAllForAdminByPharmacyId(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, id int64, product entity.Product) (*entity.Product, error)
 	Remove(ctx context.Context, id int64) error
 }
@@ -101,6 +102,18 @@ func (uc *ProductUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.G
 	paginatedItems.TotalPages = totalPages
 	paginatedItems.CurrentPageTotalItems = int64(len(products))
 	paginatedItems.CurrentPage = int64(*param.PageId)
+	return paginatedItems, nil
+}
+
+func (uc *ProductUseCaseImpl) GetAllForAdminByPharmacyId(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	products, err := uc.repo.FindAllForAdmin(ctx, pharmacyId, param)
+	if err != nil {
+		return nil, err
+	}
+
+	paginatedItems := entity.NewPaginationInfo(
+		int64(len(products)), 1, int64(len(products)), 1, products,
+	)
 	return paginatedItems, nil
 }
 

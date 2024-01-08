@@ -96,7 +96,7 @@ func (repo *PharmacyProductRepositoryImpl) FindAllJoinProducts(ctx context.Conte
 	        INNER JOIN drug_classifications ON products.drug_classification_id = drug_classifications.id
 	WHERE pharmacy_products.deleted_at IS NULL AND products.deleted_at IS NULL `
 
-	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param)
+	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, true)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
