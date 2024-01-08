@@ -58,13 +58,16 @@ func (repo *ProductRepositoryImpl) Create(ctx context.Context, product entity.Pr
 }
 
 func (repo *ProductRepositoryImpl) FindById(ctx context.Context, id int64) (*entity.Product, error) {
-	const getById = `
-SELECT p.id, p.name, p.generic_name, p.content, p.manufacturer_id, p.description, p.drug_classification_id, p.product_category_id, p.drug_form, p.unit_in_pack, p.selling_unit, p.weight, p.length, p.width, p.height, p.image, p.created_at, p.updated_at, p.deleted_at, pc.name, m.name, dc.name
-FROM products p
-         INNER JOIN product_categories pc ON p.product_category_id = pc.id
-         INNER JOIN manufacturers m ON p.manufacturer_id = m.id
-         INNER JOIN drug_classifications dc ON p.drug_classification_id = dc.id
-WHERE p.id = $1 AND p.deleted_at IS NULL`
+	const getById = `SELECT p.id, p.name, p.generic_name, p.content, p.manufacturer_id, p.description, 
+    	p.drug_classification_id, p.product_category_id, p.drug_form, p.unit_in_pack, p.selling_unit, p.weight, p.length, p.width, p.height, p.image, p.created_at, p.updated_at, p.deleted_at, pc.name, m.name, dc.name,
+		min(pharmacy_products.price), max(pharmacy_products.price)
+	FROM products p
+	INNER JOIN product_categories pc ON p.product_category_id = pc.id
+	INNER JOIN manufacturers m ON p.manufacturer_id = m.id
+    INNER JOIN drug_classifications dc ON p.drug_classification_id = dc.id 
+	INNER JOIN pharmacy_products ON p.id = pharmacy_products.product_id 
+	WHERE p.id = $1 AND p.deleted_at IS NULL
+	GROUP BY p.id, pc.id, m.id, dc.id`
 
 	row := repo.db.QueryRowContext(ctx, getById, id)
 	if row.Err() != nil {
@@ -80,7 +83,7 @@ WHERE p.id = $1 AND p.deleted_at IS NULL`
 	err := row.Scan(
 		&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
 		&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image, &product.CreatedAt, &product.UpdatedAt, &product.DeletedAt,
-		&productCategory.Name, &manufacturer.Name, &drugClassification.Name,
+		&productCategory.Name, &manufacturer.Name, &drugClassification.Name, &product.MinimumPrice, &product.MaximumPrice,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -95,7 +98,8 @@ WHERE p.id = $1 AND p.deleted_at IS NULL`
 }
 
 func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error) {
-	initQuery := `SELECT products.id, products.name, generic_name, content, manufacturer_id, description, drug_classification_id, product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image 
+	initQuery := `SELECT products.id, products.name, generic_name, content, manufacturer_id, description, drug_classification_id, product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image,
+       min(pharmacy_products.price), max(pharmacy_products.price)
 	FROM products 
 	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id
 	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
@@ -114,6 +118,7 @@ func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *querypara
 		if err := rows.Scan(
 			&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
 			&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image,
+			&product.MinimumPrice, &product.MaximumPrice,
 		); err != nil {
 			return nil, err
 		}
