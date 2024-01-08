@@ -91,6 +91,45 @@ func (h *ProductHandler) GetById(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+func (h *ProductHandler) GetByIdForUser(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	getByIdProductQuery := queryparamdto.GetByIdProductQuery{}
+	err = ctx.ShouldBindQuery(&getByIdProductQuery)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(getByIdProductQuery)
+	if err != nil {
+		return
+	}
+
+	product, err := h.uc.GetByIdForUser(ctx.Request.Context(), uri.Id, getByIdProductQuery.ToGetAllParams())
+	if err != nil {
+		return
+	}
+	resp := dto.ResponseDto{Data: product.ToProductResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 func (h *ProductHandler) GetAll(ctx *gin.Context) {
 	var err error
 	defer func() {

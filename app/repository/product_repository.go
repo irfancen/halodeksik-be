@@ -14,6 +14,7 @@ import (
 type ProductRepository interface {
 	Create(ctx context.Context, product entity.Product) (*entity.Product, error)
 	FindById(ctx context.Context, id int64) (*entity.Product, error)
+	FindByIdForUser(ctx context.Context, id int64, param *queryparamdto.GetAllParams) (*entity.Product, error)
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
 	FindAllForAdmin(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
@@ -70,6 +71,53 @@ func (repo *ProductRepositoryImpl) FindById(ctx context.Context, id int64) (*ent
 	GROUP BY p.id, pc.id, m.id, dc.id`
 
 	row := repo.db.QueryRowContext(ctx, getById, id)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	var (
+		product            entity.Product
+		productCategory    entity.ProductCategory
+		manufacturer       entity.Manufacturer
+		drugClassification entity.DrugClassification
+	)
+	err := row.Scan(
+		&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
+		&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image, &product.CreatedAt, &product.UpdatedAt, &product.DeletedAt,
+		&productCategory.Name, &manufacturer.Name, &drugClassification.Name, &product.MinimumPrice, &product.MaximumPrice,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	product.ProductCategory = &productCategory
+	product.Manufacturer = &manufacturer
+	product.DrugClassification = &drugClassification
+	return &product, err
+}
+
+func (repo *ProductRepositoryImpl) FindByIdForUser(ctx context.Context, id int64, param *queryparamdto.GetAllParams) (*entity.Product, error) {
+	initQuery := `SELECT products.id, products.name, products.generic_name, products.content, products.manufacturer_id, 
+       products.description, products.drug_classification_id, products.product_category_id, products.drug_form, 
+       products.unit_in_pack, products.selling_unit, products.weight, products.length, products.width, products.height, 
+       products.image, products.created_at, products.updated_at, products.deleted_at, 
+       product_categories.name, manufacturers.name, drug_classifications.name,
+		min(pharmacy_products.price), max(pharmacy_products.price)
+	FROM products
+	INNER JOIN product_categories ON products.product_category_id = product_categories.id
+	INNER JOIN manufacturers ON products.manufacturer_id = manufacturers.id
+    INNER JOIN drug_classifications ON products.drug_classification_id = drug_classifications.id 
+	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id 
+	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+	WHERE products.id = $1 AND products.deleted_at IS NULL `
+	indexPreparedStatement := 1
+
+	query, values := buildQuery(initQuery, &entity.Product{}, param, false, indexPreparedStatement)
+	values = util.AppendAtIndex(values, 0, interface{}(id))
+
+	row := repo.db.QueryRowContext(ctx, query, values...)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}

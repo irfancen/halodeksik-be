@@ -19,6 +19,7 @@ import (
 type ProductUseCase interface {
 	Add(ctx context.Context, product entity.Product) (*entity.Product, error)
 	GetById(ctx context.Context, id int64) (*entity.Product, error)
+	GetByIdForUser(ctx context.Context, id int64, params *queryparamdto.GetAllParams) (*entity.Product, error)
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	GetAllForAdminByPharmacyId(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, id int64, product entity.Product) (*entity.Product, error)
@@ -72,6 +73,17 @@ func (uc *ProductUseCaseImpl) Add(ctx context.Context, product entity.Product) (
 
 func (uc *ProductUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.Product, error) {
 	product, err := uc.repo.FindById(ctx, id)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound(product, "Id", id)
+		}
+		return nil, err
+	}
+	return product, nil
+}
+
+func (uc *ProductUseCaseImpl) GetByIdForUser(ctx context.Context, id int64, params *queryparamdto.GetAllParams) (*entity.Product, error) {
+	product, err := uc.repo.FindByIdForUser(ctx, id, params)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFound(product, "Id", id)
