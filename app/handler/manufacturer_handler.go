@@ -183,3 +183,30 @@ func (h *ManufacturerHandler) Edit(ctx *gin.Context) {
 	resp := dto.ResponseDto{Data: edited.ToResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }
+
+func (h *ManufacturerHandler) Remove(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	err = h.uc.Remove(ctx, uri.Id)
+	if err != nil {
+		return
+	}
+	ctx.JSON(http.StatusNoContent, dto.ResponseDto{})
+}

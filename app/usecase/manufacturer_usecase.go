@@ -16,6 +16,7 @@ type ManufacturerUseCase interface {
 	GetById(ctx context.Context, id int64) (*entity.Manufacturer, error)
 	GetAllManufacturersWithoutParams(ctx context.Context) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, id int64, manufacturer entity.Manufacturer) (*entity.Manufacturer, error)
+	Remove(ctx context.Context, id int64) error
 }
 
 type ManufacturerUseCaseImpl struct {
@@ -111,4 +112,12 @@ func (uc *ManufacturerUseCaseImpl) Edit(ctx context.Context, id int64, manufactu
 		return nil, err
 	}
 	return updated, nil
+}
+
+func (uc *ManufacturerUseCaseImpl) Remove(ctx context.Context, id int64) error {
+	_, err := uc.GetById(ctx, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
