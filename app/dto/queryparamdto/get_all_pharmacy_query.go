@@ -10,15 +10,14 @@ import (
 )
 
 type GetAllPharmaciesQuery struct {
-	Search          string `form:"search"`
-	SortBy          string `form:"sort_by"`
-	Sort            string `form:"sort"`
-	PharmacyAdminId string `form:"pharmacy_admin_id"`
-	Limit           string `form:"limit"`
-	Page            string `form:"page"`
+	Search string `form:"search"`
+	SortBy string `form:"sort_by"`
+	Sort   string `form:"sort"`
+	Limit  string `form:"limit"`
+	Page   string `form:"page"`
 }
 
-func (q *GetAllPharmaciesQuery) ToGetAllParams() (*GetAllParams, error) {
+func (q *GetAllPharmaciesQuery) ToGetAllParams(pharmacyAdminId int64) (*GetAllParams, error) {
 	param := NewGetAllParams()
 	pharmacy := new(entity.Pharmacy)
 
@@ -52,10 +51,8 @@ func (q *GetAllPharmaciesQuery) ToGetAllParams() (*GetAllParams, error) {
 		param.SortClauses = append(param.SortClauses, sortClause)
 	}
 
-	if !util.IsEmptyString(q.PharmacyAdminId) {
-		column := pharmacy.GetSqlColumnFromField("PharmacyAdminId")
-		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.EqualTo, q.PharmacyAdminId))
-	}
+	column := pharmacy.GetSqlColumnFromField("PharmacyAdminId")
+	param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.EqualTo, pharmacyAdminId))
 
 	pageSize := appconstant.DefaultGetAllPageSize
 	if !util.IsEmptyString(q.Limit) {

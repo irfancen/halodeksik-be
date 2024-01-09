@@ -95,7 +95,11 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			manufacturers.GET("/no-params", rOpts.ManufacturerHandler.GetAllWithoutParams)
 		}
 
-		pharmacy := v1.Group("/pharmacies")
+		pharmacy := v1.Group(
+			"/pharmacies",
+			middleware.LoginMiddleware(),
+			middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+		)
 		{
 			pharmacy.GET("", rOpts.PharmacyHandler.GetAll)
 			pharmacy.GET("/:id", rOpts.PharmacyHandler.GetById)

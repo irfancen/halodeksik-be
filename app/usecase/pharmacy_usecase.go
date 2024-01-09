@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
@@ -41,6 +42,11 @@ func (uc *PharmacyUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.P
 		}
 		return nil, err
 	}
+
+	if pharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
+		return nil, apperror.ErrForbiddenViewEntity
+	}
+
 	return pharmacy, nil
 }
 
