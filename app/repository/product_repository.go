@@ -9,7 +9,6 @@ import (
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
-	"log"
 )
 
 type ProductRepository interface {
@@ -153,8 +152,6 @@ func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *querypara
 	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
 	WHERE products.deleted_at IS NULL `
 	query, values := buildQuery(initQuery, &entity.Product{}, param, true)
-
-	log.Println(query)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
