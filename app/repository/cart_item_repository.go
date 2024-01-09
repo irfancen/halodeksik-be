@@ -108,7 +108,7 @@ func (repo *CartItemRepositoryImpl) FindAllByUserId(ctx context.Context, userId 
 }
 
 func (repo *CartItemRepositoryImpl) Update(ctx context.Context, cartItem entity.CartItem) (*entity.CartItem, error) {
-	const update = `UPDATE cart_items SET quantity = quantity + $1, updated_at = now()
+	const update = `UPDATE cart_items SET quantity = $1, updated_at = now()
 		WHERE user_id = $2 AND product_id = $3 AND deleted_at IS NULL
 		RETURNING id, user_id, product_id, quantity, created_at, updated_at, deleted_at`
 
