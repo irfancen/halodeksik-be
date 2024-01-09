@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"context"
 	"errors"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
@@ -14,15 +16,15 @@ import (
 )
 
 type AuthHandler struct {
-	uc        usecase.AuthUsecase
+	ucAuth    usecase.AuthUsecase
 	validator appvalidator.AppValidator
 }
 
 func NewAuthHandler(uc usecase.AuthUsecase, v appvalidator.AppValidator) *AuthHandler {
-	return &AuthHandler{uc: uc, validator: v}
+	return &AuthHandler{ucAuth: uc, validator: v}
 }
 
-func (h *AuthHandler) SendRegisterToken(ctx *gin.Context) {
+func (h *AuthHandler) ResetPassword(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -31,9 +33,19 @@ func (h *AuthHandler) SendRegisterToken(ctx *gin.Context) {
 		}
 	}()
 
-	req := requestdto.RequestRegisterToken{}
-	err = ctx.ShouldBindJSON(&req)
+	reqUri := requestdto.RequestTokenUrl{}
+	err = ctx.ShouldBindQuery(&reqUri)
 	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(reqUri)
+	if err != nil {
+		return
+	}
+
+	var req requestdto.ResetPasswordRequest
+	if err = ctx.ShouldBindJSON(&req); err != nil {
 		return
 	}
 
@@ -42,40 +54,12 @@ func (h *AuthHandler) SendRegisterToken(ctx *gin.Context) {
 		return
 	}
 
-	_, err = h.uc.SendRegisterToken(ctx.Request.Context(), req.Email)
-	if err != nil {
-		return
-	}
-	resp := dto.ResponseDto{Data: "Verification link has been sent."}
-	ctx.JSON(http.StatusOK, resp)
-
-}
-
-func (h *AuthHandler) VerifyRegisterToken(ctx *gin.Context) {
-	var err error
-	defer func() {
-		if err != nil {
-			err = WrapError(err)
-			_ = ctx.Error(err)
-		}
-	}()
-
-	req := requestdto.RequestTokenUrl{}
-	err = ctx.ShouldBindQuery(&req)
+	_, err = h.ucAuth.ChangePassword(ctx, req.Password, reqUri.Token)
 	if err != nil {
 		return
 	}
 
-	err = h.validator.Validate(req)
-	if err != nil {
-		return
-	}
-
-	token, err := h.uc.VerifyRegisterToken(ctx.Request.Context(), req.Token)
-	if err != nil {
-		return
-	}
-	resp := dto.ResponseDto{Data: token.Email}
+	resp := dto.ResponseDto{Data: "Password has been changed."}
 	ctx.JSON(http.StatusOK, resp)
 
 }
@@ -111,7 +95,29 @@ func (h *AuthHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	user, err := h.uc.Register(ctx.Request.Context(), req.ToUser(), reqUri.Token)
+	fileHeader, err := ctx.FormFile(appconstant.FormCertificate)
+	if err != nil && !errors.Is(err, http.ErrMissingFile) {
+		return
+	}
+
+	if fileHeader != nil && req.UserRoleId == appconstant.UserRoleIdDoctor {
+		reqFile := requestdto.RequestRegisterDoctorCertificate{}
+		err = ctx.ShouldBind(&reqFile)
+		if err != nil {
+			return
+		}
+
+		err = h.validator.Validate(reqFile)
+		if err != nil {
+			return
+		}
+
+		reqCtx1 := ctx.Request.Context()
+		reqCtx2 := context.WithValue(reqCtx1, appconstant.FormCertificate, fileHeader)
+		ctx.Request = ctx.Request.WithContext(reqCtx2)
+	}
+
+	user, err := h.ucAuth.Register(ctx.Request.Context(), req.ToUser(), reqUri.Token, req.Name)
 	if err != nil {
 		return
 	}
@@ -139,7 +145,7 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	user, token, err := h.uc.Login(ctx, req)
+	user, profile, err := h.ucAuth.Login(ctx.Request.Context(), req)
 	if errors.Is(err, apperror.ErrRecordNotFound) {
 		err = apperror.ErrWrongCredentials
 		return
@@ -153,8 +159,9 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 		UserId:     user.Id,
 		Email:      user.Email,
 		UserRoleId: user.UserRoleId,
-		Image:      "",
-		Token:      token,
+		Name:       profile.Name,
+		Image:      profile.Image,
+		Token:      profile.Token,
 	}}
 	ctx.JSON(http.StatusOK, resp)
 }

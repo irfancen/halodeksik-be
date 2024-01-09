@@ -37,6 +37,12 @@ CREATE TABLE doctor_specializations
     deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
+INSERT INTO doctor_specializations (name)
+values ('General Practitioners'),
+       ('Pediatric Specialist'),
+       ('Internal Medicine specialist'),
+       ('Surgical Specialist');
+
 CREATE TABLE doctor_profiles
 (
     user_id                  BIGSERIAL PRIMARY KEY REFERENCES users (id),

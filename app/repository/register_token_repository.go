@@ -8,18 +8,23 @@ import (
 	"halodeksik-be/app/entity"
 )
 
-type VerifyTokenRepository interface {
-	CreateVerifyToken(ctx context.Context, token entity.VerificationToken) (*entity.VerificationToken, error)
-	FindTokenByToken(ctx context.Context, token string) (*entity.VerificationToken, error)
-	FindTokenByEmail(ctx context.Context, email string) (*entity.VerificationToken, error)
-	DeactivateToken(ctx context.Context, token entity.VerificationToken) (*entity.VerificationToken, error)
+type RegisterTokenRepository interface {
+	CreateRegisterToken(ctx context.Context, token entity.VerificationToken) (*entity.VerificationToken, error)
+	FindRegisterTokenByToken(ctx context.Context, token string) (*entity.VerificationToken, error)
+	FindRegisterTokenByEmail(ctx context.Context, email string) (*entity.VerificationToken, error)
+	DeactivateRegisterToken(ctx context.Context, token entity.VerificationToken) (*entity.VerificationToken, error)
 }
 
-type VerifyTokenRepositoryImpl struct {
+type RegisterTokenRepositoryImpl struct {
 	db *sql.DB
 }
 
-func (repo *VerifyTokenRepositoryImpl) DeactivateToken(ctx context.Context, token entity.VerificationToken) (*entity.VerificationToken, error) {
+func NewRegisterTokenRepository(db *sql.DB) *RegisterTokenRepositoryImpl {
+	repo := RegisterTokenRepositoryImpl{db: db}
+	return &repo
+}
+
+func (repo *RegisterTokenRepositoryImpl) DeactivateRegisterToken(ctx context.Context, token entity.VerificationToken) (*entity.VerificationToken, error) {
 	const deleteToken = `
 	DELETE FROM verification_tokens WHERE token = $1
 	`
@@ -31,7 +36,7 @@ func (repo *VerifyTokenRepositoryImpl) DeactivateToken(ctx context.Context, toke
 	return &token, row.Err()
 }
 
-func (repo *VerifyTokenRepositoryImpl) FindTokenByEmail(ctx context.Context, email string) (*entity.VerificationToken, error) {
+func (repo *RegisterTokenRepositoryImpl) FindRegisterTokenByEmail(ctx context.Context, email string) (*entity.VerificationToken, error) {
 	const getActiveVerifyTokenByEmail = `
 	SELECT id, token, is_valid, expired_at, email, created_at, updated_at, deleted_at FROM verification_tokens
 	WHERE email = $1
@@ -66,7 +71,7 @@ func (repo *VerifyTokenRepositoryImpl) FindTokenByEmail(ctx context.Context, ema
 
 }
 
-func (repo *VerifyTokenRepositoryImpl) FindTokenByToken(ctx context.Context, token string) (*entity.VerificationToken, error) {
+func (repo *RegisterTokenRepositoryImpl) FindRegisterTokenByToken(ctx context.Context, token string) (*entity.VerificationToken, error) {
 	const getTokenByToken = `
 	SELECT id, token, is_valid, expired_at, email, created_at, updated_at, deleted_at FROM verification_tokens
 	WHERE token = $1
@@ -101,7 +106,7 @@ func (repo *VerifyTokenRepositoryImpl) FindTokenByToken(ctx context.Context, tok
 
 }
 
-func (repo *VerifyTokenRepositoryImpl) CreateVerifyToken(ctx context.Context, token entity.VerificationToken) (*entity.VerificationToken, error) {
+func (repo *RegisterTokenRepositoryImpl) CreateRegisterToken(ctx context.Context, token entity.VerificationToken) (*entity.VerificationToken, error) {
 
 	const createVerifyToken = `
 	INSERT INTO verification_tokens(token, is_valid, expired_at, email)
@@ -130,9 +135,4 @@ func (repo *VerifyTokenRepositoryImpl) CreateVerifyToken(ctx context.Context, to
 
 	return &createdToken, err
 
-}
-
-func NewVerifyTokenRepository(db *sql.DB) *VerifyTokenRepositoryImpl {
-	repo := VerifyTokenRepositoryImpl{db: db}
-	return &repo
 }
