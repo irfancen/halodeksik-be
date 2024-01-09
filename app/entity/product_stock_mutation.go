@@ -39,8 +39,10 @@ func (e *ProductStockMutation) GetSqlColumnFromField(fieldName string) string {
 
 func (e *ProductStockMutation) ToResponse() *responsedto.ProductStockMutationResponse {
 	pharmacyProduct := e.PharmacyProduct.ToPharmacyProductResponse()
-	pharmacyProduct.Price = ""
-	pharmacyProduct.Stock = nil
+	if pharmacyProduct != nil {
+		pharmacyProduct.Price = ""
+		pharmacyProduct.Stock = nil
+	}
 	return &responsedto.ProductStockMutationResponse{
 		Id:                               e.Id,
 		PharmacyProductId:                e.PharmacyProductId,

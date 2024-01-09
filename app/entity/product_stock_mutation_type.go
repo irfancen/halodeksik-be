@@ -34,6 +34,9 @@ func (e *ProductStockMutationType) GetSqlColumnFromField(fieldName string) strin
 }
 
 func (e *ProductStockMutationType) ToResponse() *responsedto.ProductStockMutationTypeResponse {
+	if e == nil {
+		return nil
+	}
 	return &responsedto.ProductStockMutationTypeResponse{
 		Id:   e.Id,
 		Name: e.Name,
