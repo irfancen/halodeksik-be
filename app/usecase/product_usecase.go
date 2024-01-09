@@ -127,6 +127,14 @@ func (uc *ProductUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.G
 func (uc *ProductUseCaseImpl) GetAllForAdminByPharmacyId(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
 	userId := ctx.Value(appconstant.ContextKeyUserId)
 	pharmacy, err := uc.pharmacyRepo.FindById(ctx, pharmacyId)
+
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound(pharmacy, "Id", pharmacyId)
+		}
+		return nil, err
+	}
+
 	if pharmacy.PharmacyAdminId != userId {
 		return nil, apperror.NewForbidden(pharmacy, "PharmacyAdminId", pharmacy.PharmacyAdminId, userId)
 	}
