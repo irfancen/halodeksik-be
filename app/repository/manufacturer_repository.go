@@ -12,6 +12,7 @@ type ManufacturerRepository interface {
 	Create(ctx context.Context, manufacturer entity.Manufacturer) (*entity.Manufacturer, error)
 	FindById(ctx context.Context, id int64) (*entity.Manufacturer, error)
 	FindAllWithoutParams(ctx context.Context) ([]*entity.Manufacturer, error)
+	Update(ctx context.Context, manufacturer entity.Manufacturer) (*entity.Manufacturer, error)
 }
 
 type ManufacturerRepositoryImpl struct {
@@ -81,4 +82,17 @@ func (repo *ManufacturerRepositoryImpl) FindById(ctx context.Context, id int64) 
 	}
 
 	return &manufacturer, err
+}
+
+func (repo *ManufacturerRepositoryImpl) Update(ctx context.Context, manufacturer entity.Manufacturer) (*entity.Manufacturer, error) {
+	const update = `UPDATE manufacturers
+	SET name = $1, image = $2 WHERE id = $3 RETURNING id, name, image, created_at, updated_at, deleted_at`
+
+	row := repo.db.QueryRowContext(ctx, update, manufacturer.Name, manufacturer.Image, manufacturer.Id)
+	var updated entity.Manufacturer
+	err := row.Scan(
+		&updated.Id, &updated.Name, &updated.Image, &updated.CreatedAt, &updated.UpdatedAt, &updated.DeletedAt,
+	)
+
+	return &updated, err
 }

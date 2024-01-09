@@ -15,6 +15,7 @@ type ManufacturerUseCase interface {
 	Add(ctx context.Context, manufacturer entity.Manufacturer) (*entity.Manufacturer, error)
 	GetById(ctx context.Context, id int64) (*entity.Manufacturer, error)
 	GetAllManufacturersWithoutParams(ctx context.Context) (*entity.PaginatedItems, error)
+	Edit(ctx context.Context, id int64, manufacturer entity.Manufacturer) (*entity.Manufacturer, error)
 }
 
 type ManufacturerUseCaseImpl struct {
@@ -76,4 +77,38 @@ func (uc *ManufacturerUseCaseImpl) GetAllManufacturersWithoutParams(ctx context.
 	paginatedItems.CurrentPage = 1
 
 	return paginatedItems, nil
+}
+
+func (uc *ManufacturerUseCaseImpl) Edit(ctx context.Context, id int64, manufacturer entity.Manufacturer) (*entity.Manufacturer, error) {
+	var (
+		err      error
+		fileName string
+	)
+
+	manufacturerDb, err := uc.GetById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	manufacturer.Id = id
+	manufacturer.Image = manufacturerDb.Image
+
+	fileHeader := ctx.Value(appconstant.FormImage)
+
+	if fileHeader != nil {
+		fileName, err = uc.uploader.Upload(ctx, fileHeader, manufacturer.GetEntityName())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if !util.IsEmptyString(fileName) {
+		manufacturer.Image = fileName
+	}
+
+	updated, err := uc.repo.Update(ctx, manufacturer)
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }

@@ -123,3 +123,63 @@ func (h *ManufacturerHandler) GetAllWithoutParams(ctx *gin.Context) {
 	resp := dto.ResponseDto{Data: paginatedItems}
 	ctx.JSON(http.StatusOK, resp)
 }
+
+func (h *ManufacturerHandler) Edit(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	req := requestdto.AddEditManufacturer{}
+	err = ctx.Bind(&req)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(req)
+	if err != nil {
+		return
+	}
+
+	fileHeader, err := ctx.FormFile(appconstant.FormImage)
+	if err != nil && !errors.Is(err, http.ErrMissingFile) {
+		return
+	}
+	if fileHeader != nil {
+		reqImage := requestdto.AddEditManufacturerImage{}
+		err = ctx.ShouldBind(&reqImage)
+		if err != nil {
+			return
+		}
+
+		err = h.validator.Validate(reqImage)
+		if err != nil {
+			return
+		}
+
+		reqCtx1 := ctx.Request.Context()
+		reqCtx2 := context.WithValue(reqCtx1, appconstant.FormImage, fileHeader)
+		ctx.Request = ctx.Request.WithContext(reqCtx2)
+	}
+
+	edited, err := h.uc.Edit(ctx.Request.Context(), uri.Id, req.ToManufacturer())
+	if err != nil {
+		return
+	}
+	resp := dto.ResponseDto{Data: edited.ToResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}

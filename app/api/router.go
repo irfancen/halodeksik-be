@@ -139,6 +139,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			manufacturers.GET("/no-params", rOpts.ManufacturerHandler.GetAllWithoutParams)
 			manufacturers.GET("/:id", rOpts.ManufacturerHandler.GetById)
 			manufacturers.POST("", rOpts.ManufacturerHandler.Add)
+			manufacturers.PUT("/:id", rOpts.ManufacturerHandler.Edit)
 		}
 
 		pharmacy := v1.Group(
