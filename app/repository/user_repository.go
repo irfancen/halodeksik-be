@@ -346,7 +346,9 @@ RETURNING id, email, password, user_role_id, is_verified, created_at, updated_at
 }
 
 func (repo *UserRepositoryImpl) Delete(ctx context.Context, id int64) error {
-	const deleteById = `DELETE FROM users WHERE id = $1
+	const deleteById = `UPDATE users
+SET deleted_at = now()
+WHERE id = $1
 `
 
 	_, err := repo.db.ExecContext(ctx, deleteById, id)
