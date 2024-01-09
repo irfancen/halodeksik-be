@@ -48,6 +48,10 @@ func (uc *CartItemUseCaseImpl) Add(ctx context.Context, cartItem entity.CartItem
 		return nil, err
 	}
 
+	if cartItem.Quantity <= 0 {
+		return nil, apperror.ErrProductAddedToCartMustHaveAtLeastOne
+	}
+
 	pharmacyProducts, err := uc.pharmacyProductRepo.FindAllByProductId(ctx, cartItem.ProductId)
 	if err != nil {
 		return nil, err
@@ -108,8 +112,11 @@ func (uc *CartItemUseCaseImpl) Edit(ctx context.Context, existingCartItem entity
 	for _, pharmacyProduct := range pharmacyProducts {
 		totalProductStock += pharmacyProduct.Stock
 	}
-	if existingCartItem.Quantity + cartItem.Quantity > totalProductStock {
+	if cartItem.Quantity > totalProductStock {
 		return nil, apperror.ErrProductStockNotEnoughToAddToCart
+	}
+	if cartItem.Quantity <= 0 {
+		return nil, apperror.ErrProductAddedToCartMustHaveAtLeastOne
 	}
 
 	updated, err := uc.cartItemRepo.Update(ctx, cartItem)

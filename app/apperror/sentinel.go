@@ -35,4 +35,5 @@ var (
 
 	ErrInsufficientProductStock         = errors.New("insufficient product stock")
 	ErrProductStockNotEnoughToAddToCart = errors.New("product stock is not enough to add to cart")
+	ErrProductAddedToCartMustHaveAtLeastOne = errors.New("product added to cart must have at least one item")
 )
