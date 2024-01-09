@@ -7,6 +7,7 @@ import (
 )
 
 type ManufacturerRepository interface {
+	Create(ctx context.Context, manufacturer entity.Manufacturer) (*entity.Manufacturer, error)
 	FindAllWithoutParams(ctx context.Context) ([]*entity.Manufacturer, error)
 }
 
@@ -16,6 +17,19 @@ type ManufacturerRepositoryImpl struct {
 
 func NewManufacturerRepositoryImpl(db *sql.DB) *ManufacturerRepositoryImpl {
 	return &ManufacturerRepositoryImpl{db: db}
+}
+
+func (repo *ManufacturerRepositoryImpl) Create(ctx context.Context, manufacturer entity.Manufacturer) (*entity.Manufacturer, error) {
+	const create = `INSERT INTO manufacturers(name, image)
+	VALUES ($1, $2) RETURNING id, name, image, created_at, updated_at, deleted_at`
+
+	row := repo.db.QueryRowContext(ctx, create, manufacturer.Name, manufacturer.Image)
+	var created entity.Manufacturer
+	err := row.Scan(
+		&created.Id, &created.Name, &created.Image, &created.CreatedAt, &created.UpdatedAt, &created.DeletedAt,
+	)
+
+	return &created, err
 }
 
 func (repo *ManufacturerRepositoryImpl) FindAllWithoutParams(ctx context.Context) ([]*entity.Manufacturer, error) {
