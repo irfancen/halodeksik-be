@@ -110,7 +110,7 @@ func (uc *RegisterTokenUseCaseImpl) SendRegisterToken(ctx context.Context, email
 
 	to := []string{email}
 	subject := "Email Verification"
-	message := fmt.Sprintf("Verification link:\n%s/verify-register?uid=%s", os.Getenv("FRONTEND_URL"), uid)
+	message := fmt.Sprintf("Verification link:\n%s/verify-register?token=%s", os.Getenv("FRONTEND_URL"), uid)
 
 	err = uc.mailUtil.SendEmail(to, []string{}, subject, message)
 	if err != nil {
