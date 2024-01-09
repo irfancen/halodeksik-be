@@ -55,7 +55,7 @@ func (uc *ProductUseCaseImpl) Add(ctx context.Context, product entity.Product) (
 	}
 	fileName := fmt.Sprintf("%s%s", createUUID.String(), extension)
 
-	err = uc.uploader.UploadFile(ctx, file, fmt.Sprintf("%s/", uc.cloudFolder), fileName)
+	err = uc.uploader.SendToBucket(ctx, file, fmt.Sprintf("%s/", uc.cloudFolder), fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (uc *ProductUseCaseImpl) Edit(ctx context.Context, id int64, product entity
 		}
 		fileName := fmt.Sprintf("%s%s", updateUUID.String(), extension)
 
-		err = uc.uploader.UploadFile(ctx, file, fmt.Sprintf("%s/", uc.cloudFolder), fileName)
+		err = uc.uploader.SendToBucket(ctx, file, fmt.Sprintf("%s/", uc.cloudFolder), fileName)
 		if err != nil {
 			return nil, err
 		}

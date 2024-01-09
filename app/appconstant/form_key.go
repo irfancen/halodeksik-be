@@ -1,5 +1,6 @@
 package appconstant
 
 const (
-	FormImage = "image"
+	FormImage       = "image"
+	FormCertificate = "certificate"
 )

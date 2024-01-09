@@ -24,6 +24,9 @@ type RouterOpts struct {
 	ProductCategoryHandler    *handler.ProductCategoryHandler
 	ProductHandler            *handler.ProductHandler
 	UserHandler               *handler.UserHandler
+	DoctorSpecsHandler        *handler.DoctorSpecializationHandler
+	ForgotTokenHandler        *handler.ForgotTokenHandler
+	RegisterTokenHandler      *handler.RegisterTokenHandler
 }
 
 func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
@@ -37,6 +40,9 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		ProductCategoryHandler:    handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase, appvalidator.Validator),
 		ProductHandler:            handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
 		UserHandler:               handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
+		DoctorSpecsHandler:        handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase),
+		ForgotTokenHandler:        handler.NewForgotTokenHandler(allUC.ForgotTokenUseCase, appvalidator.Validator),
+		RegisterTokenHandler:      handler.NewRegisterTokenHandler(allUC.RegisterTokenUseCase, appvalidator.Validator),
 	}
 }
 
@@ -81,10 +87,13 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 	{
 		auth := v1.Group("/auth")
 		{
-			auth.POST("/register-token", rOpts.AuthHandler.SendRegisterToken)
-			auth.GET("/verify-register", rOpts.AuthHandler.VerifyRegisterToken)
+			auth.POST("/register-token", rOpts.RegisterTokenHandler.SendRegisterToken)
+			auth.GET("/verify-register", rOpts.RegisterTokenHandler.VerifyRegisterToken)
 			auth.POST("/register", rOpts.AuthHandler.Register)
 			auth.POST("/login", rOpts.AuthHandler.Login)
+			auth.POST("/forgot-token", rOpts.ForgotTokenHandler.SendForgotToken)
+			auth.GET("/verify-forgot", rOpts.ForgotTokenHandler.VerifyForgotToken)
+			auth.POST("/reset-password", rOpts.AuthHandler.ResetPassword)
 		}
 
 		cartItems := v1.Group("/cart-items")
@@ -114,6 +123,11 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		drugClassifications := v1.Group("/drug-classifications")
 		{
 			drugClassifications.GET("/no-params", rOpts.DrugClassificationHandler.GetAllWithoutParams)
+		}
+
+		specs := v1.Group("/doctor-specs")
+		{
+			specs.GET("/no-params", rOpts.DoctorSpecsHandler.GetAllWithoutParams)
 		}
 
 		manufacturers := v1.Group("/manufacturers")

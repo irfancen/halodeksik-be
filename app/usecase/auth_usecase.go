@@ -2,13 +2,14 @@ package usecase
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"halodeksik-be/app/appcloud"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/requestdto"
+	"halodeksik-be/app/dto/responsedto"
 	"halodeksik-be/app/entity"
+	"halodeksik-be/app/env"
 	"halodeksik-be/app/repository"
 	"halodeksik-be/app/util"
 	"os"
@@ -17,112 +18,93 @@ import (
 )
 
 type AuthUsecase interface {
-	SendRegisterToken(ctx context.Context, email string) (string, error)
-	VerifyRegisterToken(ctx context.Context, token string) (*entity.VerificationToken, error)
-	Register(ctx context.Context, user entity.User, token string) (*entity.User, error)
-	Login(ctx context.Context, req requestdto.LoginRequest) (*entity.User, string, error)
+	Register(ctx context.Context, user entity.User, token string, name string) (*entity.User, error)
+	Login(ctx context.Context, req requestdto.LoginRequest) (*entity.User, *responsedto.GenericProfileResponse, error)
+	ChangePassword(ctx context.Context, newPassword string, token string) (*entity.User, error)
 }
 
 type AuthUseCaseImpl struct {
-	userRepository        repository.UserRepository
-	verifyTokenRepository repository.VerifyTokenRepository
-	authUtil              util.AuthUtil
-	mailUtil              util.EmailUtil
-	registerTokenExpired  int
-	loginTokenExpired     int
+	userRepository          repository.UserRepository
+	profileRepository       repository.ProfileRepository
+	forgotTokenRepository   repository.ForgotTokenRepository
+	registerTokenRepository repository.RegisterTokenRepository
+	authUtil                util.AuthUtil
+	uploader                appcloud.FileUploader
+	cloudUrl                string
+	cloudFolder             string
+	loginExpired            int
+	forgotTokenUseCase      ForgotTokenUseCase
+	registerTokenUseCase    RegisterTokenUseCase
 }
 
-func (uc *AuthUseCaseImpl) VerifyRegisterToken(ctx context.Context, token string) (*entity.VerificationToken, error) {
-	existedToken, err := uc.verifyTokenRepository.FindTokenByToken(ctx, token)
-	if existedToken == nil {
-		return nil, apperror.NewNotFound(existedToken, "Token", token)
+type AuthRepos struct {
+	UserRepo      repository.UserRepository
+	TForgotRepo   repository.ForgotTokenRepository
+	TRegisterRepo repository.RegisterTokenRepository
+	ProfileRepo   repository.ProfileRepository
+}
+
+type AuthUseCases struct {
+	TForgotUseCase   ForgotTokenUseCase
+	TRegisterUseCase RegisterTokenUseCase
+}
+
+func NewAuthUsecase(authRepos AuthRepos, aUtil util.AuthUtil, uploader appcloud.FileUploader, cases AuthUseCases) AuthUsecase {
+	cloudUrl := env.Get("GCLOUD_STORAGE_CDN")
+	cloudFolder := env.Get("GCLOUD_STORAGE_FOLDER_CERTIFICATE")
+
+	expiryLogin, err := strconv.Atoi(os.Getenv("LOGIN_TOKEN_EXPIRED_MINUTE"))
+	if err != nil {
+		return nil
 	}
+
+	return &AuthUseCaseImpl{
+		userRepository:          authRepos.UserRepo,
+		forgotTokenRepository:   authRepos.TForgotRepo,
+		registerTokenRepository: authRepos.TRegisterRepo,
+		profileRepository:       authRepos.ProfileRepo,
+		authUtil:                aUtil,
+		uploader:                uploader,
+		cloudUrl:                cloudUrl,
+		cloudFolder:             cloudFolder,
+		loginExpired:            expiryLogin,
+		forgotTokenUseCase:      cases.TForgotUseCase,
+		registerTokenUseCase:    cases.TRegisterUseCase,
+	}
+}
+
+func (uc *AuthUseCaseImpl) ChangePassword(ctx context.Context, newPassword string, token string) (*entity.User, error) {
+	dbToken, err := uc.forgotTokenUseCase.VerifyForgetToken(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 
-	if existedToken.IsValid == false {
-		return nil, apperror.ErrRegisterTokenInvalid
-	}
-
-	if existedToken.ExpiredAt.Before(time.Now()) {
-		return nil, apperror.ErrRegisterTokenExpired
-	}
-	return existedToken, nil
-}
-
-func (uc *AuthUseCaseImpl) SendRegisterToken(ctx context.Context, email string) (string, error) {
-	var userVerify entity.VerificationToken
-
-	existedUser, err := uc.userRepository.FindByEmail(ctx, email)
-	if existedUser != nil {
-		return "", apperror.NewAlreadyExist(existedUser, "Email", email)
-	}
-	if err != nil && !errors.Is(err, apperror.ErrRecordNotFound) {
-		return "", err
-	}
-
-	token, err := uc.authUtil.GenerateSecureToken()
-	if err != nil {
-		return "", err
-	}
-
-	tokenFound, err := uc.verifyTokenRepository.FindTokenByToken(ctx, token)
-	if tokenFound != nil {
-		return "", &apperror.AlreadyExist{
-			Resource:        tokenFound,
-			FieldInResource: "Token",
-			Value:           tokenFound.Token,
-		}
-	}
-
-	activeToken, err := uc.verifyTokenRepository.FindTokenByEmail(ctx, email)
-	if activeToken != nil {
-		_, err2 := uc.verifyTokenRepository.DeactivateToken(ctx, *activeToken)
-		if err2 != nil {
-			return "", err
-		}
-	}
-	if err != nil && !errors.Is(err, apperror.ErrRecordNotFound) {
-		return "", err
-	}
-
-	userVerify.Token = token
-	userVerify.Email = email
-	userVerify.ExpiredAt = time.Now().Add(time.Duration(uc.registerTokenExpired) * time.Minute)
-	userVerify.IsValid = true
-
-	_, err = uc.verifyTokenRepository.CreateVerifyToken(ctx, userVerify)
-	if err != nil {
-		return "", err
-	}
-
-	to := []string{email}
-	subject := "Email Verification"
-	message := fmt.Sprintf("Verification link:\n%s/verify-register?token=%s", os.Getenv("FRONTEND_URL"), token)
-
-	err = uc.mailUtil.SendEmail(to, []string{}, subject, message)
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
-}
-
-func (uc *AuthUseCaseImpl) Register(ctx context.Context, user entity.User, token string) (*entity.User, error) {
-	verifiedToken, err := uc.VerifyRegisterToken(ctx, token)
+	registeredUser, err := uc.userRepository.FindById(ctx, dbToken.UserId)
 	if err != nil {
 		return nil, err
 	}
-	if verifiedToken.Email != user.Email {
-		return nil, apperror.ErrRegisterTokenInvalid
+
+	newHashedPw, err := uc.authUtil.HashAndSalt(newPassword)
+	if err != nil {
+		return nil, err
 	}
 
-	existedUser, err := uc.userRepository.FindByEmail(ctx, user.Email)
-	if err == nil {
-		return nil, apperror.NewAlreadyExist(existedUser, "Email", user.Email)
+	changedUser, err := uc.userRepository.ChangePassword(ctx, *registeredUser, newHashedPw)
+	if err != nil {
+		return nil, err
 	}
-	if !errors.Is(err, apperror.ErrRecordNotFound) {
+
+	_, err = uc.forgotTokenRepository.DeactivateForgotToken(ctx, *dbToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return changedUser, nil
+}
+
+func (uc *AuthUseCaseImpl) Register(ctx context.Context, user entity.User, token string, name string) (*entity.User, error) {
+	verifiedToken, err := uc.verifyToken(ctx, token, user.Email)
+	if err != nil {
 		return nil, err
 	}
 
@@ -130,11 +112,6 @@ func (uc *AuthUseCaseImpl) Register(ctx context.Context, user entity.User, token
 		return nil, apperror.ErrInvalidRegisterRole
 	}
 
-	// todo: upload doctor certificate
-	//if user.UserRoleId == appconstant.UserRoleIdDoctor {
-	//}
-
-	// todo: handle hash errors
 	hashedPw, err := uc.authUtil.HashAndSalt(user.Password)
 	if err != nil {
 		return nil, err
@@ -142,12 +119,26 @@ func (uc *AuthUseCaseImpl) Register(ctx context.Context, user entity.User, token
 
 	user.Password = hashedPw
 	user.IsVerified = true
-	createdUser, err := uc.userRepository.Create(ctx, user)
+	doctorProfile := entity.DoctorProfile{}
+	userProfile := entity.UserProfile{}
+
+	fileHeaderAny := ctx.Value(appconstant.FormCertificate)
+	if user.UserRoleId == appconstant.UserRoleIdDoctor && fileHeaderAny != nil {
+		url, err2 := uc.uploader.Upload(ctx, fileHeaderAny, uc.cloudFolder)
+		if err2 != nil {
+			return nil, err2
+		}
+		doctorProfile.DoctorCertificate = url
+	}
+
+	userProfile.Name = name
+	doctorProfile.Name = name
+	createdUser, err := uc.createUser(ctx, user, &doctorProfile, &userProfile)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = uc.verifyTokenRepository.DeactivateToken(ctx, *verifiedToken)
+	_, err = uc.registerTokenRepository.DeactivateRegisterToken(ctx, *verifiedToken)
 	if err != nil {
 		return nil, err
 	}
@@ -155,22 +146,70 @@ func (uc *AuthUseCaseImpl) Register(ctx context.Context, user entity.User, token
 	return createdUser, nil
 }
 
-func (uc *AuthUseCaseImpl) Login(ctx context.Context, req requestdto.LoginRequest) (*entity.User, string, error) {
+func (uc *AuthUseCaseImpl) verifyToken(ctx context.Context, token string, email string) (*entity.VerificationToken, error) {
+	verifiedToken, err := uc.registerTokenUseCase.VerifyRegisterToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+	if verifiedToken.Email != email {
+		return nil, apperror.ErrRegisterTokenInvalid
+	}
+	return verifiedToken, nil
+}
+
+func (uc *AuthUseCaseImpl) createUser(ctx context.Context, user entity.User, doctorProfile *entity.DoctorProfile, userProfile *entity.UserProfile) (*entity.User, error) {
+	createdUser := &entity.User{}
+	var err error
+	if user.UserRoleId == appconstant.UserRoleIdDoctor {
+		doctorProfile.DoctorSpecializationId = appconstant.DoctorSpecializationGeneral
+		createdUser, err = uc.userRepository.CreateAndDoctorProfile(ctx, user, *doctorProfile)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		createdUser, err = uc.userRepository.CreateAndUserProfile(ctx, user, *userProfile)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return createdUser, nil
+}
+
+func (uc *AuthUseCaseImpl) Login(ctx context.Context, req requestdto.LoginRequest) (*entity.User, *responsedto.GenericProfileResponse, error) {
 	user, err := uc.userRepository.FindByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
+	}
+	var name string
+	var image string
+
+	if user.UserRoleId == appconstant.UserRoleIdDoctor {
+		userProfile, err := uc.profileRepository.FindDoctorProfileByUserId(ctx, user.Id)
+		if err != nil {
+			return nil, nil, err
+		}
+		name = userProfile.Name
+		image = userProfile.ProfilePhoto
+	} else if user.UserRoleId == appconstant.UserRoleIdUser {
+		userProfile, err := uc.profileRepository.FindUserProfileByUserId(ctx, user.Id)
+		if err != nil {
+			return nil, nil, err
+		}
+		name = userProfile.Name
+		image = userProfile.ProfilePhoto
 	}
 
 	if !uc.authUtil.ComparePassword(user.Password, req.Password) {
-		return nil, "", apperror.ErrWrongCredentials
+		return nil, nil, apperror.ErrWrongCredentials
 	}
 
-	expirationTime := time.Now().Add(time.Duration(uc.loginTokenExpired) * time.Minute)
+	expirationTime := time.Now().Add(time.Duration(uc.loginExpired) * time.Minute)
 	claims := &entity.Claims{
 		UserId: user.Id,
 		Email:  user.Email,
 		RoleId: user.UserRoleId,
-		Image:  "",
+		Name:   name,
+		Image:  image,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "ByeByeSick Healthcare",
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -180,32 +219,13 @@ func (uc *AuthUseCaseImpl) Login(ctx context.Context, req requestdto.LoginReques
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := uc.authUtil.SignToken(token)
-
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
-	return user, tokenString, nil
-}
-
-func NewAuthUsecase(a repository.UserRepository, b repository.VerifyTokenRepository, u util.AuthUtil, m util.EmailUtil) AuthUsecase {
-
-	expiryRegister, err := strconv.Atoi(os.Getenv("REGISTER_TOKEN_EXPIRED_MINUTE"))
-	if err != nil {
-		return nil
-	}
-
-	expiryLogin, err := strconv.Atoi(os.Getenv("LOGIN_TOKEN_EXPIRED_MINUTE"))
-	if err != nil {
-		return nil
-	}
-
-	return &AuthUseCaseImpl{
-		userRepository:        a,
-		verifyTokenRepository: b,
-		authUtil:              u,
-		mailUtil:              m,
-		registerTokenExpired:  expiryRegister,
-		loginTokenExpired:     expiryLogin,
-	}
+	return user, &responsedto.GenericProfileResponse{
+		Image: image,
+		Name:  name,
+		Token: tokenString,
+	}, nil
 }
