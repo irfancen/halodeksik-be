@@ -9,6 +9,7 @@ import (
 	"halodeksik-be/app/dto"
 	"halodeksik-be/app/dto/requestdto"
 	"halodeksik-be/app/dto/responsedto"
+	"halodeksik-be/app/dto/uriparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"net/http"
@@ -69,6 +70,34 @@ func (h *ManufacturerHandler) Add(ctx *gin.Context) {
 		return
 	}
 	resp := dto.ResponseDto{Data: added.ToResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *ManufacturerHandler) GetById(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	manufacturer, err := h.uc.GetById(ctx.Request.Context(), uri.Id)
+	if err != nil {
+		return
+	}
+	resp := dto.ResponseDto{Data: manufacturer.ToResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }
 
