@@ -99,6 +99,6 @@ func (q *GetAllPharmacyProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 }
 
 func (q *GetAllPharmacyProductsQuery) GetPharmacyId() int64 {
-	pharmacyId, _ := strconv.ParseInt(q.PharmacyId, 10, 64)
+	pharmacyId, _ := util.ParseInt64(q.PharmacyId)
 	return pharmacyId
 }

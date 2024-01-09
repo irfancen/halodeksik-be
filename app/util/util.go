@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"halodeksik-be/app/appconstant"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -38,6 +39,10 @@ func RandomToken(marker string) (string, error) {
 	_, err := rand.Read(b)
 
 	return fmt.Sprintf("%x", b), err
+}
+
+func ParseInt64(str string) (int64, error) {
+	return strconv.ParseInt(str, 10, 64)
 }
 
 func PascalToSnake(input string) string {
