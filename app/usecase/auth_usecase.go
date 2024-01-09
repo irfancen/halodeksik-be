@@ -51,7 +51,7 @@ type AuthUseCases struct {
 
 func NewAuthUsecase(authRepos AuthRepos, aUtil util.AuthUtil, uploader appcloud.FileUploader, cases AuthUseCases) AuthUsecase {
 	cloudUrl := env.Get("GCLOUD_STORAGE_CDN")
-	cloudFolder := env.Get("GCLOUD_STORAGE_FOLDER_CERTIFICATE")
+	cloudFolder := env.Get("GCLOUD_STORAGE_FOLDER_CERTIFICATES")
 
 	expiryLogin, err := strconv.Atoi(os.Getenv("LOGIN_TOKEN_EXPIRED_MINUTE"))
 	if err != nil {
