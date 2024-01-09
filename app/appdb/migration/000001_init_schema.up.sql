@@ -166,14 +166,15 @@ CREATE TABLE manufacturers
 (
     id         BIGSERIAL PRIMARY KEY,
     name       VARCHAR                   NOT NULL,
+    image      VARCHAR                   NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
-INSERT INTO manufacturers (name)
-values ('Soho Industri Pharmasi'),
-       ('Amarox Pharma Global');
+INSERT INTO manufacturers (name, image)
+values ('Soho Industri Pharmasi', ''),
+       ('Amarox Pharma Global', '');
 
 CREATE TABLE product_categories
 (
