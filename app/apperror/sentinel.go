@@ -23,6 +23,8 @@ var (
 	ErrForbiddenViewEntity   = errors.New("you are not allowed to view this entity")
 	ErrForbiddenModifyEntity = errors.New("you are not allowed to modify this entity")
 
+	ErrDeleteAlreadyAssignedAdmin = errors.New("cannot delete already assigned pharmacy admin")
+
 	ErrInvalidDecimal     = errors.New("invalid decimal")
 	ErrInvalidIntInString = errors.New("invalid integer in string")
 

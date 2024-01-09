@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"halodeksik-be/app/appconstant"
+	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
@@ -20,16 +21,17 @@ type UserUseCase interface {
 }
 
 type UserUseCaseImpl struct {
-	repo repository.UserRepository
-	util util.AuthUtil
+	userRepository     repository.UserRepository
+	pharmacyRepository repository.PharmacyRepository
+	util               util.AuthUtil
 }
 
-func NewUserUseCaseImpl(repo repository.UserRepository, util util.AuthUtil) *UserUseCaseImpl {
-	return &UserUseCaseImpl{repo: repo, util: util}
+func NewUserUseCaseImpl(userRepository repository.UserRepository, pharmacyRepository repository.PharmacyRepository, util util.AuthUtil) *UserUseCaseImpl {
+	return &UserUseCaseImpl{userRepository: userRepository, pharmacyRepository: pharmacyRepository, util: util}
 }
 
 func (uc *UserUseCaseImpl) AddAdmin(ctx context.Context, admin entity.User) (*entity.User, error) {
-	if user, err := uc.repo.FindByEmail(ctx, admin.Email); err == nil {
+	if user, err := uc.userRepository.FindByEmail(ctx, admin.Email); err == nil {
 		return nil, apperror.NewAlreadyExist(user, "Email", admin.Email)
 	}
 
@@ -41,7 +43,7 @@ func (uc *UserUseCaseImpl) AddAdmin(ctx context.Context, admin entity.User) (*en
 	admin.UserRoleId = 2
 	admin.IsVerified = true
 
-	created, err := uc.repo.Create(ctx, admin)
+	created, err := uc.userRepository.Create(ctx, admin)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +51,7 @@ func (uc *UserUseCaseImpl) AddAdmin(ctx context.Context, admin entity.User) (*en
 }
 
 func (uc *UserUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.User, error) {
-	user, err := uc.repo.FindById(ctx, id)
+	user, err := uc.userRepository.FindById(ctx, id)
 	if errors.Is(err, apperror.ErrRecordNotFound) {
 		return nil, apperror.NewNotFound(user, "Id", id)
 	}
@@ -67,12 +69,12 @@ func (uc *UserUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.User,
 }
 
 func (uc *UserUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
-	users, err := uc.repo.FindAll(ctx, param)
+	users, err := uc.userRepository.FindAll(ctx, param)
 	if err != nil {
 		return nil, err
 	}
 
-	totalItems, err := uc.repo.CountFindAll(ctx, param)
+	totalItems, err := uc.userRepository.CountFindAll(ctx, param)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +117,7 @@ func (uc *UserUseCaseImpl) EditAdmin(ctx context.Context, id int64, user entity.
 		userdb.Password = newPassword
 	}
 
-	updated, err := uc.repo.Update(ctx, *userdb)
+	updated, err := uc.userRepository.Update(ctx, *userdb)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +134,16 @@ func (uc *UserUseCaseImpl) RemoveAdmin(ctx context.Context, id int64) error {
 		return apperror.ErrForbiddenModifyEntity
 	}
 
-	err = uc.repo.Delete(ctx, id)
+	param := queryparamdto.NewGetAllParams()
+	pharmacy := new(entity.Pharmacy)
+	param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(pharmacy.GetSqlColumnFromField("PharmacyAdminId"), appdb.EqualTo, id))
+	pharmacyCount, err := uc.pharmacyRepository.CountFindAll(ctx, param)
+
+	if pharmacyCount > 0 {
+		return apperror.ErrDeleteAlreadyAssignedAdmin
+	}
+
+	err = uc.userRepository.Delete(ctx, id)
 	if err != nil {
 		return err
 	}
