@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/gin-gonic/gin"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
@@ -12,8 +13,6 @@ import (
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 type PharmacyProductHandler struct {
@@ -97,14 +96,13 @@ func (h *PharmacyProductHandler) GetAllByPharmacy(ctx *gin.Context) {
 
 	getAllPharmacyProductQuery := queryparamdto.GetAllPharmacyProductsQuery{}
 	_ = ctx.ShouldBindQuery(&getAllPharmacyProductQuery)
-	pharmacyId := getAllPharmacyProductQuery.PharmacyId
 
 	param, err := getAllPharmacyProductQuery.ToGetAllParams()
 	if err != nil {
 		return
 	}
 
-	paginatedItems, err := h.uc.GetAllByPharmacy(ctx.Request.Context(), pharmacyId, param)
+	paginatedItems, err := h.uc.GetAllByPharmacy(ctx.Request.Context(), getAllPharmacyProductQuery.GetPharmacyId(), param)
 	if err != nil {
 		return
 	}

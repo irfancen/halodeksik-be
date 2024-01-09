@@ -15,34 +15,38 @@ import (
 )
 
 type RouterOpts struct {
-	AuthHandler               *handler.AuthHandler
-	CartItemHandler           *handler.CartItemHandler
-	DrugClassificationHandler *handler.DrugClassificationHandler
-	ManufacturerHandler       *handler.ManufacturerHandler
-	PharmacyHandler           *handler.PharmacyHandler
-	PharmacyProductsHandler   *handler.PharmacyProductHandler
-	ProductCategoryHandler    *handler.ProductCategoryHandler
-	ProductHandler            *handler.ProductHandler
-	UserHandler               *handler.UserHandler
-	DoctorSpecsHandler        *handler.DoctorSpecializationHandler
-	ForgotTokenHandler        *handler.ForgotTokenHandler
-	RegisterTokenHandler      *handler.RegisterTokenHandler
+	AuthHandler                 *handler.AuthHandler
+	CartItemHandler             *handler.CartItemHandler
+	DrugClassificationHandler   *handler.DrugClassificationHandler
+	ManufacturerHandler         *handler.ManufacturerHandler
+	PharmacyHandler             *handler.PharmacyHandler
+	PharmacyProductsHandler     *handler.PharmacyProductHandler
+	ProductCategoryHandler      *handler.ProductCategoryHandler
+	ProductHandler              *handler.ProductHandler
+	ProductStockMutationHandler *handler.ProductStockMutationHandler
+	StockReportHandler          *handler.StockReportHandler
+	UserHandler                 *handler.UserHandler
+	DoctorSpecsHandler          *handler.DoctorSpecializationHandler
+	ForgotTokenHandler          *handler.ForgotTokenHandler
+	RegisterTokenHandler        *handler.RegisterTokenHandler
 }
 
 func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 	return &RouterOpts{
-		AuthHandler:               handler.NewAuthHandler(allUC.AuthUsecase, appvalidator.Validator),
-		CartItemHandler:           handler.NewCartItemHandler(allUC.CartItemUseCase, appvalidator.Validator),
-		DrugClassificationHandler: handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
-		ManufacturerHandler:       handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
-		PharmacyHandler:           handler.NewPharmacyHandler(allUC.PharmacyUseCase, appvalidator.Validator),
-		PharmacyProductsHandler:   handler.NewPharmacyProductHAndler(allUC.PharmacyProductUseCase, appvalidator.Validator),
-		ProductCategoryHandler:    handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase, appvalidator.Validator),
-		ProductHandler:            handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
-		UserHandler:               handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
-		DoctorSpecsHandler:        handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase),
-		ForgotTokenHandler:        handler.NewForgotTokenHandler(allUC.ForgotTokenUseCase, appvalidator.Validator),
-		RegisterTokenHandler:      handler.NewRegisterTokenHandler(allUC.RegisterTokenUseCase, appvalidator.Validator),
+		AuthHandler:                 handler.NewAuthHandler(allUC.AuthUsecase, appvalidator.Validator),
+		CartItemHandler:             handler.NewCartItemHandler(allUC.CartItemUseCase, appvalidator.Validator),
+		DrugClassificationHandler:   handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
+		ManufacturerHandler:         handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
+		PharmacyHandler:             handler.NewPharmacyHandler(allUC.PharmacyUseCase, appvalidator.Validator),
+		PharmacyProductsHandler:     handler.NewPharmacyProductHAndler(allUC.PharmacyProductUseCase, appvalidator.Validator),
+		ProductCategoryHandler:      handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase, appvalidator.Validator),
+		ProductHandler:              handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
+		ProductStockMutationHandler: handler.NewProductStockMutationHandler(allUC.ProductStockMutation, appvalidator.Validator),
+		StockReportHandler:          handler.NewStockReportHandler(allUC.ProductStockMutation, appvalidator.Validator),
+		UserHandler:                 handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
+		DoctorSpecsHandler:          handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase),
+		ForgotTokenHandler:          handler.NewForgotTokenHandler(allUC.ForgotTokenUseCase, appvalidator.Validator),
+		RegisterTokenHandler:        handler.NewRegisterTokenHandler(allUC.RegisterTokenUseCase, appvalidator.Validator),
 	}
 }
 
@@ -203,6 +207,16 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
 				rOpts.ProductHandler.Remove,
 			)
+		}
+
+		report := v1.Group("/report-stock-mutations")
+		{
+			report.GET("", rOpts.StockReportHandler.FindAll)
+		}
+
+		stockMutation := v1.Group("/stock-mutations")
+		{
+			stockMutation.POST("", rOpts.ProductStockMutationHandler.Add)
 		}
 
 		users := v1.Group("/users")

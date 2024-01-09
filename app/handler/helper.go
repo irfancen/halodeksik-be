@@ -91,23 +91,31 @@ func WrapError(err error, customCode ...int) error {
 		errWrapper.Code = http.StatusUnauthorized
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidDecimal):
-		errWrapper.Code = http.StatusBadRequest
+		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrPharmacyProductUniqueConstraint):
-		errWrapper.Code = http.StatusBadRequest
+		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductUniqueConstraint):
-		errWrapper.Code = http.StatusBadRequest
+		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidRegisterRole):
-		errWrapper.Code = http.StatusBadRequest
+		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrWrongCredentials):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrStartDateAfterEndDate):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrInsufficientProductStock):
+		fallthrough
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductImageDoesNotExistInContext):
-		errWrapper.Code = http.StatusBadRequest
+		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductStockNotEnoughToAddToCart):
-		errWrapper.Code = http.StatusBadRequest
+		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidIntInString):
 		errWrapper.Code = http.StatusBadRequest
@@ -137,6 +145,8 @@ func createErrValidationMsgTag(fieldError validator.FieldError) string {
 		return fmt.Sprintf("field '%s' is required", fieldName)
 	case "email":
 		return fmt.Sprintf("field '%s' must be in the format of an email", fieldName)
+	case "datetime":
+		return fmt.Sprintf("field '%s' must follow the format %s", fieldName, fieldError.Param())
 	case "number":
 		return fmt.Sprintf("field '%s' must be a number", fieldName)
 	case "numeric":
@@ -163,7 +173,7 @@ func createErrValidationMsgTag(fieldError validator.FieldError) string {
 		return fmt.Sprintf("field '%s' have maximum value of %s", fieldName, fieldError.Param())
 	case "oneof":
 		params := strings.ReplaceAll(fieldError.Param(), " ", ", ")
-		return fmt.Sprintf("item '%s' on field '%s' must be one of %s", fieldError.Value(), fieldName, params)
+		return fmt.Sprintf("item '%v' on field '%s' must be one of %s", fieldError.Value(), fieldName, params)
 	case "latitude":
 		return fmt.Sprintf("field '%s' must be a valid latitude", fieldName)
 	case "longitude":

@@ -14,7 +14,7 @@ type GetAllPharmacyProductsQuery struct {
 	SortBy              string `form:"sort_by"`
 	Sort                string `form:"sort"`
 	DrugClassifications string `form:"drug_class"`
-	PharmacyId          int64  `form:"pharmacy_id"`
+	PharmacyId          string `form:"pharmacy_id" validate:"number"`
 	Limit               string `form:"limit"`
 	Page                string `form:"page"`
 }
@@ -29,6 +29,7 @@ func (q *GetAllPharmacyProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 	param := NewGetAllParams()
 	product := new(entity.Product)
 	pharmacyProduct := new(entity.PharmacyProduct)
+	pharmacyId, _ := strconv.Atoi(q.PharmacyId)
 
 	if q.Search != "" {
 		words := strings.Split(q.Search, " ")
@@ -66,7 +67,7 @@ func (q *GetAllPharmacyProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 		param.SortClauses = append(param.SortClauses, sortClause)
 	}
 
-	if q.PharmacyId != 0 {
+	if pharmacyId != 0 {
 		column := pharmacyProduct.GetSqlColumnFromField("PharmacyId")
 		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.EqualTo, q.PharmacyId))
 	}
@@ -95,4 +96,9 @@ func (q *GetAllPharmacyProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 	param.PageId = &pageId
 
 	return param, nil
+}
+
+func (q *GetAllPharmacyProductsQuery) GetPharmacyId() int64 {
+	pharmacyId, _ := util.ParseInt64(q.PharmacyId)
+	return pharmacyId
 }

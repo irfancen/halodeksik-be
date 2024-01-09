@@ -13,6 +13,7 @@ type AllRepositories struct {
 	PharmacyProductRepository      repository.PharmacyProductRepository
 	ProductCategoryRepository      repository.ProductCategoryRepository
 	ProductRepository              repository.ProductRepository
+	ProductStockMutationRepository repository.ProductStockMutationRepository
 	UserRepository                 repository.UserRepository
 	ForgotTokenRepository          repository.ForgotTokenRepository
 	RegisterTokenRepository        repository.RegisterTokenRepository
@@ -29,6 +30,7 @@ func InitializeRepositories(db *sql.DB) *AllRepositories {
 		PharmacyProductRepository:      repository.NewPharmacyProductRepository(db),
 		ProductCategoryRepository:      repository.NewProductCategoryRepositoryImpl(db),
 		ProductRepository:              repository.NewProductRepositoryImpl(db),
+		ProductStockMutationRepository: repository.NewProductStockMutationRepositoryImpl(db),
 		UserRepository:                 repository.NewUserRepository(db),
 		ForgotTokenRepository:          repository.NewForgotTokenRepository(db),
 		ProfileRepository:              repository.NewProfileRepository(db),

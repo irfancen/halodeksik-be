@@ -50,6 +50,10 @@ func (p *Pharmacy) GetSqlColumnFromField(fieldName string) string {
 }
 
 func (p *Pharmacy) ToPharmacyResponse() *responsedto.PharmacyResponse {
+	if p == nil {
+		return nil
+	}
+
 	operationalHours := strings.Split(p.OperationalHours, "-")
 	operationalHoursOpen, _ := strconv.Atoi(operationalHours[0])
 	operationalHoursClose, _ := strconv.Atoi(operationalHours[1])

@@ -13,6 +13,7 @@ type AllUseCases struct {
 	PharmacyUseCase             usecase.PharmacyUseCase
 	PharmacyProductUseCase      usecase.PharmacyProductUseCase
 	ProductCategoryUseCase      usecase.ProductCategoryUseCase
+	ProductStockMutation        usecase.ProductStockMutationUseCase
 	ProductUseCase              usecase.ProductUseCase
 	UserUseCase                 usecase.UserUseCase
 	ProfileUseCase              usecase.ProfileUseCase
@@ -42,6 +43,7 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 		PharmacyProductUseCase:      usecase.NewPharmacyProductUseCaseImpl(allRepo.PharmacyProductRepository, allRepo.PharmacyRepository, allRepo.ProductRepository),
 		ProductCategoryUseCase:      usecase.NewProductCategoryUseCaseImpl(allRepo.ProductCategoryRepository),
 		ProductUseCase:              usecase.NewProductUseCaseImpl(allRepo.ProductRepository, appcloud.AppFileUploader),
+		ProductStockMutation:        usecase.NewProductStockMutationUseCaseImpl(allRepo.ProductStockMutationRepository, allRepo.PharmacyProductRepository),
 		UserUseCase:                 usecase.NewUserUseCaseImpl(allRepo.UserRepository, allUtil.AuthUtil),
 		ProfileUseCase:              usecase.NewProfileUseCaseImpl(allRepo.ProfileRepository),
 		DoctorSpecializationUseCase: usecase.NewDoctorSpecializationUseCaseImpl(allRepo.DoctorSpecializationRepository),

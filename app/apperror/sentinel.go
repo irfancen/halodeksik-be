@@ -18,7 +18,8 @@ var (
 	ErrLoginTokenNotValid    = errors.New("login token is invalid")
 	ErrUnauthorized          = errors.New("you don't have permission to access this endpoint")
 
-	ErrPasswordTooLong = errors.New("password too long")
+	ErrPasswordTooLong       = errors.New("password too long")
+	ErrStartDateAfterEndDate = errors.New("start date cannot be after end date")
 
 	ErrInvalidDecimal     = errors.New("invalid decimal")
 	ErrInvalidIntInString = errors.New("invalid integer in string")
@@ -28,5 +29,6 @@ var (
 	ErrProductUniqueConstraint           = errors.New("name, generic_name, content, and manufacturer_id combinations violate unique constraint")
 	ErrProductImageDoesNotExistInContext = errors.New("product image does not exist in context")
 
+	ErrInsufficientProductStock         = errors.New("insufficient product stock")
 	ErrProductStockNotEnoughToAddToCart = errors.New("product stock is not enough to add to cart")
 )

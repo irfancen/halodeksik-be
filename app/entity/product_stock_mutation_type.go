@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type Manufacturer struct {
+type ProductStockMutationType struct {
 	Id        int64        `json:"id"`
 	Name      string       `json:"name"`
 	CreatedAt time.Time    `json:"created_at"`
@@ -17,11 +17,11 @@ type Manufacturer struct {
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
-func (e *Manufacturer) GetEntityName() string {
-	return "manufacturers"
+func (e *ProductStockMutationType) GetEntityName() string {
+	return "product_stock_mutation_types"
 }
 
-func (e *Manufacturer) GetFieldStructTag(fieldName string, structTag string) string {
+func (e *ProductStockMutationType) GetFieldStructTag(fieldName string, structTag string) string {
 	field, ok := reflect.TypeOf(e).Elem().FieldByName(fieldName)
 	if !ok {
 		return ""
@@ -29,15 +29,12 @@ func (e *Manufacturer) GetFieldStructTag(fieldName string, structTag string) str
 	return field.Tag.Get(structTag)
 }
 
-func (e *Manufacturer) GetSqlColumnFromField(fieldName string) string {
+func (e *ProductStockMutationType) GetSqlColumnFromField(fieldName string) string {
 	return fmt.Sprintf("%s.%s", e.GetEntityName(), e.GetFieldStructTag(fieldName, appconstant.JsonStructTag))
 }
 
-func (e *Manufacturer) ToResponse() *responsedto.ManufacturerResponse {
-	if e == nil {
-		return nil
-	}
-	return &responsedto.ManufacturerResponse{
+func (e *ProductStockMutationType) ToResponse() *responsedto.ProductStockMutationTypeResponse {
+	return &responsedto.ProductStockMutationTypeResponse{
 		Id:   e.Id,
 		Name: e.Name,
 	}
