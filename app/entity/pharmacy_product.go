@@ -50,8 +50,8 @@ func (pp *PharmacyProduct) ToPharmacyProductResponse() *responsedto.PharmacyProd
 		PharmacyId:      pp.PharmacyId,
 		ProductId:       pp.ProductId,
 		IsActive:        pp.IsActive,
-		Price:           pp.Price,
-		Stock:           pp.Stock,
+		Price:           pp.Price.String(),
+		Stock:           &pp.Stock,
 		ProductResponse: pp.Product.ToProductResponse(),
 	}
 }
