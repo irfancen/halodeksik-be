@@ -1,5 +1,7 @@
 package appconstant
 
-const(
+const (
 	DefaultGetAllPageSize = 10
+
+	ClosestPharmacyRangeRadius = 25 // kilometers
 )

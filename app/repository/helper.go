@@ -9,7 +9,13 @@ import (
 	"strings"
 )
 
-func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamdto.GetAllParams, isLimitSet ...bool) (string, []interface{}) {
+func buildQuery(
+	initQuery string,
+	resourcer entity.Resourcer,
+	param *queryparamdto.GetAllParams,
+	setLimit bool,
+	initIndex ...int,
+) (string, []interface{}) {
 	var query strings.Builder
 	var values []interface{}
 
@@ -20,6 +26,9 @@ func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamd
 	}
 
 	indexPreparedStatement := 0
+	if len(initIndex) > 0 {
+		indexPreparedStatement = initIndex[0]
+	}
 
 	for index, whereClause := range param.WhereClauses {
 		if whereClause.OpenParenthesis {
@@ -40,8 +49,13 @@ func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamd
 			continue
 		}
 
-		indexPreparedStatement++
-		query.WriteString(fmt.Sprintf("%s %s $%d %s ", whereClause.Column, whereClause.Condition, indexPreparedStatement, whereClause.Logic))
+		if whereClause.Value != nil {
+			indexPreparedStatement++
+			query.WriteString(fmt.Sprintf("%s %s $%d %s ", whereClause.Column, whereClause.Condition, indexPreparedStatement, whereClause.Logic))
+		}
+		if whereClause.Value == nil {
+			query.WriteString(fmt.Sprintf("%s %s %s %s ", whereClause.Column, whereClause.Condition, appdb.Null, whereClause.Logic))
+		}
 
 		if whereClause.CloseParenthesis {
 			query.WriteString(" ) ")
@@ -51,12 +65,9 @@ func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamd
 			query.WriteString(appdb.AND + " ")
 		}
 
-		values = append(values, whereClause.Value)
-	}
-
-	setLimit := true
-	if len(isLimitSet) > 0 {
-		setLimit = isLimitSet[0]
+		if whereClause.Value != nil {
+			values = append(values, whereClause.Value)
+		}
 	}
 
 	if len(param.GroupClauses) > 0 {

@@ -91,6 +91,45 @@ func (h *ProductHandler) GetById(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+func (h *ProductHandler) GetByIdForUser(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	getByIdProductQuery := queryparamdto.GetByIdProductQuery{}
+	err = ctx.ShouldBindQuery(&getByIdProductQuery)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(getByIdProductQuery)
+	if err != nil {
+		return
+	}
+
+	product, err := h.uc.GetByIdForUser(ctx.Request.Context(), uri.Id, getByIdProductQuery.ToGetAllParams())
+	if err != nil {
+		return
+	}
+	resp := dto.ResponseDto{Data: product.ToProductResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 func (h *ProductHandler) GetAll(ctx *gin.Context) {
 	var err error
 	defer func() {
@@ -101,7 +140,15 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 	}()
 
 	getAllProductQuery := queryparamdto.GetAllProductsQuery{}
-	_ = ctx.ShouldBindQuery(&getAllProductQuery)
+	err = ctx.ShouldBindQuery(&getAllProductQuery)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(getAllProductQuery)
+	if err != nil {
+		return
+	}
 
 	param, err := getAllProductQuery.ToGetAllParams()
 	if err != nil {
@@ -109,6 +156,46 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 	}
 
 	paginatedItems, err := h.uc.GetAll(ctx.Request.Context(), param)
+	if err != nil {
+		return
+	}
+
+	resps := make([]*responsedto.ProductResponse, 0)
+	for _, product := range paginatedItems.Items.([]*entity.Product) {
+		resps = append(resps, product.ToProductResponse())
+	}
+	paginatedItems.Items = resps
+
+	resp := dto.ResponseDto{Data: paginatedItems}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *ProductHandler) GetAllForAdmin(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	getAllProductsForAdminQuery := queryparamdto.GetAllProductsForAdminQuery{}
+	err = ctx.ShouldBindQuery(&getAllProductsForAdminQuery)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(getAllProductsForAdminQuery)
+	if err != nil {
+		return
+	}
+
+	param, err := getAllProductsForAdminQuery.ToGetAllParams()
+	if err != nil {
+		return
+	}
+
+	paginatedItems, err := h.uc.GetAllForAdminByPharmacyId(ctx.Request.Context(), getAllProductsForAdminQuery.GetPharmacyId(), param)
 	if err != nil {
 		return
 	}

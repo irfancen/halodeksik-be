@@ -61,3 +61,22 @@ func PascalToSnake(input string) string {
 
 	return builder.String()
 }
+
+func AppendAtIndex[T any](arr []T, index int, value T) []T {
+	if len(arr) == 0 || arr == nil {
+		arr = make([]T, 0)
+		arr = append(arr, value)
+		return arr
+	}
+
+	if index > len(arr)-1 {
+		index = len(arr) - 1
+	}
+
+	newArr := make([]T, 0)
+	newArr = append(newArr, arr[:index]...)
+	newArr = append(newArr, value)
+	newArr = append(newArr, arr[index:]...)
+
+	return newArr
+}

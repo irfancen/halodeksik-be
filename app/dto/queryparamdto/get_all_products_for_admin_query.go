@@ -1,7 +1,6 @@
 package queryparamdto
 
 import (
-	"fmt"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/entity"
@@ -10,26 +9,29 @@ import (
 	"strings"
 )
 
-type GetAllProductsQuery struct {
+type GetAllProductsForAdminQuery struct {
 	Search              string `form:"search"`
 	SortBy              string `form:"sort_by"`
 	Sort                string `form:"sort"`
 	DrugClassifications string `form:"drug_class"`
-	Latitude            string `form:"latitude" validate:"omitempty,latitude"`
-	Longitude           string `form:"longitude" validate:"omitempty,longitude"`
+	PharmacyId          string `form:"pharmacy_id" validate:"required,number"`
+	NotAdded            string `form:"not_added"`
 	Limit               string `form:"limit"`
 	Page                string `form:"page"`
 }
 
-func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
+func (q *GetAllProductsForAdminQuery) ToGetAllParams() (*GetAllParams, error) {
 	const (
 		sortByName = "name"
 		sortByDate = "date"
+
+		notAddedFalse = "false"
+		notAddedTrue  = "true"
 	)
 
 	param := NewGetAllParams()
 	product := new(entity.Product)
-	pharmacy := new(entity.Pharmacy)
+	pharmacyProduct := new(entity.PharmacyProduct)
 
 	if q.Search != "" {
 		words := strings.Split(q.Search, " ")
@@ -66,22 +68,22 @@ func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 	}
 
 	if !util.IsEmptyString(q.DrugClassifications) {
-		column := fmt.Sprintf("%s.%s", product.GetEntityName(), product.GetFieldStructTag("DrugClassificationId", appconstant.JsonStructTag))
+		column := product.GetSqlColumnFromField("DrugClassificationId")
 		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.In, q.DrugClassifications))
 	}
 
-	if !util.IsEmptyString(q.Latitude) && !util.IsEmptyString(q.Longitude) {
-		latColName := pharmacy.GetSqlColumnFromField("Latitude")
-		lonColName := pharmacy.GetSqlColumnFromField("Longitude")
-
+	switch q.NotAdded {
+	case notAddedTrue:
 		param.WhereClauses = append(
 			param.WhereClauses,
-			appdb.NewWhere(
-				fmt.Sprintf("distance(%s, %s, '%s', '%s')", latColName, lonColName, q.Latitude, q.Longitude),
-				appdb.LessOrEqualTo,
-				appconstant.ClosestPharmacyRangeRadius,
-			),
+			appdb.NewWhere(pharmacyProduct.GetSqlColumnFromField("ProductId"), appdb.Is, nil),
 		)
+	case notAddedFalse:
+		param.WhereClauses = append(
+			param.WhereClauses,
+			appdb.NewWhere(pharmacyProduct.GetSqlColumnFromField("ProductId"), appdb.IsNot, nil),
+		)
+	default:
 	}
 
 	param.GroupClauses = append(
@@ -110,6 +112,7 @@ func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 	return param, nil
 }
 
-func (q *GetAllProductsQuery) GetCurrentLocation() (string, string) {
-	return q.Latitude, q.Longitude
+func (q *GetAllProductsForAdminQuery) GetPharmacyId() int64 {
+	pharmacyId, _ := strconv.ParseInt(q.PharmacyId, 10, 64)
+	return pharmacyId
 }

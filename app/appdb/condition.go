@@ -10,6 +10,7 @@ const (
 	LessThan         DBCondition = "<"
 	LessOrEqualTo    DBCondition = "<="
 	Is                           = "IS"
+	IsNot                        = "IS NOT"
 	In                           = "IN"
 	Not                          = "NOT"
 	Like             DBCondition = "LIKE"
@@ -18,4 +19,5 @@ const (
 	NotILike         DBCondition = "NOT ILIKE"
 	OrderAsc         DBCondition = "ASC"
 	OrderDesc        DBCondition = "DESC"
+	Null             DBCondition = "NULL"
 )

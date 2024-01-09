@@ -272,7 +272,7 @@ WHERE email = $1
 
 func (repo *UserRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error) {
 	initQuery := `SELECT id, email, user_role_id, is_verified FROM users WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.User{}, param)
+	query, values := buildQuery(initQuery, &entity.User{}, param, true)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {

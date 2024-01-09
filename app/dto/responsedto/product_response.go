@@ -20,4 +20,6 @@ type ProductResponse struct {
 	ManufacturerResponse       *ManufacturerResponse       `json:"manufacturer,omitempty"`
 	DrugClassificationResponse *DrugClassificationResponse `json:"drug_classification,omitempty"`
 	ProductCategoryResponse    *ProductCategoryResponse    `json:"product_category,omitempty"`
+	MinimumPrice               string                      `json:"minimum_price,omitempty"`
+	MaximumPrice               string                      `json:"maximum_price,omitempty"`
 }

@@ -187,8 +187,20 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 
 		products := v1.Group("/products")
 		{
-			products.GET("/:id", rOpts.ProductHandler.GetById)
+			products.GET(
+				"/:id/admin",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				rOpts.ProductHandler.GetById,
+			)
+			products.GET("/:id", rOpts.ProductHandler.GetByIdForUser)
 			products.GET("", rOpts.ProductHandler.GetAll)
+			products.GET(
+				"/admin",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				rOpts.ProductHandler.GetAllForAdmin,
+			)
 			products.POST(
 				"",
 				middleware.LoginMiddleware(),

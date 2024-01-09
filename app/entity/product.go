@@ -3,6 +3,7 @@ package entity
 import (
 	"database/sql"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/dto/responsedto"
 	"reflect"
@@ -32,6 +33,8 @@ type Product struct {
 	Manufacturer         *Manufacturer
 	DrugClassification   *DrugClassification
 	ProductCategory      *ProductCategory
+	MinimumPrice         decimal.Decimal
+	MaximumPrice         decimal.Decimal
 }
 
 func (p *Product) GetEntityName() string {
@@ -54,6 +57,16 @@ func (p *Product) ToProductResponse() *responsedto.ProductResponse {
 	if p == nil {
 		return nil
 	}
+	minimumPrice := p.MinimumPrice.String()
+	maximumPrice := p.MaximumPrice.String()
+
+	if p.MinimumPrice.IsZero() {
+		minimumPrice = ""
+	}
+	if p.MaximumPrice.IsZero() {
+		maximumPrice = ""
+	}
+
 	return &responsedto.ProductResponse{
 		Id:                         p.Id,
 		Name:                       p.Name,
@@ -74,5 +87,7 @@ func (p *Product) ToProductResponse() *responsedto.ProductResponse {
 		ManufacturerResponse:       p.Manufacturer.ToResponse(),
 		DrugClassificationResponse: p.DrugClassification.ToResponse(),
 		ProductCategoryResponse:    p.ProductCategory.ToResponse(),
+		MinimumPrice:               minimumPrice,
+		MaximumPrice:               maximumPrice,
 	}
 }

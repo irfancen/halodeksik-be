@@ -4,18 +4,22 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/jackc/pgx/v5/pgconn"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
-
-	"github.com/jackc/pgx/v5/pgconn"
+	"halodeksik-be/app/util"
+	"log"
 )
 
 type ProductRepository interface {
 	Create(ctx context.Context, product entity.Product) (*entity.Product, error)
 	FindById(ctx context.Context, id int64) (*entity.Product, error)
+	FindByIdForUser(ctx context.Context, id int64, param *queryparamdto.GetAllParams) (*entity.Product, error)
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
+	FindAllForAdmin(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
+	CountFindAllForAdmin(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (int64, error)
 	Update(ctx context.Context, product entity.Product) (*entity.Product, error)
 	Delete(ctx context.Context, id int64) error
 }
@@ -56,13 +60,15 @@ func (repo *ProductRepositoryImpl) Create(ctx context.Context, product entity.Pr
 }
 
 func (repo *ProductRepositoryImpl) FindById(ctx context.Context, id int64) (*entity.Product, error) {
-	const getById = `
-SELECT p.id, p.name, p.generic_name, p.content, p.manufacturer_id, p.description, p.drug_classification_id, p.product_category_id, p.drug_form, p.unit_in_pack, p.selling_unit, p.weight, p.length, p.width, p.height, p.image, p.created_at, p.updated_at, p.deleted_at, pc.name, m.name, dc.name
-FROM products p
-         INNER JOIN product_categories pc ON p.product_category_id = pc.id
-         INNER JOIN manufacturers m ON p.manufacturer_id = m.id
-         INNER JOIN drug_classifications dc ON p.drug_classification_id = dc.id
-WHERE p.id = $1 AND p.deleted_at IS NULL`
+	const getById = `SELECT p.id, p.name, p.generic_name, p.content, p.manufacturer_id, p.description, 
+    	p.drug_classification_id, p.product_category_id, p.drug_form, p.unit_in_pack, p.selling_unit, p.weight, p.length, p.width, p.height, p.image, p.created_at, p.updated_at, p.deleted_at, pc.name, m.name, dc.name
+	FROM products p
+	INNER JOIN product_categories pc ON p.product_category_id = pc.id
+	INNER JOIN manufacturers m ON p.manufacturer_id = m.id
+    INNER JOIN drug_classifications dc ON p.drug_classification_id = dc.id 
+	INNER JOIN pharmacy_products ON p.id = pharmacy_products.product_id 
+	WHERE p.id = $1 AND p.deleted_at IS NULL
+	GROUP BY p.id, pc.id, m.id, dc.id`
 
 	row := repo.db.QueryRowContext(ctx, getById, id)
 	if row.Err() != nil {
@@ -92,9 +98,138 @@ WHERE p.id = $1 AND p.deleted_at IS NULL`
 	return &product, err
 }
 
+func (repo *ProductRepositoryImpl) FindByIdForUser(ctx context.Context, id int64, param *queryparamdto.GetAllParams) (*entity.Product, error) {
+	initQuery := `SELECT products.id, products.name, products.generic_name, products.content, products.manufacturer_id, 
+       products.description, products.drug_classification_id, products.product_category_id, products.drug_form, 
+       products.unit_in_pack, products.selling_unit, products.weight, products.length, products.width, products.height, 
+       products.image, products.created_at, products.updated_at, products.deleted_at, 
+       product_categories.name, manufacturers.name, drug_classifications.name,
+		min(pharmacy_products.price), max(pharmacy_products.price)
+	FROM products
+	INNER JOIN product_categories ON products.product_category_id = product_categories.id
+	INNER JOIN manufacturers ON products.manufacturer_id = manufacturers.id
+    INNER JOIN drug_classifications ON products.drug_classification_id = drug_classifications.id 
+	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id 
+	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+	WHERE products.id = $1 AND products.deleted_at IS NULL `
+	indexPreparedStatement := 1
+
+	query, values := buildQuery(initQuery, &entity.Product{}, param, false, indexPreparedStatement)
+	values = util.AppendAtIndex(values, 0, interface{}(id))
+
+	row := repo.db.QueryRowContext(ctx, query, values...)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	var (
+		product            entity.Product
+		productCategory    entity.ProductCategory
+		manufacturer       entity.Manufacturer
+		drugClassification entity.DrugClassification
+	)
+	err := row.Scan(
+		&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
+		&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image, &product.CreatedAt, &product.UpdatedAt, &product.DeletedAt,
+		&productCategory.Name, &manufacturer.Name, &drugClassification.Name, &product.MinimumPrice, &product.MaximumPrice,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	product.ProductCategory = &productCategory
+	product.Manufacturer = &manufacturer
+	product.DrugClassification = &drugClassification
+	return &product, err
+}
+
 func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error) {
-	initQuery := `SELECT id, name, generic_name, content, manufacturer_id, description, drug_classification_id, product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image FROM products WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.Product{}, param)
+	initQuery := `SELECT products.id, products.name, generic_name, content, manufacturer_id, description, drug_classification_id, product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image,
+       min(pharmacy_products.price), max(pharmacy_products.price)
+	FROM products 
+	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id
+	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+	WHERE products.deleted_at IS NULL `
+	query, values := buildQuery(initQuery, &entity.Product{}, param, true)
+
+	log.Println(query)
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*entity.Product, 0)
+	for rows.Next() {
+		var product entity.Product
+		if err := rows.Scan(
+			&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
+			&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image,
+			&product.MinimumPrice, &product.MaximumPrice,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &product)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
+	initQuery := `SELECT count(products.id) 
+	FROM products 
+	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id
+	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+	WHERE products.deleted_at IS NULL `
+	query, values := buildQuery(initQuery, &entity.Product{}, param, false)
+
+	var (
+		totalItems int64
+		temp       int64
+	)
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return totalItems, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(
+			&temp,
+		); err != nil {
+			return totalItems, err
+		}
+		totalItems++
+	}
+
+	if err := rows.Err(); err != nil {
+		return totalItems, err
+	}
+	return totalItems, nil
+}
+
+func (repo *ProductRepositoryImpl) FindAllForAdmin(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) ([]*entity.Product, error) {
+	initQuery := `
+	SELECT products.id, products.name, products.generic_name, products.content, products.manufacturer_id, products.description, 
+		   products.drug_classification_id, products.product_category_id, products.drug_form, products.unit_in_pack, products.selling_unit, products.weight, products.length, products.width, products.height, products.image
+			FROM products
+			 LEFT JOIN (
+			pharmacy_products
+			JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+			AND pharmacies.id = $1
+		) ON products.id = pharmacy_products.product_id 
+		WHERE products.deleted_at IS NULL `
+	indexPreparedStatement := 1
+
+	query, values := buildQuery(initQuery, &entity.Product{}, param, true, indexPreparedStatement)
+	values = util.AppendAtIndex(values, 0, interface{}(pharmacyId))
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -120,11 +255,25 @@ func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *querypara
 	return items, nil
 }
 
-func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
-	initQuery := `SELECT count(id) FROM products WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.Product{}, param, false)
+func (repo *ProductRepositoryImpl) CountFindAllForAdmin(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (int64, error) {
+	initQuery := `
+	SELECT COUNT(products.id)
+			FROM products
+			 LEFT JOIN (
+			pharmacy_products
+			JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+			AND pharmacies.id = $1
+		) ON products.id = pharmacy_products.product_id 
+		WHERE products.deleted_at IS NULL `
+	indexPreparedStatement := 1
 
-	var totalItems int64
+	query, values := buildQuery(initQuery, &entity.Product{}, param, false, indexPreparedStatement)
+	values = util.AppendAtIndex(values, 0, interface{}(pharmacyId))
+
+	var (
+		totalItems int64
+		temp       int64
+	)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -134,10 +283,11 @@ func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *quer
 
 	for rows.Next() {
 		if err := rows.Scan(
-			&totalItems,
+			&temp,
 		); err != nil {
 			return totalItems, err
 		}
+		totalItems++
 	}
 
 	if err := rows.Err(); err != nil {
