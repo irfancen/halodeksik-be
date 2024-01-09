@@ -20,6 +20,8 @@ var (
 
 	ErrPasswordTooLong       = errors.New("password too long")
 	ErrStartDateAfterEndDate = errors.New("start date cannot be after end date")
+	ErrForbiddenViewEntity   = errors.New("you are not allowed to view this entity")
+	ErrForbiddenModifyEntity = errors.New("you are not allowed to modify this entity")
 
 	ErrInvalidDecimal     = errors.New("invalid decimal")
 	ErrInvalidIntInString = errors.New("invalid integer in string")

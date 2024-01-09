@@ -28,6 +28,9 @@ CREATE TABLE users
     deleted_at   TIMESTAMPTZ DEFAULT NULL
 );
 
+INSERT INTO users (email, password, user_role_id, is_verified)
+VALUES ('byebyesick@gmail.com', '$2a$04$MYf2/GkfNPUUZUj8zInF.ej7KqSVO3KlJrbNEwkCtCerFXzqbOsDe', 1, true);
+
 CREATE TABLE doctor_specializations
 (
     id         BIGSERIAL PRIMARY KEY,

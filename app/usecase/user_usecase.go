@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
@@ -14,8 +15,8 @@ type UserUseCase interface {
 	AddAdmin(ctx context.Context, admin entity.User) (*entity.User, error)
 	GetById(ctx context.Context, id int64) (*entity.User, error)
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
-	Edit(ctx context.Context, id int64, user entity.User) (*entity.User, error)
-	Remove(ctx context.Context, id int64) error
+	EditAdmin(ctx context.Context, id int64, user entity.User) (*entity.User, error)
+	RemoveAdmin(ctx context.Context, id int64) error
 }
 
 type UserUseCaseImpl struct {
@@ -55,6 +56,13 @@ func (uc *UserUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.User,
 	if err != nil {
 		return nil, err
 	}
+
+	currentUserId := ctx.Value(appconstant.ContextKeyUserId).(int64)
+	currentUserRoleId := ctx.Value(appconstant.ContextKeyRoleId).(int64)
+	if currentUserRoleId != appconstant.UserRoleIdAdmin && currentUserId != user.Id {
+		return nil, apperror.ErrForbiddenViewEntity
+	}
+
 	return user, nil
 }
 
@@ -81,10 +89,14 @@ func (uc *UserUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetA
 	return paginatedItems, nil
 }
 
-func (uc *UserUseCaseImpl) Edit(ctx context.Context, id int64, user entity.User) (*entity.User, error) {
+func (uc *UserUseCaseImpl) EditAdmin(ctx context.Context, id int64, user entity.User) (*entity.User, error) {
 	userdb, err := uc.GetById(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+
+	if userdb.UserRoleId != appconstant.UserRoleIdPharmacyAdmin {
+		return nil, apperror.ErrForbiddenModifyEntity
 	}
 
 	if user.Email == "" && user.Password == "" {
@@ -110,12 +122,17 @@ func (uc *UserUseCaseImpl) Edit(ctx context.Context, id int64, user entity.User)
 	return updated, nil
 }
 
-func (uc *UserUseCaseImpl) Remove(ctx context.Context, id int64) error {
-	if _, err := uc.GetById(ctx, id); err != nil {
+func (uc *UserUseCaseImpl) RemoveAdmin(ctx context.Context, id int64) error {
+	userdb, err := uc.GetById(ctx, id)
+	if err != nil {
 		return err
 	}
 
-	err := uc.repo.Delete(ctx, id)
+	if userdb.UserRoleId != appconstant.UserRoleIdPharmacyAdmin {
+		return apperror.ErrForbiddenModifyEntity
+	}
+
+	err = uc.repo.Delete(ctx, id)
 	if err != nil {
 		return err
 	}

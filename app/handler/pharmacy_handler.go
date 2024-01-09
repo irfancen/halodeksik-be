@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"github.com/gin-gonic/gin"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
 	"halodeksik-be/app/dto/queryparamdto"
@@ -10,8 +12,6 @@ import (
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 type PharmacyHandler struct {
@@ -33,6 +33,7 @@ func (h *PharmacyHandler) Add(ctx *gin.Context) {
 	}()
 
 	req := requestdto.AddEditPharmacy{}
+	req.PharmacyAdminId = ctx.Request.Context().Value(appconstant.ContextKeyUserId).(int64)
 	err = ctx.ShouldBindJSON(&req)
 	if err != nil {
 		return
@@ -91,7 +92,7 @@ func (h *PharmacyHandler) GetAll(ctx *gin.Context) {
 	getAllPharmacyQuery := queryparamdto.GetAllPharmaciesQuery{}
 	_ = ctx.ShouldBindQuery(&getAllPharmacyQuery)
 
-	param, err := getAllPharmacyQuery.ToGetAllParams()
+	param, err := getAllPharmacyQuery.ToGetAllParams(ctx.Request.Context().Value(appconstant.ContextKeyUserId).(int64))
 	if err != nil {
 		return
 	}

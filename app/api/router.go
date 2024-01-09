@@ -139,7 +139,11 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			manufacturers.GET("/no-params", rOpts.ManufacturerHandler.GetAllWithoutParams)
 		}
 
-		pharmacy := v1.Group("/pharmacies")
+		pharmacy := v1.Group(
+			"/pharmacies",
+			middleware.LoginMiddleware(),
+			middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+		)
 		{
 			pharmacy.GET("", rOpts.PharmacyHandler.GetAll)
 			pharmacy.GET("/:id", rOpts.PharmacyHandler.GetById)
@@ -231,13 +235,27 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			stockMutation.POST("", rOpts.ProductStockMutationHandler.Add)
 		}
 
-		users := v1.Group("/users")
+		users := v1.Group(
+			"/users",
+			middleware.LoginMiddleware(),
+		)
 		{
 			users.GET("/:id", rOpts.UserHandler.GetById)
-			users.GET("", rOpts.UserHandler.GetAll)
-			users.POST("/admin", rOpts.UserHandler.AddAdmin)
-			users.PATCH("/admin/:id", rOpts.UserHandler.Edit)
-			users.DELETE("/admin/:id", rOpts.UserHandler.Remove)
+			users.GET(
+				"",
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.UserHandler.GetAll,
+			)
+
+			admin := users.Group(
+				"/admin",
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+			)
+			{
+				admin.POST("", rOpts.UserHandler.AddAdmin)
+				admin.PATCH("/:id", rOpts.UserHandler.EditAdmin)
+				admin.DELETE("/:id", rOpts.UserHandler.RemoveAdmin)
+			}
 		}
 	}
 
