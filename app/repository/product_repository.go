@@ -65,7 +65,6 @@ func (repo *ProductRepositoryImpl) FindById(ctx context.Context, id int64) (*ent
 	INNER JOIN product_categories pc ON p.product_category_id = pc.id
 	INNER JOIN manufacturers m ON p.manufacturer_id = m.id
     INNER JOIN drug_classifications dc ON p.drug_classification_id = dc.id 
-	INNER JOIN pharmacy_products ON p.id = pharmacy_products.product_id 
 	WHERE p.id = $1 AND p.deleted_at IS NULL
 	GROUP BY p.id, pc.id, m.id, dc.id`
 
