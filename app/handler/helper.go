@@ -96,6 +96,9 @@ func WrapError(err error, customCode ...int) error {
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrForbiddenModifyEntity):
 		errWrapper.Code = http.StatusForbidden
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrDeleteAlreadyAssignedAdmin):
+		fallthrough
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidDecimal):
 		fallthrough
 
