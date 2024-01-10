@@ -6,6 +6,7 @@ import (
 )
 
 type AllRepositories struct {
+	AddressAreaRepository          repository.AddressAreaRepository
 	CartItemRepository             repository.CartItemRepository
 	DrugClassificationRepository   repository.DrugClassificationRepository
 	ManufacturerRepository         repository.ManufacturerRepository
@@ -23,6 +24,7 @@ type AllRepositories struct {
 
 func InitializeRepositories(db *sql.DB) *AllRepositories {
 	return &AllRepositories{
+		AddressAreaRepository:          repository.NewAddressAreaRepositoryImpl(db),
 		CartItemRepository:             repository.NewCartItemRepositoryImpl(db),
 		DrugClassificationRepository:   repository.NewDrugClassificationRepositoryImpl(db),
 		ManufacturerRepository:         repository.NewManufacturerRepositoryImpl(db),

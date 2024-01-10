@@ -15,6 +15,7 @@ import (
 )
 
 type RouterOpts struct {
+	AddressAreaHandler          *handler.AddressAreaHandler
 	AuthHandler                 *handler.AuthHandler
 	CartItemHandler             *handler.CartItemHandler
 	DrugClassificationHandler   *handler.DrugClassificationHandler
@@ -33,7 +34,8 @@ type RouterOpts struct {
 
 func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 	return &RouterOpts{
-		AuthHandler:                 handler.NewAuthHandler(allUC.AuthUsecase, appvalidator.Validator),
+		AddressAreaHandler:          handler.NewAddressAreaHandler(allUC.AddressAreaUseCase),
+		AuthHandler:                 handler.NewAuthHandler(allUC.AuthUseCase, appvalidator.Validator),
 		CartItemHandler:             handler.NewCartItemHandler(allUC.CartItemUseCase, appvalidator.Validator),
 		DrugClassificationHandler:   handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
 		ManufacturerHandler:         handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
@@ -89,6 +91,12 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 
 	v1 := router.Group("/v1")
 	{
+		addressArea := v1.Group("/address-area")
+		{
+			addressArea.GET("/provinces/no-params", rOpts.AddressAreaHandler.GetAllProvince)
+			addressArea.GET("/cities/no-params", rOpts.AddressAreaHandler.GetAllCities)
+		}
+
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/register-token", rOpts.RegisterTokenHandler.SendRegisterToken)
