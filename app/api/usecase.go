@@ -6,7 +6,8 @@ import (
 )
 
 type AllUseCases struct {
-	AuthUsecase                 usecase.AuthUsecase
+	AddressAreaUseCase          usecase.AddressAreaUseCase
+	AuthUseCase                 usecase.AuthUsecase
 	CartItemUseCase             usecase.CartItemUseCase
 	DrugClassificationUseCase   usecase.DrugClassificationUseCase
 	ManufacturerUseCase         usecase.ManufacturerUseCase
@@ -35,7 +36,8 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 	authCases := usecase.AuthUseCases{TForgotUseCase: forgotTokenUseCase, TRegisterUseCase: registerTokenUseCase}
 
 	return &AllUseCases{
-		AuthUsecase:                 usecase.NewAuthUsecase(authRepos, allUtil.AuthUtil, appcloud.AppFileUploader, authCases),
+		AddressAreaUseCase:          usecase.NewAddressAreaUseCaseImpl(allRepo.AddressAreaRepository),
+		AuthUseCase:                 usecase.NewAuthUsecase(authRepos, allUtil.AuthUtil, appcloud.AppFileUploader, authCases),
 		CartItemUseCase:             usecase.NewCartItemUseCaseImpl(allRepo.CartItemRepository, allRepo.ProductRepository, allRepo.PharmacyProductRepository),
 		DrugClassificationUseCase:   usecase.NewDrugClassificationUseCaseImpl(allRepo.DrugClassificationRepository),
 		ManufacturerUseCase:         usecase.NewManufacturerUseCaseImpl(allRepo.ManufacturerRepository),
