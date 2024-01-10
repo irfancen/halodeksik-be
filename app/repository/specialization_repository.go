@@ -13,6 +13,7 @@ type DoctorSpecializationRepository interface {
 	FindById(ctx context.Context, id int64) (*entity.DoctorSpecialization, error)
 	FindAllWithoutParams(ctx context.Context) ([]*entity.DoctorSpecialization, error)
 	Update(ctx context.Context, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
+	Delete(ctx context.Context, id int64) error
 }
 
 type DoctorSpecializationRepositoryImpl struct {
@@ -96,4 +97,10 @@ func (repo *DoctorSpecializationRepositoryImpl) Update(ctx context.Context, spec
 	)
 
 	return &updated, err
+}
+
+func (repo *DoctorSpecializationRepositoryImpl) Delete(ctx context.Context, id int64) error {
+	const deleteQ = `UPDATE doctor_specializations SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL `
+	_, err := repo.db.ExecContext(ctx, deleteQ, id)
+	return err
 }

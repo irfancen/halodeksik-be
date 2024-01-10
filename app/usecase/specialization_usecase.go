@@ -16,6 +16,7 @@ type DoctorSpecializationUseCase interface {
 	GetById(ctx context.Context, id int64) (*entity.DoctorSpecialization, error)
 	GetAllSpecsWithoutParams(ctx context.Context) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, id int64, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
+	Remove(ctx context.Context, id int64) error
 }
 
 type DoctorSpecializationUseCaseImpl struct {
@@ -111,4 +112,16 @@ func (uc *DoctorSpecializationUseCaseImpl) Edit(ctx context.Context, id int64, s
 		return nil, err
 	}
 	return updated, nil
+}
+
+func (uc *DoctorSpecializationUseCaseImpl) Remove(ctx context.Context, id int64) error {
+	_, err := uc.GetById(ctx, id)
+	if err != nil {
+		return err
+	}
+	err = uc.repo.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
