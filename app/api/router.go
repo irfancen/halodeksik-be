@@ -38,7 +38,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		AuthHandler:                 handler.NewAuthHandler(allUC.AuthUseCase, appvalidator.Validator),
 		CartItemHandler:             handler.NewCartItemHandler(allUC.CartItemUseCase, appvalidator.Validator),
 		DrugClassificationHandler:   handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
-		ManufacturerHandler:         handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
+		ManufacturerHandler:         handler.NewManufacturerHandler(allUC.ManufacturerUseCase, appvalidator.Validator),
 		PharmacyHandler:             handler.NewPharmacyHandler(allUC.PharmacyUseCase, appvalidator.Validator),
 		PharmacyProductsHandler:     handler.NewPharmacyProductHAndler(allUC.PharmacyProductUseCase, appvalidator.Validator),
 		ProductCategoryHandler:      handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase, appvalidator.Validator),
@@ -144,7 +144,27 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 
 		manufacturers := v1.Group("/manufacturers")
 		{
+			manufacturers.GET("/:id", rOpts.ManufacturerHandler.GetById)
 			manufacturers.GET("/no-params", rOpts.ManufacturerHandler.GetAllWithoutParams)
+			manufacturers.GET("", rOpts.ManufacturerHandler.GetAll)
+			manufacturers.POST(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.ManufacturerHandler.Add,
+			)
+			manufacturers.PUT(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.ManufacturerHandler.Edit,
+			)
+			manufacturers.DELETE(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.ManufacturerHandler.Remove,
+			)
 		}
 
 		pharmacy := v1.Group(

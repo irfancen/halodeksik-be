@@ -45,6 +45,7 @@ CREATE TABLE doctor_specializations
 (
     id         BIGSERIAL PRIMARY KEY,
     name       VARCHAR                   NOT NULL,
+    image      VARCHAR                   NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     deleted_at TIMESTAMPTZ DEFAULT NULL
@@ -165,6 +166,7 @@ CREATE TABLE manufacturers
 (
     id         BIGSERIAL PRIMARY KEY,
     name       VARCHAR                   NOT NULL,
+    image      VARCHAR                   NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     deleted_at TIMESTAMPTZ DEFAULT NULL
@@ -421,15 +423,15 @@ values ('Admin'),
 INSERT INTO users (email, password, user_role_id, is_verified)
 VALUES ('byebyesick@gmail.com', '$2a$04$MYf2/GkfNPUUZUj8zInF.ej7KqSVO3KlJrbNEwkCtCerFXzqbOsDe', 1, true);
 
-INSERT INTO doctor_specializations (name)
-values ('General Practitioners'),
-       ('Pediatric Specialist'),
-       ('Internal Medicine specialist'),
-       ('Surgical Specialist');
+INSERT INTO doctor_specializations (name, image)
+values ('General Practitioners', ''),
+       ('Pediatric Specialist', ''),
+       ('Internal Medicine specialist', ''),
+       ('Surgical Specialist', '');
 
-INSERT INTO manufacturers (name)
-values ('Soho Industri Pharmasi'),
-       ('Amarox Pharma Global');
+INSERT INTO manufacturers (name, image)
+values ('Soho Industri Pharmasi', ''),
+       ('Amarox Pharma Global', '');
 
 INSERT INTO shipping_methods (name)
 values ('Official Instant'),

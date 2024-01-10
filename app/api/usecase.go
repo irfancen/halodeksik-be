@@ -40,7 +40,7 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 		AuthUseCase:                 usecase.NewAuthUsecase(authRepos, allUtil.AuthUtil, appcloud.AppFileUploader, authCases),
 		CartItemUseCase:             usecase.NewCartItemUseCaseImpl(allRepo.CartItemRepository, allRepo.ProductRepository, allRepo.PharmacyProductRepository),
 		DrugClassificationUseCase:   usecase.NewDrugClassificationUseCaseImpl(allRepo.DrugClassificationRepository),
-		ManufacturerUseCase:         usecase.NewManufacturerUseCaseImpl(allRepo.ManufacturerRepository),
+		ManufacturerUseCase:         usecase.NewManufacturerUseCaseImpl(allRepo.ManufacturerRepository, appcloud.AppFileUploader),
 		PharmacyUseCase:             usecase.NewPharmacyUseCseImpl(allRepo.PharmacyRepository),
 		PharmacyProductUseCase:      usecase.NewPharmacyProductUseCaseImpl(allRepo.PharmacyProductRepository, allRepo.PharmacyRepository, allRepo.ProductRepository),
 		ProductCategoryUseCase:      usecase.NewProductCategoryUseCaseImpl(allRepo.ProductCategoryRepository),
