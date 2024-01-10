@@ -48,7 +48,7 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 		ProductStockMutation:        usecase.NewProductStockMutationUseCaseImpl(allRepo.ProductStockMutationRepository, allRepo.PharmacyProductRepository),
 		UserUseCase:                 usecase.NewUserUseCaseImpl(allRepo.UserRepository, allRepo.PharmacyRepository, allUtil.AuthUtil),
 		ProfileUseCase:              usecase.NewProfileUseCaseImpl(allRepo.ProfileRepository),
-		DoctorSpecializationUseCase: usecase.NewDoctorSpecializationUseCaseImpl(allRepo.DoctorSpecializationRepository),
+		DoctorSpecializationUseCase: usecase.NewDoctorSpecializationUseCaseImpl(allRepo.DoctorSpecializationRepository, appcloud.AppFileUploader),
 		ForgotTokenUseCase:          forgotTokenUseCase,
 		RegisterTokenUseCase:        registerTokenUseCase,
 	}

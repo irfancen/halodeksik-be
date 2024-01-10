@@ -46,7 +46,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		ProductStockMutationHandler: handler.NewProductStockMutationHandler(allUC.ProductStockMutation, appvalidator.Validator),
 		StockReportHandler:          handler.NewStockReportHandler(allUC.ProductStockMutation, appvalidator.Validator),
 		UserHandler:                 handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
-		DoctorSpecsHandler:          handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase),
+		DoctorSpecsHandler:          handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase, appvalidator.Validator),
 		ForgotTokenHandler:          handler.NewForgotTokenHandler(allUC.ForgotTokenUseCase, appvalidator.Validator),
 		RegisterTokenHandler:        handler.NewRegisterTokenHandler(allUC.RegisterTokenUseCase, appvalidator.Validator),
 	}
@@ -139,7 +139,27 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 
 		specs := v1.Group("/doctor-specs")
 		{
+			specs.GET("/:id", rOpts.DoctorSpecsHandler.GetById)
 			specs.GET("/no-params", rOpts.DoctorSpecsHandler.GetAllWithoutParams)
+			specs.GET("", rOpts.DoctorSpecsHandler.GetAll)
+			specs.POST(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.DoctorSpecsHandler.Add,
+			)
+			specs.PUT(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.DoctorSpecsHandler.Edit,
+			)
+			specs.DELETE(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.DoctorSpecsHandler.Remove,
+			)
 		}
 
 		manufacturers := v1.Group("/manufacturers")
