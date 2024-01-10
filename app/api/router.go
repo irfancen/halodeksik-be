@@ -44,7 +44,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		ProductStockMutationHandler: handler.NewProductStockMutationHandler(allUC.ProductStockMutation, appvalidator.Validator),
 		StockReportHandler:          handler.NewStockReportHandler(allUC.ProductStockMutation, appvalidator.Validator),
 		UserHandler:                 handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
-		DoctorSpecsHandler:          handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase),
+		DoctorSpecsHandler:          handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase, appvalidator.Validator),
 		ForgotTokenHandler:          handler.NewForgotTokenHandler(allUC.ForgotTokenUseCase, appvalidator.Validator),
 		RegisterTokenHandler:        handler.NewRegisterTokenHandler(allUC.RegisterTokenUseCase, appvalidator.Validator),
 	}
@@ -132,6 +132,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		specs := v1.Group("/doctor-specs")
 		{
 			specs.GET("/no-params", rOpts.DoctorSpecsHandler.GetAllWithoutParams)
+			specs.POST("", rOpts.DoctorSpecsHandler.Add)
 		}
 
 		manufacturers := v1.Group("/manufacturers")

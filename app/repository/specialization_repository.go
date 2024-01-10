@@ -7,6 +7,7 @@ import (
 )
 
 type DoctorSpecializationRepository interface {
+	Create(ctx context.Context, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
 	FindAllWithoutParams(ctx context.Context) ([]*entity.DoctorSpecialization, error)
 }
 
@@ -16,6 +17,19 @@ type DoctorSpecializationRepositoryImpl struct {
 
 func NewDoctorSpecializationRepositoryImpl(db *sql.DB) *DoctorSpecializationRepositoryImpl {
 	return &DoctorSpecializationRepositoryImpl{db: db}
+}
+
+func (repo *DoctorSpecializationRepositoryImpl) Create(ctx context.Context, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error) {
+	const create = `INSERT INTO doctor_specializations(name, image)
+	VALUES ($1, $2) RETURNING id, name, image, created_at, updated_at, deleted_at`
+
+	row := repo.db.QueryRowContext(ctx, create, specialization.Name, specialization.Image)
+	var created entity.DoctorSpecialization
+	err := row.Scan(
+		&created.Id, &created.Name, &created.Image, &created.CreatedAt, &created.UpdatedAt, &created.DeletedAt,
+	)
+
+	return &created, err
 }
 
 func (repo *DoctorSpecializationRepositoryImpl) FindAllWithoutParams(ctx context.Context) ([]*entity.DoctorSpecialization, error) {
