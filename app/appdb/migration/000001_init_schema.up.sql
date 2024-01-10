@@ -35,16 +35,17 @@ CREATE TABLE doctor_specializations
 (
     id         BIGSERIAL PRIMARY KEY,
     name       VARCHAR                   NOT NULL,
+    image      VARCHAR                   NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
-INSERT INTO doctor_specializations (name)
-values ('General Practitioners'),
-       ('Pediatric Specialist'),
-       ('Internal Medicine specialist'),
-       ('Surgical Specialist');
+INSERT INTO doctor_specializations (name, image)
+values ('General Practitioners', ''),
+       ('Pediatric Specialist', ''),
+       ('Internal Medicine specialist', ''),
+       ('Surgical Specialist', '');
 
 CREATE TABLE doctor_profiles
 (

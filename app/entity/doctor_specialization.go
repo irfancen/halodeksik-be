@@ -9,6 +9,7 @@ import (
 type DoctorSpecialization struct {
 	Id        int64        `json:"id"`
 	Name      string       `json:"name"`
+	Image     string       `json:"image"`
 	CreatedAt time.Time    `json:"created_at"`
 	UpdatedAt time.Time    `json:"updated_at"`
 	DeletedAt sql.NullTime `json:"deleted_at"`
@@ -19,7 +20,8 @@ func (e *DoctorSpecialization) ToResponse() *responsedto.SpecializationResponse 
 		return nil
 	}
 	return &responsedto.SpecializationResponse{
-		Id:   e.Id,
-		Name: e.Name,
+		Id:    e.Id,
+		Name:  e.Name,
+		Image: e.Image,
 	}
 }
