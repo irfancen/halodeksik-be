@@ -119,5 +119,9 @@ func (uc *ManufacturerUseCaseImpl) Remove(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
+	err = uc.repo.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -87,7 +87,7 @@ func (repo *ManufacturerRepositoryImpl) FindById(ctx context.Context, id int64) 
 
 func (repo *ManufacturerRepositoryImpl) Update(ctx context.Context, manufacturer entity.Manufacturer) (*entity.Manufacturer, error) {
 	const update = `UPDATE manufacturers
-	SET name = $1, image = $2 WHERE id = $3 RETURNING id, name, image, created_at, updated_at, deleted_at`
+	SET name = $1, image = $2 WHERE id = $3 AND deleted_at IS NULL RETURNING id, name, image, created_at, updated_at, deleted_at`
 
 	row := repo.db.QueryRowContext(ctx, update, manufacturer.Name, manufacturer.Image, manufacturer.Id)
 	var updated entity.Manufacturer
@@ -99,7 +99,7 @@ func (repo *ManufacturerRepositoryImpl) Update(ctx context.Context, manufacturer
 }
 
 func (repo *ManufacturerRepositoryImpl) Delete(ctx context.Context, id int64) error {
-	const deleteQ = `UPDATE manufacturers SET deleted_at = now() WHERE id = $1`
+	const deleteQ = `UPDATE manufacturers SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL `
 	_, err := repo.db.ExecContext(ctx, deleteQ, id)
 	return err
 }
