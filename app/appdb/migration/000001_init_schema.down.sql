@@ -33,3 +33,5 @@ DROP TABLE IF EXISTS doctor_profiles;
 DROP TABLE IF EXISTS doctor_specializations;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS cities;
+DROP TABLE IF EXISTS provinces;
