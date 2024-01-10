@@ -134,9 +134,24 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			specs.GET("/:id", rOpts.DoctorSpecsHandler.GetById)
 			specs.GET("/no-params", rOpts.DoctorSpecsHandler.GetAllWithoutParams)
 			specs.GET("", rOpts.DoctorSpecsHandler.GetAll)
-			specs.POST("", rOpts.DoctorSpecsHandler.Add)
-			specs.PUT("/:id", rOpts.DoctorSpecsHandler.Edit)
-			specs.DELETE("/:id", rOpts.DoctorSpecsHandler.Remove)
+			specs.POST(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.DoctorSpecsHandler.Add,
+			)
+			specs.PUT(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.DoctorSpecsHandler.Edit,
+			)
+			specs.DELETE(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.DoctorSpecsHandler.Remove,
+			)
 		}
 
 		manufacturers := v1.Group("/manufacturers")
