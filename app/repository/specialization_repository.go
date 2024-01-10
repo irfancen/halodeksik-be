@@ -5,12 +5,15 @@ import (
 	"database/sql"
 	"errors"
 	"halodeksik-be/app/apperror"
+	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 )
 
 type DoctorSpecializationRepository interface {
 	Create(ctx context.Context, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
 	FindById(ctx context.Context, id int64) (*entity.DoctorSpecialization, error)
+	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.DoctorSpecialization, error)
+	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 	FindAllWithoutParams(ctx context.Context) ([]*entity.DoctorSpecialization, error)
 	Update(ctx context.Context, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
 	Delete(ctx context.Context, id int64) error
@@ -53,6 +56,59 @@ func (repo *DoctorSpecializationRepositoryImpl) FindById(ctx context.Context, id
 	}
 
 	return &specialization, err
+}
+
+func (repo *DoctorSpecializationRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.DoctorSpecialization, error) {
+	initQuery := `SELECT id, name, image FROM doctor_specializations WHERE deleted_at IS NULL `
+	query, values := buildQuery(initQuery, &entity.DoctorSpecialization{}, param, true)
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*entity.DoctorSpecialization, 0)
+	for rows.Next() {
+		var specialization entity.DoctorSpecialization
+		if err := rows.Scan(
+			&specialization.Id, &specialization.Name, &specialization.Image,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &specialization)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (repo *DoctorSpecializationRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
+	initQuery := `SELECT count(id) FROM doctor_specializations WHERE deleted_at IS NULL `
+	query, values := buildQuery(initQuery, &entity.DoctorSpecialization{}, param, false)
+
+	var totalItems int64
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return totalItems, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(
+			&totalItems,
+		); err != nil {
+			return totalItems, err
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return totalItems, err
+	}
+	return totalItems, nil
 }
 
 func (repo *DoctorSpecializationRepositoryImpl) FindAllWithoutParams(ctx context.Context) ([]*entity.DoctorSpecialization, error) {

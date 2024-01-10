@@ -6,6 +6,7 @@ import (
 	"halodeksik-be/app/appcloud"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
+	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
 	"halodeksik-be/app/util"
@@ -14,6 +15,7 @@ import (
 type DoctorSpecializationUseCase interface {
 	Add(ctx context.Context, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
 	GetById(ctx context.Context, id int64) (*entity.DoctorSpecialization, error)
+	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	GetAllSpecsWithoutParams(ctx context.Context) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, id int64, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
 	Remove(ctx context.Context, id int64) error
@@ -62,6 +64,27 @@ func (uc *DoctorSpecializationUseCaseImpl) GetById(ctx context.Context, id int64
 		return nil, err
 	}
 	return specialization, nil
+}
+
+func (uc *DoctorSpecializationUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	specializations, err := uc.repo.FindAll(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	totalItems, err := uc.repo.CountFindAll(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	totalPages := totalItems / int64(*param.PageSize)
+	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
+		totalPages += 1
+	}
+
+	paginatedItems := entity.NewPaginationInfo(
+		totalItems, totalPages, int64(len(specializations)), int64(*param.PageId), specializations,
+	)
+	return paginatedItems, nil
 }
 
 func (uc *DoctorSpecializationUseCaseImpl) GetAllSpecsWithoutParams(ctx context.Context) (*entity.PaginatedItems, error) {
