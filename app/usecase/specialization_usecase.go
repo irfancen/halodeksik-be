@@ -15,6 +15,7 @@ type DoctorSpecializationUseCase interface {
 	Add(ctx context.Context, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
 	GetById(ctx context.Context, id int64) (*entity.DoctorSpecialization, error)
 	GetAllSpecsWithoutParams(ctx context.Context) (*entity.PaginatedItems, error)
+	Edit(ctx context.Context, id int64, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
 }
 
 type DoctorSpecializationUseCaseImpl struct {
@@ -76,4 +77,38 @@ func (uc *DoctorSpecializationUseCaseImpl) GetAllSpecsWithoutParams(ctx context.
 	paginatedItems.CurrentPage = 1
 
 	return paginatedItems, nil
+}
+
+func (uc *DoctorSpecializationUseCaseImpl) Edit(ctx context.Context, id int64, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error) {
+	var (
+		err      error
+		fileName string
+	)
+
+	specializationDb, err := uc.GetById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	specialization.Id = id
+	specialization.Image = specializationDb.Image
+
+	fileHeader := ctx.Value(appconstant.FormImage)
+
+	if fileHeader != nil {
+		fileName, err = uc.uploader.Upload(ctx, fileHeader, specialization.GetEntityName())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if !util.IsEmptyString(fileName) {
+		specialization.Image = fileName
+	}
+
+	updated, err := uc.repo.Update(ctx, specialization)
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }

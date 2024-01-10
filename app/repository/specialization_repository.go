@@ -12,6 +12,7 @@ type DoctorSpecializationRepository interface {
 	Create(ctx context.Context, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
 	FindById(ctx context.Context, id int64) (*entity.DoctorSpecialization, error)
 	FindAllWithoutParams(ctx context.Context) ([]*entity.DoctorSpecialization, error)
+	Update(ctx context.Context, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
 }
 
 type DoctorSpecializationRepositoryImpl struct {
@@ -82,4 +83,17 @@ func (repo *DoctorSpecializationRepositoryImpl) FindAllWithoutParams(ctx context
 		return nil, err
 	}
 	return items, nil
+}
+
+func (repo *DoctorSpecializationRepositoryImpl) Update(ctx context.Context, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error) {
+	const update = `UPDATE doctor_specializations
+	SET name = $1, image = $2 WHERE id = $3 AND deleted_at IS NULL RETURNING id, name, image, created_at, updated_at, deleted_at`
+
+	row := repo.db.QueryRowContext(ctx, update, specialization.Name, specialization.Image, specialization.Id)
+	var updated entity.DoctorSpecialization
+	err := row.Scan(
+		&updated.Id, &updated.Name, &updated.Image, &updated.CreatedAt, &updated.UpdatedAt, &updated.DeletedAt,
+	)
+
+	return &updated, err
 }

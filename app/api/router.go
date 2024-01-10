@@ -134,6 +134,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			specs.GET("/:id", rOpts.DoctorSpecsHandler.GetById)
 			specs.GET("/no-params", rOpts.DoctorSpecsHandler.GetAllWithoutParams)
 			specs.POST("", rOpts.DoctorSpecsHandler.Add)
+			specs.PUT("/:id", rOpts.DoctorSpecsHandler.Edit)
 		}
 
 		manufacturers := v1.Group("/manufacturers")
