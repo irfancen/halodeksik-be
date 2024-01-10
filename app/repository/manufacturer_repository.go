@@ -5,12 +5,15 @@ import (
 	"database/sql"
 	"errors"
 	"halodeksik-be/app/apperror"
+	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 )
 
 type ManufacturerRepository interface {
 	Create(ctx context.Context, manufacturer entity.Manufacturer) (*entity.Manufacturer, error)
 	FindById(ctx context.Context, id int64) (*entity.Manufacturer, error)
+	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Manufacturer, error)
+	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 	FindAllWithoutParams(ctx context.Context) ([]*entity.Manufacturer, error)
 	Update(ctx context.Context, manufacturer entity.Manufacturer) (*entity.Manufacturer, error)
 	Delete(ctx context.Context, id int64) error
@@ -35,6 +38,59 @@ func (repo *ManufacturerRepositoryImpl) Create(ctx context.Context, manufacturer
 	)
 
 	return &created, err
+}
+
+func (repo *ManufacturerRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Manufacturer, error) {
+	initQuery := `SELECT id, name, image FROM manufacturers WHERE deleted_at IS NULL `
+	query, values := buildQuery(initQuery, &entity.Manufacturer{}, param, true)
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*entity.Manufacturer, 0)
+	for rows.Next() {
+		var manufacturer entity.Manufacturer
+		if err := rows.Scan(
+			&manufacturer.Id, &manufacturer.Name, &manufacturer.Image,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &manufacturer)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (repo *ManufacturerRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
+	initQuery := `SELECT count(id) FROM manufacturers WHERE deleted_at IS NULL `
+	query, values := buildQuery(initQuery, &entity.Manufacturer{}, param, false)
+
+	var totalItems int64
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return totalItems, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(
+			&totalItems,
+		); err != nil {
+			return totalItems, err
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return totalItems, err
+	}
+	return totalItems, nil
 }
 
 func (repo *ManufacturerRepositoryImpl) FindAllWithoutParams(ctx context.Context) ([]*entity.Manufacturer, error) {

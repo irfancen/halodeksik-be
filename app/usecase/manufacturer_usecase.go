@@ -6,6 +6,7 @@ import (
 	"halodeksik-be/app/appcloud"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
+	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
 	"halodeksik-be/app/util"
@@ -14,6 +15,7 @@ import (
 type ManufacturerUseCase interface {
 	Add(ctx context.Context, manufacturer entity.Manufacturer) (*entity.Manufacturer, error)
 	GetById(ctx context.Context, id int64) (*entity.Manufacturer, error)
+	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	GetAllManufacturersWithoutParams(ctx context.Context) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, id int64, manufacturer entity.Manufacturer) (*entity.Manufacturer, error)
 	Remove(ctx context.Context, id int64) error
@@ -62,6 +64,27 @@ func (uc *ManufacturerUseCaseImpl) GetById(ctx context.Context, id int64) (*enti
 		return nil, err
 	}
 	return manufacturer, nil
+}
+
+func (uc *ManufacturerUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	manufacturers, err := uc.repo.FindAll(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	totalItems, err := uc.repo.CountFindAll(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	totalPages := totalItems / int64(*param.PageSize)
+	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
+		totalPages += 1
+	}
+
+	paginatedItems := entity.NewPaginationInfo(
+		totalItems, totalPages, int64(len(manufacturers)), int64(*param.PageId), manufacturers,
+	)
+	return paginatedItems, nil
 }
 
 func (uc *ManufacturerUseCaseImpl) GetAllManufacturersWithoutParams(ctx context.Context) (*entity.PaginatedItems, error) {
