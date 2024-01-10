@@ -3,11 +3,14 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/entity"
 )
 
 type DoctorSpecializationRepository interface {
 	Create(ctx context.Context, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
+	FindById(ctx context.Context, id int64) (*entity.DoctorSpecialization, error)
 	FindAllWithoutParams(ctx context.Context) ([]*entity.DoctorSpecialization, error)
 }
 
@@ -30,6 +33,24 @@ func (repo *DoctorSpecializationRepositoryImpl) Create(ctx context.Context, spec
 	)
 
 	return &created, err
+}
+
+func (repo *DoctorSpecializationRepositoryImpl) FindById(ctx context.Context, id int64) (*entity.DoctorSpecialization, error) {
+	const findById = `SELECT id, name, image, created_at, updated_at, deleted_at FROM doctor_specializations WHERE id = $1 AND deleted_at IS NULL`
+
+	row := repo.db.QueryRowContext(ctx, findById, id)
+	var specialization entity.DoctorSpecialization
+	err := row.Scan(
+		&specialization.Id, &specialization.Name, &specialization.Image, &specialization.CreatedAt, &specialization.UpdatedAt, &specialization.DeletedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+
+	return &specialization, err
 }
 
 func (repo *DoctorSpecializationRepositoryImpl) FindAllWithoutParams(ctx context.Context) ([]*entity.DoctorSpecialization, error) {

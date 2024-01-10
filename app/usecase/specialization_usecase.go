@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"halodeksik-be/app/appcloud"
 	"halodeksik-be/app/appconstant"
+	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
 	"halodeksik-be/app/util"
@@ -11,6 +13,7 @@ import (
 
 type DoctorSpecializationUseCase interface {
 	Add(ctx context.Context, specialization entity.DoctorSpecialization) (*entity.DoctorSpecialization, error)
+	GetById(ctx context.Context, id int64) (*entity.DoctorSpecialization, error)
 	GetAllSpecsWithoutParams(ctx context.Context) (*entity.PaginatedItems, error)
 }
 
@@ -46,6 +49,17 @@ func (uc *DoctorSpecializationUseCaseImpl) Add(ctx context.Context, specializati
 		return nil, err
 	}
 	return created, nil
+}
+
+func (uc *DoctorSpecializationUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.DoctorSpecialization, error) {
+	specialization, err := uc.repo.FindById(ctx, id)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound(specialization, "Id", id)
+		}
+		return nil, err
+	}
+	return specialization, nil
 }
 
 func (uc *DoctorSpecializationUseCaseImpl) GetAllSpecsWithoutParams(ctx context.Context) (*entity.PaginatedItems, error) {
