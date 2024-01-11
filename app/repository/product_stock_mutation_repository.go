@@ -31,7 +31,7 @@ func (repo *ProductStockMutationRepositoryImpl) Create(ctx context.Context, stoc
 
 	create := `INSERT INTO product_stock_mutations(pharmacy_product_id, product_stock_mutation_type_id, stock)
 VALUES ($1, $2, $3)
-RETURNING id, pharmacy_product_id, product_stock_mutation_type_id, stock
+RETURNING id, pharmacy_product_id, product_stock_mutation_type_id, stock, created_at
 `
 	row1 := tx.QueryRowContext(ctx, create,
 		stockMutation.PharmacyProductId, stockMutation.ProductStockMutationTypeId, stockMutation.Stock,
@@ -39,7 +39,7 @@ RETURNING id, pharmacy_product_id, product_stock_mutation_type_id, stock
 
 	var created entity.ProductStockMutation
 	if err := row1.Scan(
-		&created.Id, &created.PharmacyProductId, &created.ProductStockMutationTypeId, &created.Stock,
+		&created.Id, &created.PharmacyProductId, &created.ProductStockMutationTypeId, &created.Stock, &created.CreatedAt,
 	); err != nil {
 		return nil, err
 	}
@@ -73,6 +73,7 @@ func (repo *ProductStockMutationRepositoryImpl) FindAllJoin(ctx context.Context,
        pharmacy_product_id,
        product_stock_mutation_type_id,
        product_stock_mutations.stock AS stock,
+       product_stock_mutations.created_at,
        product_stock_mutation_types.name AS mutation_type,
        pharmacies.name                   AS pharmacy_name,
        products.name                     AS product_name,
@@ -107,7 +108,7 @@ FROM product_stock_mutations
 			manufacturer    entity.Manufacturer
 		)
 		if err := rows.Scan(
-			&stockMutation.Id, &stockMutation.PharmacyProductId, &stockMutation.ProductStockMutationTypeId, &stockMutation.Stock,
+			&stockMutation.Id, &stockMutation.PharmacyProductId, &stockMutation.ProductStockMutationTypeId, &stockMutation.Stock, &stockMutation.CreatedAt,
 			&mutationType.Name,
 			&pharmacy.Name,
 			&product.Name,

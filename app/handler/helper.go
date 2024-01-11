@@ -114,6 +114,12 @@ func WrapError(err error, customCode ...int) error {
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrWrongCredentials):
 		fallthrough
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidCityProvinceCombi):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrPasswordTooLong):
+		fallthrough
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrStartDateAfterEndDate):
 		fallthrough
 

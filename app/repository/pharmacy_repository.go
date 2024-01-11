@@ -34,7 +34,7 @@ RETURNING id, name, address, sub_district, district, city, province, postal_code
 
 	row := repo.db.QueryRowContext(ctx, create,
 		pharmacy.Name,
-		pharmacy.Address, pharmacy.SubDistrict, pharmacy.District, pharmacy.City, pharmacy.Province, pharmacy.PostalCode,
+		pharmacy.Address, pharmacy.SubDistrict, pharmacy.District, pharmacy.CityId, pharmacy.ProvinceId, pharmacy.PostalCode,
 		pharmacy.Latitude, pharmacy.Longitude,
 		pharmacy.PharmacistName, pharmacy.PharmacistLicenseNo, pharmacy.PharmacistPhoneNo,
 		pharmacy.OperationalHours, pharmacy.OperationalDays, pharmacy.PharmacyAdminId,
@@ -42,7 +42,7 @@ RETURNING id, name, address, sub_district, district, city, province, postal_code
 	var created entity.Pharmacy
 	err := row.Scan(
 		&created.Id, &created.Name,
-		&created.Address, &created.SubDistrict, &created.District, &created.City, &created.Province, &created.PostalCode,
+		&created.Address, &created.SubDistrict, &created.District, &created.CityId, &created.ProvinceId, &created.PostalCode,
 		&created.Latitude, &created.Longitude,
 		&created.PharmacistName, &created.PharmacistLicenseNo, &created.PharmacistPhoneNo,
 		&created.OperationalHours, &created.OperationalDays, &created.PharmacyAdminId,
@@ -64,7 +64,7 @@ func (repo *PharmacyRepositoryImpl) FindById(ctx context.Context, id int64) (*en
 	var pharmacy entity.Pharmacy
 	err := row.Scan(
 		&pharmacy.Id, &pharmacy.Name,
-		&pharmacy.Address, &pharmacy.SubDistrict, &pharmacy.District, &pharmacy.City, &pharmacy.Province, &pharmacy.PostalCode, &pharmacy.Latitude, &pharmacy.Longitude,
+		&pharmacy.Address, &pharmacy.SubDistrict, &pharmacy.District, &pharmacy.CityId, &pharmacy.ProvinceId, &pharmacy.PostalCode, &pharmacy.Latitude, &pharmacy.Longitude,
 		&pharmacy.PharmacistName, &pharmacy.PharmacistLicenseNo, &pharmacy.PharmacistPhoneNo,
 		&pharmacy.OperationalHours, &pharmacy.OperationalDays, &pharmacy.PharmacyAdminId,
 	)
@@ -93,7 +93,7 @@ func (repo *PharmacyRepositoryImpl) FindAll(ctx context.Context, param *querypar
 		var pharmacy entity.Pharmacy
 		if err := rows.Scan(
 			&pharmacy.Id, &pharmacy.Name,
-			&pharmacy.Address, &pharmacy.SubDistrict, &pharmacy.District, &pharmacy.City, &pharmacy.Province, &pharmacy.PostalCode, &pharmacy.Latitude, &pharmacy.Longitude,
+			&pharmacy.Address, &pharmacy.SubDistrict, &pharmacy.District, &pharmacy.CityId, &pharmacy.ProvinceId, &pharmacy.PostalCode, &pharmacy.Latitude, &pharmacy.Longitude,
 			&pharmacy.PharmacistName, &pharmacy.PharmacistLicenseNo, &pharmacy.PharmacistPhoneNo,
 			&pharmacy.OperationalHours, &pharmacy.OperationalDays, &pharmacy.PharmacyAdminId,
 		); err != nil {
@@ -141,7 +141,7 @@ func (repo *PharmacyRepositoryImpl) Update(ctx context.Context, pharmacy entity.
 
 	row := repo.db.QueryRowContext(ctx, updateById,
 		pharmacy.Name,
-		pharmacy.Address, pharmacy.SubDistrict, pharmacy.District, pharmacy.City, pharmacy.Province, pharmacy.PostalCode,
+		pharmacy.Address, pharmacy.SubDistrict, pharmacy.District, pharmacy.CityId, pharmacy.ProvinceId, pharmacy.PostalCode,
 		pharmacy.Latitude, pharmacy.Longitude,
 		pharmacy.PharmacistName, pharmacy.PharmacistLicenseNo, pharmacy.PharmacistPhoneNo,
 		pharmacy.OperationalHours, pharmacy.OperationalDays, pharmacy.PharmacyAdminId, pharmacy.Id,
@@ -150,7 +150,7 @@ func (repo *PharmacyRepositoryImpl) Update(ctx context.Context, pharmacy entity.
 	var updated entity.Pharmacy
 	err := row.Scan(
 		&updated.Id, &updated.Name,
-		&updated.Address, &updated.SubDistrict, &updated.District, &updated.City, &updated.Province, &updated.PostalCode, &updated.Latitude, &updated.Longitude,
+		&updated.Address, &updated.SubDistrict, &updated.District, &updated.CityId, &updated.ProvinceId, &updated.PostalCode, &updated.Latitude, &updated.Longitude,
 		&updated.PharmacistName, &updated.PharmacistLicenseNo, &updated.PharmacistPhoneNo,
 		&updated.OperationalHours, &updated.OperationalDays, &updated.PharmacyAdminId,
 	)

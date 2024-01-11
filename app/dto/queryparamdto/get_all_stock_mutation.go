@@ -18,7 +18,7 @@ type GetAllStockMutationsQuery struct {
 	Page       string `form:"page"`
 }
 
-func (q *GetAllStockMutationsQuery) ToGetAllParams() (*GetAllParams, error) {
+func (q *GetAllStockMutationsQuery) ToGetAllParams(pharmacyAdminId int64) (*GetAllParams, int64, error) {
 	param := NewGetAllParams()
 	stockMutation := new(entity.ProductStockMutation)
 	mutationType := new(entity.ProductStockMutationType)
@@ -26,7 +26,7 @@ func (q *GetAllStockMutationsQuery) ToGetAllParams() (*GetAllParams, error) {
 	pharmacy := new(entity.Pharmacy)
 	product := new(entity.Product)
 	manufacturer := new(entity.Manufacturer)
-	pharmacyId, _ := strconv.Atoi(q.PharmacyId)
+	pharmacyId, _ := util.ParseInt64(q.PharmacyId)
 
 	startDate := time.Date(1970, time.January, 1, 0, 0, 0, 0, time.UTC)
 	endDate := util.GetCurrentDate()
@@ -45,7 +45,7 @@ func (q *GetAllStockMutationsQuery) ToGetAllParams() (*GetAllParams, error) {
 
 	if !util.IsEmptyString(q.StartDate) && !util.IsEmptyString(q.EndDate) {
 		if startDate.After(endDate) {
-			return nil, apperror.ErrStartDateAfterEndDate
+			return nil, 0, apperror.ErrStartDateAfterEndDate
 		}
 	}
 
@@ -53,6 +53,8 @@ func (q *GetAllStockMutationsQuery) ToGetAllParams() (*GetAllParams, error) {
 		column := pharmacyProduct.GetSqlColumnFromField("PharmacyId")
 		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.EqualTo, q.PharmacyId))
 	}
+
+	param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(pharmacy.GetSqlColumnFromField("PharmacyAdminId"), appdb.EqualTo, pharmacyAdminId))
 
 	param.GroupClauses = append(
 		param.GroupClauses,
@@ -81,5 +83,5 @@ func (q *GetAllStockMutationsQuery) ToGetAllParams() (*GetAllParams, error) {
 	}
 	param.PageId = &pageId
 
-	return param, nil
+	return param, pharmacyId, nil
 }

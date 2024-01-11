@@ -11,8 +11,8 @@ type AddEditPharmacy struct {
 	Address               string   `json:"address" validate:"required"`
 	SubDistrict           string   `json:"sub_district" validate:"required"`
 	District              string   `json:"district" validate:"required"`
-	City                  string   `json:"city" validate:"required"`
-	Province              string   `json:"province" validate:"required"`
+	CityId                int64    `json:"city_id" validate:"required"`
+	ProvinceId            int64    `json:"province_id" validate:"required"`
 	PostalCode            string   `json:"postal_code" validate:"required,number"`
 	Latitude              string   `json:"latitude" validate:"required,latitude"`
 	Longitude             string   `json:"longitude" validate:"required,longitude"`
@@ -38,8 +38,8 @@ func (r AddEditPharmacy) ToPharmacy() entity.Pharmacy {
 		Address:             r.Address,
 		SubDistrict:         r.SubDistrict,
 		District:            r.District,
-		City:                r.City,
-		Province:            r.Province,
+		CityId:              r.CityId,
+		ProvinceId:          r.ProvinceId,
 		PostalCode:          r.PostalCode,
 		Latitude:            r.Latitude,
 		Longitude:           r.Longitude,
