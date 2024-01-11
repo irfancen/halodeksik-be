@@ -3,11 +3,14 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/entity"
 )
 
 type AddressAreaRepository interface {
 	FindAllProvince(ctx context.Context) ([]*entity.Province, error)
+	FindCityById(ctx context.Context, cityId int64) (*entity.City, error)
 	FindAllCities(ctx context.Context) ([]*entity.City, error)
 }
 
@@ -20,8 +23,8 @@ func NewAddressAreaRepositoryImpl(db *sql.DB) *AddressAreaRepositoryImpl {
 }
 
 func (repo *AddressAreaRepositoryImpl) FindAllProvince(ctx context.Context) ([]*entity.Province, error) {
-	query := `SELECT id, name FROM provinces WHERE deleted_at IS NULL ORDER BY id`
-	rows, err := repo.db.QueryContext(ctx, query)
+	getAll := `SELECT id, name FROM provinces WHERE deleted_at IS NULL ORDER BY id`
+	rows, err := repo.db.QueryContext(ctx, getAll)
 	if err != nil {
 		return nil, err
 	}
@@ -44,9 +47,30 @@ func (repo *AddressAreaRepositoryImpl) FindAllProvince(ctx context.Context) ([]*
 	return items, nil
 }
 
+func (repo *AddressAreaRepositoryImpl) FindCityById(ctx context.Context, cityId int64) (*entity.City, error) {
+	getById := `SELECT id, name, province_id FROM cities WHERE id = $1 AND deleted_at IS NULL `
+	row := repo.db.QueryRowContext(ctx, getById, cityId)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	var city entity.City
+	err := row.Scan(
+		&city.Id, &city.Name, &city.ProvinceId,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+
+	return &city, nil
+}
+
 func (repo *AddressAreaRepositoryImpl) FindAllCities(ctx context.Context) ([]*entity.City, error) {
-	query := `SELECT id, name, province_id FROM cities WHERE deleted_at IS NULL ORDER BY province_id, name`
-	rows, err := repo.db.QueryContext(ctx, query)
+	getAll := `SELECT id, name, province_id FROM cities WHERE deleted_at IS NULL ORDER BY province_id, name`
+	rows, err := repo.db.QueryContext(ctx, getAll)
 	if err != nil {
 		return nil, err
 	}

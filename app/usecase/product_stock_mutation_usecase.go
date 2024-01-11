@@ -12,20 +12,21 @@ import (
 
 type ProductStockMutationUseCase interface {
 	Add(ctx context.Context, stockMutation entity.ProductStockMutation) (*entity.ProductStockMutation, error)
-	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	GetAllByPharmacy(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 }
 
 type ProductStockMutationUseCaseImpl struct {
 	productStockMutationRepo repository.ProductStockMutationRepository
 	pharmacyProductRepo      repository.PharmacyProductRepository
+	pharmacyRepository       repository.PharmacyRepository
 }
 
-func NewProductStockMutationUseCaseImpl(productStockMutationRepo repository.ProductStockMutationRepository, pharmacyProductRepo repository.PharmacyProductRepository) *ProductStockMutationUseCaseImpl {
-	return &ProductStockMutationUseCaseImpl{productStockMutationRepo: productStockMutationRepo, pharmacyProductRepo: pharmacyProductRepo}
+func NewProductStockMutationUseCaseImpl(productStockMutationRepo repository.ProductStockMutationRepository, pharmacyProductRepo repository.PharmacyProductRepository, pharmacyRepository repository.PharmacyRepository) *ProductStockMutationUseCaseImpl {
+	return &ProductStockMutationUseCaseImpl{productStockMutationRepo: productStockMutationRepo, pharmacyProductRepo: pharmacyProductRepo, pharmacyRepository: pharmacyRepository}
 }
 
-func (uc *ProductStockMutationUseCaseImpl) findPharmacyProductById(ctx context.Context, id int64) (*entity.PharmacyProduct, error) {
-	pharmacyProduct, err := uc.pharmacyProductRepo.FindById(ctx, id)
+func (uc *ProductStockMutationUseCaseImpl) findPharmacyProductByIdJoinPharmacy(ctx context.Context, id int64) (*entity.PharmacyProduct, error) {
+	pharmacyProduct, err := uc.pharmacyProductRepo.FindByIdJoinPharmacy(ctx, id)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFound(pharmacyProduct, "Id", id)
@@ -36,9 +37,13 @@ func (uc *ProductStockMutationUseCaseImpl) findPharmacyProductById(ctx context.C
 }
 
 func (uc *ProductStockMutationUseCaseImpl) Add(ctx context.Context, stockMutation entity.ProductStockMutation) (*entity.ProductStockMutation, error) {
-	pharmacyProduct, err := uc.findPharmacyProductById(ctx, stockMutation.PharmacyProductId)
+	pharmacyProduct, err := uc.findPharmacyProductByIdJoinPharmacy(ctx, stockMutation.PharmacyProductId)
 	if err != nil {
 		return nil, err
+	}
+
+	if pharmacyProduct.Pharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
+		return nil, apperror.ErrForbiddenModifyEntity
 	}
 
 	if stockMutation.ProductStockMutationTypeId == appconstant.StockMutationTypeReduction &&
@@ -53,7 +58,17 @@ func (uc *ProductStockMutationUseCaseImpl) Add(ctx context.Context, stockMutatio
 	return created, nil
 }
 
-func (uc *ProductStockMutationUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+func (uc *ProductStockMutationUseCaseImpl) GetAllByPharmacy(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	if pharmacyId != 0 {
+		pharmacy, err := uc.pharmacyRepository.FindById(ctx, pharmacyId)
+		if err != nil && !errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, err
+		}
+		if pharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
+			return nil, apperror.ErrForbiddenViewEntity
+		}
+	}
+
 	productStockMutation, err := uc.productStockMutationRepo.FindAllJoin(ctx, param)
 	if err != nil {
 		return nil, err

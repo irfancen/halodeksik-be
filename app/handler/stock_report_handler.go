@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
 	"halodeksik-be/app/dto/queryparamdto"
@@ -37,12 +38,13 @@ func (h *StockReportHandler) FindAll(ctx *gin.Context) {
 		return
 	}
 
-	param, err := getAllStockMutationQuery.ToGetAllParams()
+	pharmacyAdmin := ctx.Request.Context().Value(appconstant.ContextKeyUserId).(int64)
+	param, pharmacyId, err := getAllStockMutationQuery.ToGetAllParams(pharmacyAdmin)
 	if err != nil {
 		return
 	}
 
-	paginatedItems, err := h.uc.GetAll(ctx.Request.Context(), param)
+	paginatedItems, err := h.uc.GetAllByPharmacy(ctx.Request.Context(), pharmacyId, param)
 	if err != nil {
 		return
 	}

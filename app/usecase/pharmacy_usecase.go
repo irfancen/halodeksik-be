@@ -19,15 +19,28 @@ type PharmacyUseCase interface {
 }
 
 type PharmacyUseCaseImpl struct {
-	repo repository.PharmacyRepository
+	pharmacyRepository    repository.PharmacyRepository
+	addressAreaRepository repository.AddressAreaRepository
 }
 
-func NewPharmacyUseCseImpl(repo repository.PharmacyRepository) *PharmacyUseCaseImpl {
-	return &PharmacyUseCaseImpl{repo: repo}
+func NewPharmacyUseCaseImpl(pharmacyRepository repository.PharmacyRepository, addressAreaRepository repository.AddressAreaRepository) *PharmacyUseCaseImpl {
+	return &PharmacyUseCaseImpl{pharmacyRepository: pharmacyRepository, addressAreaRepository: addressAreaRepository}
 }
 
 func (uc *PharmacyUseCaseImpl) Add(ctx context.Context, pharmacy entity.Pharmacy) (*entity.Pharmacy, error) {
-	created, err := uc.repo.Create(ctx, pharmacy)
+	city, err := uc.addressAreaRepository.FindCityById(ctx, pharmacy.CityId)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.ErrInvalidCityProvinceCombi
+		}
+		return nil, err
+	}
+
+	if city.ProvinceId != pharmacy.ProvinceId {
+		return nil, apperror.ErrInvalidCityProvinceCombi
+	}
+
+	created, err := uc.pharmacyRepository.Create(ctx, pharmacy)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +48,7 @@ func (uc *PharmacyUseCaseImpl) Add(ctx context.Context, pharmacy entity.Pharmacy
 }
 
 func (uc *PharmacyUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.Pharmacy, error) {
-	pharmacy, err := uc.repo.FindById(ctx, id)
+	pharmacy, err := uc.pharmacyRepository.FindById(ctx, id)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFound(pharmacy, "Id", id)
@@ -51,12 +64,12 @@ func (uc *PharmacyUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.P
 }
 
 func (uc *PharmacyUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
-	pharmacies, err := uc.repo.FindAll(ctx, param)
+	pharmacies, err := uc.pharmacyRepository.FindAll(ctx, param)
 	if err != nil {
 		return nil, err
 	}
 
-	totalItems, err := uc.repo.CountFindAll(ctx, param)
+	totalItems, err := uc.pharmacyRepository.CountFindAll(ctx, param)
 	if err != nil {
 		return nil, err
 	}
@@ -76,11 +89,29 @@ func (uc *PharmacyUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.
 }
 
 func (uc *PharmacyUseCaseImpl) Edit(ctx context.Context, id int64, pharmacy entity.Pharmacy) (*entity.Pharmacy, error) {
-	if _, err := uc.GetById(ctx, id); err != nil {
+	pharmacydb, err := uc.GetById(ctx, id)
+	if err != nil {
 		return nil, err
 	}
+
+	if pharmacydb.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
+		return nil, apperror.ErrForbiddenModifyEntity
+	}
+
+	city, err := uc.addressAreaRepository.FindCityById(ctx, pharmacy.CityId)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.ErrInvalidCityProvinceCombi
+		}
+		return nil, err
+	}
+
+	if city.ProvinceId != pharmacy.ProvinceId {
+		return nil, apperror.ErrInvalidCityProvinceCombi
+	}
+
 	pharmacy.Id = id
-	updated, err := uc.repo.Update(ctx, pharmacy)
+	updated, err := uc.pharmacyRepository.Update(ctx, pharmacy)
 	if err != nil {
 		return nil, err
 	}
@@ -88,12 +119,16 @@ func (uc *PharmacyUseCaseImpl) Edit(ctx context.Context, id int64, pharmacy enti
 }
 
 func (uc *PharmacyUseCaseImpl) Remove(ctx context.Context, id int64) error {
-	if _, err := uc.GetById(ctx, id); err != nil {
+	pharmacy, err := uc.GetById(ctx, id)
+	if err != nil {
 		return err
 	}
 
-	err := uc.repo.Delete(ctx, id)
-	if err != nil {
+	if pharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
+		return apperror.ErrForbiddenModifyEntity
+	}
+
+	if err = uc.pharmacyRepository.Delete(ctx, id); err != nil {
 		return err
 	}
 	return nil

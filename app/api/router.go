@@ -273,12 +273,20 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			)
 		}
 
-		report := v1.Group("/report-stock-mutations")
+		report := v1.Group(
+			"/report-stock-mutations",
+			middleware.LoginMiddleware(),
+			middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+		)
 		{
 			report.GET("", rOpts.StockReportHandler.FindAll)
 		}
 
-		stockMutation := v1.Group("/stock-mutations")
+		stockMutation := v1.Group(
+			"/stock-mutations",
+			middleware.LoginMiddleware(),
+			middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+		)
 		{
 			stockMutation.POST("", rOpts.ProductStockMutationHandler.Add)
 		}

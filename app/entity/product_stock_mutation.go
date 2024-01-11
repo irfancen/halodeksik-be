@@ -48,6 +48,7 @@ func (e *ProductStockMutation) ToResponse() *responsedto.ProductStockMutationRes
 		PharmacyProductId:                e.PharmacyProductId,
 		ProductStockMutationTypeId:       e.ProductStockMutationTypeId,
 		Stock:                            e.Stock,
+		MutationDate:                     e.CreatedAt.UTC(),
 		PharmacyProductResponse:          pharmacyProduct,
 		ProductStockMutationTypeResponse: e.ProductStockMutationType.ToResponse(),
 	}
