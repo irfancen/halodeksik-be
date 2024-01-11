@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type Manufacturer struct {
+type DoctorSpecialization struct {
 	Id        int64        `json:"id"`
 	Name      string       `json:"name"`
 	Image     string       `json:"image"`
@@ -18,11 +18,11 @@ type Manufacturer struct {
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
-func (e *Manufacturer) GetEntityName() string {
-	return "manufacturers"
+func (e *DoctorSpecialization) GetEntityName() string {
+	return "doctor_specializations"
 }
 
-func (e *Manufacturer) GetFieldStructTag(fieldName string, structTag string) string {
+func (e *DoctorSpecialization) GetFieldStructTag(fieldName string, structTag string) string {
 	field, ok := reflect.TypeOf(e).Elem().FieldByName(fieldName)
 	if !ok {
 		return ""
@@ -30,15 +30,15 @@ func (e *Manufacturer) GetFieldStructTag(fieldName string, structTag string) str
 	return field.Tag.Get(structTag)
 }
 
-func (e *Manufacturer) GetSqlColumnFromField(fieldName string) string {
+func (e *DoctorSpecialization) GetSqlColumnFromField(fieldName string) string {
 	return fmt.Sprintf("%s.%s", e.GetEntityName(), e.GetFieldStructTag(fieldName, appconstant.JsonStructTag))
 }
 
-func (e *Manufacturer) ToResponse() *responsedto.ManufacturerResponse {
+func (e *DoctorSpecialization) ToResponse() *responsedto.SpecializationResponse {
 	if e == nil {
 		return nil
 	}
-	return &responsedto.ManufacturerResponse{
+	return &responsedto.SpecializationResponse{
 		Id:    e.Id,
 		Name:  e.Name,
 		Image: e.Image,

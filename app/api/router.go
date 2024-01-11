@@ -15,6 +15,7 @@ import (
 )
 
 type RouterOpts struct {
+	AddressAreaHandler          *handler.AddressAreaHandler
 	AuthHandler                 *handler.AuthHandler
 	CartItemHandler             *handler.CartItemHandler
 	DrugClassificationHandler   *handler.DrugClassificationHandler
@@ -33,10 +34,11 @@ type RouterOpts struct {
 
 func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 	return &RouterOpts{
-		AuthHandler:                 handler.NewAuthHandler(allUC.AuthUsecase, appvalidator.Validator),
+		AddressAreaHandler:          handler.NewAddressAreaHandler(allUC.AddressAreaUseCase),
+		AuthHandler:                 handler.NewAuthHandler(allUC.AuthUseCase, appvalidator.Validator),
 		CartItemHandler:             handler.NewCartItemHandler(allUC.CartItemUseCase, appvalidator.Validator),
 		DrugClassificationHandler:   handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
-		ManufacturerHandler:         handler.NewManufacturerHandler(allUC.ManufacturerUseCase),
+		ManufacturerHandler:         handler.NewManufacturerHandler(allUC.ManufacturerUseCase, appvalidator.Validator),
 		PharmacyHandler:             handler.NewPharmacyHandler(allUC.PharmacyUseCase, appvalidator.Validator),
 		PharmacyProductsHandler:     handler.NewPharmacyProductHAndler(allUC.PharmacyProductUseCase, appvalidator.Validator),
 		ProductCategoryHandler:      handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase, appvalidator.Validator),
@@ -44,7 +46,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		ProductStockMutationHandler: handler.NewProductStockMutationHandler(allUC.ProductStockMutation, appvalidator.Validator),
 		StockReportHandler:          handler.NewStockReportHandler(allUC.ProductStockMutation, appvalidator.Validator),
 		UserHandler:                 handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
-		DoctorSpecsHandler:          handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase),
+		DoctorSpecsHandler:          handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase, appvalidator.Validator),
 		ForgotTokenHandler:          handler.NewForgotTokenHandler(allUC.ForgotTokenUseCase, appvalidator.Validator),
 		RegisterTokenHandler:        handler.NewRegisterTokenHandler(allUC.RegisterTokenUseCase, appvalidator.Validator),
 	}
@@ -89,6 +91,12 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 
 	v1 := router.Group("/v1")
 	{
+		addressArea := v1.Group("/address-area")
+		{
+			addressArea.GET("/provinces/no-params", rOpts.AddressAreaHandler.GetAllProvince)
+			addressArea.GET("/cities/no-params", rOpts.AddressAreaHandler.GetAllCities)
+		}
+
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/register-token", rOpts.RegisterTokenHandler.SendRegisterToken)
@@ -131,12 +139,52 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 
 		specs := v1.Group("/doctor-specs")
 		{
+			specs.GET("/:id", rOpts.DoctorSpecsHandler.GetById)
 			specs.GET("/no-params", rOpts.DoctorSpecsHandler.GetAllWithoutParams)
+			specs.GET("", rOpts.DoctorSpecsHandler.GetAll)
+			specs.POST(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.DoctorSpecsHandler.Add,
+			)
+			specs.PUT(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.DoctorSpecsHandler.Edit,
+			)
+			specs.DELETE(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.DoctorSpecsHandler.Remove,
+			)
 		}
 
 		manufacturers := v1.Group("/manufacturers")
 		{
+			manufacturers.GET("/:id", rOpts.ManufacturerHandler.GetById)
 			manufacturers.GET("/no-params", rOpts.ManufacturerHandler.GetAllWithoutParams)
+			manufacturers.GET("", rOpts.ManufacturerHandler.GetAll)
+			manufacturers.POST(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.ManufacturerHandler.Add,
+			)
+			manufacturers.PUT(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.ManufacturerHandler.Edit,
+			)
+			manufacturers.DELETE(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
+				rOpts.ManufacturerHandler.Remove,
+			)
 		}
 
 		pharmacy := v1.Group(
