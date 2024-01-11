@@ -6,8 +6,8 @@ type PharmacyResponse struct {
 	Address               string   `json:"address,omitempty"`
 	SubDistrict           string   `json:"sub_district,omitempty"`
 	District              string   `json:"district,omitempty"`
-	City                  string   `json:"city,omitempty"`
-	Province              string   `json:"province,omitempty"`
+	CityId                int64    `json:"city_id,omitempty"`
+	ProvinceId            int64    `json:"province_id,omitempty"`
 	PostalCode            string   `json:"postal_code,omitempty"`
 	Latitude              string   `json:"latitude,omitempty"`
 	Longitude             string   `json:"longitude,omitempty"`
