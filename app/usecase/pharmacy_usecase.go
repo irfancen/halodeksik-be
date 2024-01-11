@@ -76,9 +76,15 @@ func (uc *PharmacyUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.
 }
 
 func (uc *PharmacyUseCaseImpl) Edit(ctx context.Context, id int64, pharmacy entity.Pharmacy) (*entity.Pharmacy, error) {
-	if _, err := uc.GetById(ctx, id); err != nil {
+	pharmacydb, err := uc.GetById(ctx, id)
+	if err != nil {
 		return nil, err
 	}
+
+	if pharmacydb.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
+		return nil, apperror.ErrForbiddenModifyEntity
+	}
+
 	pharmacy.Id = id
 	updated, err := uc.repo.Update(ctx, pharmacy)
 	if err != nil {
@@ -88,12 +94,16 @@ func (uc *PharmacyUseCaseImpl) Edit(ctx context.Context, id int64, pharmacy enti
 }
 
 func (uc *PharmacyUseCaseImpl) Remove(ctx context.Context, id int64) error {
-	if _, err := uc.GetById(ctx, id); err != nil {
+	pharmacy, err := uc.GetById(ctx, id)
+	if err != nil {
 		return err
 	}
 
-	err := uc.repo.Delete(ctx, id)
-	if err != nil {
+	if pharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
+		return apperror.ErrForbiddenModifyEntity
+	}
+
+	if err := uc.repo.Delete(ctx, id); err != nil {
 		return err
 	}
 	return nil

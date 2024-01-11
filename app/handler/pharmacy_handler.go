@@ -134,6 +134,7 @@ func (h *PharmacyHandler) Edit(ctx *gin.Context) {
 	}
 
 	req := requestdto.AddEditPharmacy{}
+	req.PharmacyAdminId = ctx.Request.Context().Value(appconstant.ContextKeyUserId).(int64)
 	err = ctx.ShouldBindJSON(&req)
 	if err != nil {
 		return
