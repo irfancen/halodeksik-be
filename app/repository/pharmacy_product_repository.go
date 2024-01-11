@@ -14,6 +14,7 @@ import (
 type PharmacyProductRepository interface {
 	Create(ctx context.Context, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error)
 	FindById(ctx context.Context, id int64) (*entity.PharmacyProduct, error)
+	FindByIdJoinPharmacy(ctx context.Context, id int64) (*entity.PharmacyProduct, error)
 	FindAllJoinProducts(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error)
 	FindAllByProductId(ctx context.Context, productId int64) ([]*entity.PharmacyProduct, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
@@ -80,6 +81,42 @@ func (repo *PharmacyProductRepositoryImpl) FindById(ctx context.Context, id int6
 		}
 		return nil, err
 	}
+
+	return &pharmacyProducts, nil
+}
+
+func (repo *PharmacyProductRepositoryImpl) FindByIdJoinPharmacy(ctx context.Context, id int64) (*entity.PharmacyProduct, error) {
+	getById := `
+	SELECT pp.id, pp.pharmacy_id, pp.product_id, pp.is_active, pp.price, pp.stock,
+	       p.id, p.name, p.address, p.sub_district, p.district, p.city, p.province, p.postal_code, p.latitude, p.longitude, p.pharmacist_name, p.pharmacist_license_no, p.pharmacist_phone_no, p.operational_hours, p.operational_days, p.pharmacy_admin_id
+	FROM pharmacy_products pp
+	INNER JOIN pharmacies p on pp.pharmacy_id = p.id
+	WHERE pp.id = $1 AND pp.deleted_at IS NULL `
+
+	row := repo.db.QueryRowContext(ctx, getById, id)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	var (
+		pharmacyProducts entity.PharmacyProduct
+		pharmacy         entity.Pharmacy
+	)
+	err := row.Scan(
+		&pharmacyProducts.Id, &pharmacyProducts.PharmacyId, &pharmacyProducts.ProductId,
+		&pharmacyProducts.IsActive, &pharmacyProducts.Price, &pharmacyProducts.Stock,
+		&pharmacy.Id, &pharmacy.Name,
+		&pharmacy.Address, &pharmacy.SubDistrict, &pharmacy.District, &pharmacy.CityId, &pharmacy.ProvinceId, &pharmacy.PostalCode, &pharmacy.Latitude, &pharmacy.Longitude,
+		&pharmacy.PharmacistName, &pharmacy.PharmacistLicenseNo, &pharmacy.PharmacistPhoneNo,
+		&pharmacy.OperationalHours, &pharmacy.OperationalDays, &pharmacy.PharmacyAdminId,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	pharmacyProducts.Pharmacy = &pharmacy
 
 	return &pharmacyProducts, nil
 }
