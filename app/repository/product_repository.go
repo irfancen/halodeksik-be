@@ -15,10 +15,15 @@ type ProductRepository interface {
 	Create(ctx context.Context, product entity.Product) (*entity.Product, error)
 	FindById(ctx context.Context, id int64) (*entity.Product, error)
 	FindByIdForUser(ctx context.Context, id int64, param *queryparamdto.GetAllParams) (*entity.Product, error)
+
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
+	FindAllForUser(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
 	FindAllForAdmin(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) ([]*entity.Product, error)
+
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
+	CountFindAllForUser(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 	CountFindAllForAdmin(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (int64, error)
+
 	Update(ctx context.Context, product entity.Product) (*entity.Product, error)
 	Delete(ctx context.Context, id int64) error
 }
@@ -144,6 +149,72 @@ func (repo *ProductRepositoryImpl) FindByIdForUser(ctx context.Context, id int64
 }
 
 func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error) {
+	initQuery := `
+	SELECT products.id, products.name, products.generic_name, products.content, products.manufacturer_id, products.description, 
+		   products.drug_classification_id, products.product_category_id, products.drug_form, products.unit_in_pack, products.selling_unit, products.weight, products.length, products.width, products.height, products.image
+	FROM products 
+	WHERE products.deleted_at IS NULL `
+
+	query, values := buildQuery(initQuery, &entity.Product{}, param, true)
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*entity.Product, 0)
+	for rows.Next() {
+		var product entity.Product
+		if err := rows.Scan(
+			&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
+			&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &product)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
+	initQuery := `
+	SELECT count(products.id)
+	FROM products 
+	WHERE products.deleted_at IS NULL `
+	query, values := buildQuery(initQuery, &entity.Product{}, param, false)
+
+	var (
+		totalItems int64
+		temp       int64
+	)
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return totalItems, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(
+			&temp,
+		); err != nil {
+			return totalItems, err
+		}
+		totalItems++
+	}
+
+	if err := rows.Err(); err != nil {
+		return totalItems, err
+	}
+	return totalItems, nil
+}
+
+func (repo *ProductRepositoryImpl) FindAllForUser(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Product, error) {
 	initQuery := `SELECT products.id, products.name, generic_name, content, manufacturer_id, description, drug_classification_id, product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image,
        min(pharmacy_products.price), max(pharmacy_products.price)
 	FROM products 
@@ -177,7 +248,7 @@ func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *querypara
 	return items, nil
 }
 
-func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
+func (repo *ProductRepositoryImpl) CountFindAllForUser(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
 	initQuery := `SELECT count(products.id) 
 	FROM products 
 	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id

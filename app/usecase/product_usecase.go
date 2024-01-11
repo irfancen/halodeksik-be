@@ -21,6 +21,7 @@ type ProductUseCase interface {
 	GetById(ctx context.Context, id int64) (*entity.Product, error)
 	GetByIdForUser(ctx context.Context, id int64, params *queryparamdto.GetAllParams) (*entity.Product, error)
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	GetAllForUser(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	GetAllForAdminByPharmacyId(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, id int64, product entity.Product) (*entity.Product, error)
 	Remove(ctx context.Context, id int64) error
@@ -124,7 +125,35 @@ func (uc *ProductUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.G
 	return paginatedItems, nil
 }
 
+func (uc *ProductUseCaseImpl) GetAllForUser(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	products, err := uc.productRepo.FindAllForUser(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	totalItems, err := uc.productRepo.CountFindAllForUser(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	totalPages := totalItems / int64(*param.PageSize)
+	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
+		totalPages += 1
+	}
+
+	paginatedItems := new(entity.PaginatedItems)
+	paginatedItems.Items = products
+	paginatedItems.TotalItems = totalItems
+	paginatedItems.TotalPages = totalPages
+	paginatedItems.CurrentPageTotalItems = int64(len(products))
+	paginatedItems.CurrentPage = int64(*param.PageId)
+	return paginatedItems, nil
+}
+
 func (uc *ProductUseCaseImpl) GetAllForAdminByPharmacyId(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	if pharmacyId <= 0 {
+		return uc.GetAll(ctx, param)
+	}
+
 	userId := ctx.Value(appconstant.ContextKeyUserId)
 	pharmacy, err := uc.pharmacyRepo.FindById(ctx, pharmacyId)
 

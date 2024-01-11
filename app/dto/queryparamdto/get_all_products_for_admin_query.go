@@ -14,7 +14,7 @@ type GetAllProductsForAdminQuery struct {
 	SortBy              string `form:"sort_by"`
 	Sort                string `form:"sort"`
 	DrugClassifications string `form:"drug_class"`
-	PharmacyId          string `form:"pharmacy_id" validate:"required,number"`
+	PharmacyId          string `form:"pharmacy_id" validate:"omitempty,number"`
 	NotAdded            string `form:"not_added"`
 	Limit               string `form:"limit"`
 	Page                string `form:"page"`
@@ -72,13 +72,13 @@ func (q *GetAllProductsForAdminQuery) ToGetAllParams() (*GetAllParams, error) {
 		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.In, q.DrugClassifications))
 	}
 
-	switch q.NotAdded {
-	case notAddedTrue:
+	switch {
+	case q.NotAdded == notAddedTrue && !util.IsEmptyString(q.PharmacyId) && q.GetPharmacyId() > 0:
 		param.WhereClauses = append(
 			param.WhereClauses,
 			appdb.NewWhere(pharmacyProduct.GetSqlColumnFromField("ProductId"), appdb.Is, nil),
 		)
-	case notAddedFalse:
+	case q.NotAdded == notAddedFalse && !util.IsEmptyString(q.PharmacyId) && q.GetPharmacyId() > 0:
 		param.WhereClauses = append(
 			param.WhereClauses,
 			appdb.NewWhere(pharmacyProduct.GetSqlColumnFromField("ProductId"), appdb.IsNot, nil),

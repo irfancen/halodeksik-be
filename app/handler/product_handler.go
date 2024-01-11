@@ -155,7 +155,7 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 		return
 	}
 
-	paginatedItems, err := h.uc.GetAll(ctx.Request.Context(), param)
+	paginatedItems, err := h.uc.GetAllForUser(ctx.Request.Context(), param)
 	if err != nil {
 		return
 	}
