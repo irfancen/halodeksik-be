@@ -73,6 +73,7 @@ func (repo *ProductStockMutationRepositoryImpl) FindAllJoin(ctx context.Context,
        pharmacy_product_id,
        product_stock_mutation_type_id,
        product_stock_mutations.stock AS stock,
+       product_stock_mutations.created_at,
        product_stock_mutation_types.name AS mutation_type,
        pharmacies.name                   AS pharmacy_name,
        products.name                     AS product_name,
@@ -107,7 +108,7 @@ FROM product_stock_mutations
 			manufacturer    entity.Manufacturer
 		)
 		if err := rows.Scan(
-			&stockMutation.Id, &stockMutation.PharmacyProductId, &stockMutation.ProductStockMutationTypeId, &stockMutation.Stock,
+			&stockMutation.Id, &stockMutation.PharmacyProductId, &stockMutation.ProductStockMutationTypeId, &stockMutation.Stock, &stockMutation.CreatedAt,
 			&mutationType.Name,
 			&pharmacy.Name,
 			&product.Name,
