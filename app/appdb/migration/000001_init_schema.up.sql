@@ -453,40 +453,6 @@ values ('Obat Bebas'),
        ('Obat Bebas Terbatas'),
        ('Non Obat');
 
-INSERT INTO products(name, generic_name, content, manufacturer_id, description, drug_classification_id,
-                     product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image)
-VALUES ('Panadol 500 mg 10 Kaplet', 'Panadol', 'Paracetamol', 1, 'Obat sakit kepala', 1,
-        1, 'Blister', 10, 'Strip', 0.05, 50, 50, 50,
-        'https://storage.googleapis.com/byebyesick-bucket/products/panadol.jpg'),
-       ('Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 1,
-        'Obat sakit kepala', 1,
-        1, 'Tablet', 4, 'Strip', 0.05, 50, 50, 50,
-        'https://storage.googleapis.com/byebyesick-bucket/products/saridon.jpg');
-
-INSERT INTO pharmacies(name, address, sub_district, district, city, province, postal_code, latitude, longitude,
-                       pharmacist_name, pharmacist_license_no, pharmacist_phone_no, operational_hours, operational_days,
-                       pharmacy_admin_id)
-VALUES ('Kimia Farma Kuningan', 'Jalan Gatau', 'Kuningan', 'Setia Budi', 153, 6, '12950', '-6.230060', '106.827363',
-        'M. Irfan Junaidi',
-        '69696969', '08123456789', '0-20', 'mon,tue,wed,thu,fri', 2),
-       ('Kimia Farma Pasar Minggu', 'Jalan Jalan', 'Ragunan', 'Pasar Minggu', 153, 6, '12560', '-6.290963', '106.817317',
-        'M. Yafi Al Hakim',
-        '42042042', '08998239082', '0-22', 'mon,tue,wed,thu,fri,sat,sun', 2),
-       ('Apotek Sinar Jaya', 'Jalan Jaya', 'Merdeka', 'Medan Baru', 278, 34, '20222', '3.576816', '98.659355',
-        'Victor Castor',
-        '10090900', '0892308932', '0-18', 'mon,tue,wed,thu,fri', 4);
-
-INSERT INTO pharmacy_products(pharmacy_id, product_id, is_active, price, stock)
-VALUES (1, 1, true, '12000', 100),
-       (1, 2, true, '5000', 95),
-       (3, 1, true, '15000', 87);
-
-INSERT INTO pharmacy_shipping_methods(pharmacy_id, shipping_method_id)
-VALUES (1, 1),
-       (1, 2),
-       (1, 3),
-       (2, 2);
-
 INSERT INTO product_stock_mutation_types (name)
 values ('Addition'),
        ('Deduction');
@@ -1582,6 +1548,40 @@ INSERT INTO cities (name, id, province_id)
 VALUES ('Kota Tebing Tinggi', 470, 34);
 INSERT INTO cities (name, id, province_id)
 VALUES ('Kab. Toba Samosir', 481, 34);
+
+INSERT INTO products(name, generic_name, content, manufacturer_id, description, drug_classification_id,
+                     product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image)
+VALUES ('Panadol 500 mg 10 Kaplet', 'Panadol', 'Paracetamol', 1, 'Obat sakit kepala', 1,
+        1, 'Blister', 10, 'Strip', 0.05, 50, 50, 50,
+        'https://storage.googleapis.com/byebyesick-bucket/products/panadol.jpg'),
+       ('Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 1,
+        'Obat sakit kepala', 1,
+        1, 'Tablet', 4, 'Strip', 0.05, 50, 50, 50,
+        'https://storage.googleapis.com/byebyesick-bucket/products/saridon.jpg');
+
+INSERT INTO pharmacies(name, address, sub_district, district, city, province, postal_code, latitude, longitude,
+                       pharmacist_name, pharmacist_license_no, pharmacist_phone_no, operational_hours, operational_days,
+                       pharmacy_admin_id)
+VALUES ('Kimia Farma Kuningan', 'Jalan Gatau', 'Kuningan', 'Setia Budi', 153, 6, '12950', '-6.230060', '106.827363',
+        'M. Irfan Junaidi',
+        '69696969', '08123456789', '0-20', 'mon,tue,wed,thu,fri', 2),
+       ('Kimia Farma Pasar Minggu', 'Jalan Jalan', 'Ragunan', 'Pasar Minggu', 153, 6, '12560', '-6.290963', '106.817317',
+        'M. Yafi Al Hakim',
+        '42042042', '08998239082', '0-22', 'mon,tue,wed,thu,fri,sat,sun', 2),
+       ('Apotek Sinar Jaya', 'Jalan Jaya', 'Merdeka', 'Medan Baru', 278, 34, '20222', '3.576816', '98.659355',
+        'Victor Castor',
+        '10090900', '0892308932', '0-18', 'mon,tue,wed,thu,fri', 4);
+
+INSERT INTO pharmacy_products(pharmacy_id, product_id, is_active, price, stock)
+VALUES (1, 1, true, '12000', 100),
+       (1, 2, true, '5000', 95),
+       (3, 1, true, '15000', 87);
+
+INSERT INTO pharmacy_shipping_methods(pharmacy_id, shipping_method_id)
+VALUES (1, 1),
+       (1, 2),
+       (1, 3),
+       (2, 2);
 
 
 -- CREATE FUNCTIONS --
