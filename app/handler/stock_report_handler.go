@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"halodeksik-be/app/appconstant"
+	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
 	"halodeksik-be/app/dto/queryparamdto"
@@ -23,9 +25,14 @@ func NewStockReportHandler(uc usecase.ProductStockMutationUseCase, validator app
 
 func (h *StockReportHandler) FindAll(ctx *gin.Context) {
 	var err error
+	var notFound *apperror.NotFound
 	defer func() {
 		if err != nil {
-			err = WrapError(err)
+			if errors.As(err, &notFound) {
+				err = WrapError(err, http.StatusBadRequest)
+			} else {
+				err = WrapError(err)
+			}
 			_ = ctx.Error(err)
 		}
 	}()
