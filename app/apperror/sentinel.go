@@ -38,4 +38,7 @@ var (
 	ErrInsufficientProductStock             = errors.New("insufficient product stock")
 	ErrProductStockNotEnoughToAddToCart     = errors.New("product stock is not enough to add to cart")
 	ErrProductAddedToCartMustHaveAtLeastOne = errors.New("product added to cart must have at least one item")
+
+	ErrRequestStockMutationFromOwnPharmacy  = errors.New("cannot request stock mutation from own pharmacy")
+	ErrRequestStockMutationDifferentProduct = errors.New("requested product from destination pharmacy is not the same as origin pharmacy")
 )
