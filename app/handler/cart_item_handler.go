@@ -124,3 +124,43 @@ func (h *CartItemHandler) Remove(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusNoContent, dto.ResponseDto{})
 }
+
+func (h *CartItemHandler) Checkout(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	getCartItemCheckoutQuery := queryparamdto.GetCartItemCheckoutQuery{}
+	err = ctx.ShouldBindQuery(&getCartItemCheckoutQuery)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(getCartItemCheckoutQuery)
+	if err != nil {
+		return
+	}
+
+	ids, err := getCartItemCheckoutQuery.GetCartItemIds()
+	if err != nil {
+		return
+	}
+
+	param := getCartItemCheckoutQuery.ToGetAllParams()
+	paginatedItems, err := h.uc.Checkout(ctx.Request.Context(), param, ids...)
+	if err != nil {
+		return
+	}
+
+	resps := make([]*responsedto.CartItemResponse, 0)
+	for _, cartItem := range paginatedItems.Items.([]*entity.CartItem) {
+		resps = append(resps, cartItem.ToResponse())
+	}
+	paginatedItems.Items = resps
+
+	ctx.JSON(http.StatusOK, paginatedItems)
+}

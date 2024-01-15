@@ -88,12 +88,21 @@ func buildQuery(
 		query.WriteString(fmt.Sprintf(" %s ASC ", resourcer.GetSqlColumnFromField("Id")))
 	}
 
+	if setLimit && param.PageSize != nil {
+		size := *param.PageSize
+		query.WriteString(fmt.Sprintf(" LIMIT $%d ", indexPreparedStatement+1))
+
+		indexPreparedStatement += 1
+		values = append(values, size)
+	}
+
 	if setLimit && param.PageId != nil && param.PageSize != nil {
 		size := *param.PageSize
 		offset := (*param.PageId - 1) * size
+		query.WriteString(fmt.Sprintf(" OFFSET $%d ", indexPreparedStatement+1))
 
-		query.WriteString(fmt.Sprintf("LIMIT $%d OFFSET $%d", indexPreparedStatement+1, indexPreparedStatement+2))
-		values = append(values, size, offset)
+		indexPreparedStatement += 1
+		values = append(values, offset)
 	}
 
 	return query.String(), values

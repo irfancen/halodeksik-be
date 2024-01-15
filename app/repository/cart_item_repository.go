@@ -13,6 +13,7 @@ type CartItemRepository interface {
 	Create(ctx context.Context, cartItem entity.CartItem) (*entity.CartItem, error)
 	FindByUserIdAndProductId(ctx context.Context, userId int64, productId int64) (*entity.CartItem, error)
 	FindAllByUserId(ctx context.Context, userId int64) ([]*entity.CartItem, error)
+	FindByMultipleIds(ctx context.Context, id ...int64) ([]*entity.CartItem, error)
 	Update(ctx context.Context, cartItem entity.CartItem) (*entity.CartItem, error)
 	Delete(ctx context.Context, userId int64, productIds []int64) error
 }
@@ -105,6 +106,35 @@ func (repo *CartItemRepositoryImpl) FindAllByUserId(ctx context.Context, userId 
 		return nil, err
 	}
 	return cartItems, nil
+}
+
+func (repo *CartItemRepositoryImpl) FindByMultipleIds(ctx context.Context, id ...int64) ([]*entity.CartItem, error) {
+	const findByMultipleIds = `SELECT id, user_id, product_id, quantity
+	FROM cart_items WHERE id = ANY ($1::int[]) AND deleted_at IS NULL`
+
+	rows, err := repo.db.QueryContext(ctx, findByMultipleIds, pq.Array(id))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*entity.CartItem, 0)
+	for rows.Next() {
+		var cartItem entity.CartItem
+		if err := rows.Scan(
+			&cartItem.Id, &cartItem.UserId, &cartItem.ProductId, &cartItem.Quantity,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &cartItem)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 func (repo *CartItemRepositoryImpl) Update(ctx context.Context, cartItem entity.CartItem) (*entity.CartItem, error) {
