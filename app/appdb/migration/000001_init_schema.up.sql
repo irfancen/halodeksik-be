@@ -141,10 +141,10 @@ CREATE TABLE pharmacy_shipping_methods
 CREATE TABLE verification_tokens
 (
     id         BIGSERIAL PRIMARY KEY,
-    token      VARCHAR              NOT NULL,
-    is_valid   BOOLEAN DEFAULT TRUE NOT NULL,
-    expired_at TIMESTAMPTZ          NOT NULL,
-    email      VARCHAR              NOT NULL,
+    token      VARCHAR                   NOT NULL,
+    is_valid   BOOLEAN     DEFAULT TRUE  NOT NULL,
+    expired_at TIMESTAMPTZ               NOT NULL,
+    email      VARCHAR                   NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     deleted_at TIMESTAMPTZ DEFAULT NULL
@@ -421,17 +421,22 @@ values ('Admin'),
        ('User');
 
 INSERT INTO users (email, password, user_role_id, is_verified)
-VALUES ('byebyesick@gmail.com', '$2a$04$MYf2/GkfNPUUZUj8zInF.ej7KqSVO3KlJrbNEwkCtCerFXzqbOsDe', 1, true);
+VALUES ('byebyesick@gmail.com', '$2a$04$MYf2/GkfNPUUZUj8zInF.ej7KqSVO3KlJrbNEwkCtCerFXzqbOsDe', 1, true),
+       ('yafi.tamfan08@gmail.com', '$2a$04$s0eeWG0MEJ6b.ffuGsibcuhqHZJyIxHbb5Cc/EckWD2GY9ZnvUj9S', 2, true),
+       ('tifan@email.com', '$2a$04$s0eeWG0MEJ6b.ffuGsibcuhqHZJyIxHbb5Cc/EckWD2GY9ZnvUj9S', 2, true),
+       ('random@email.com', '$2a$04$s0eeWG0MEJ6b.ffuGsibcuhqHZJyIxHbb5Cc/EckWD2GY9ZnvUj9S', 2, true),
+       ('wasikamin4@gmail.com', '$2a$04$s0eeWG0MEJ6b.ffuGsibcuhqHZJyIxHbb5Cc/EckWD2GY9ZnvUj9S', 3, true),
+       ('lumbanraja.boy@gmail.com', '$2a$04$s0eeWG0MEJ6b.ffuGsibcuhqHZJyIxHbb5Cc/EckWD2GY9ZnvUj9S', 4, true);
 
 INSERT INTO doctor_specializations (name, image)
-values ('General Practitioners', ''),
-       ('Pediatric Specialist', ''),
-       ('Internal Medicine specialist', ''),
-       ('Surgical Specialist', '');
+values ('General Practitioners',
+        'https://byebyesick-bucket.irfancen.com/doctor_specializations/doctor-specs.jpg'),
+       ('Pediatric Specialist',
+        'https://byebyesick-bucket.irfancen.com/doctor_specializations/doctor-specs.jpg');
 
 INSERT INTO manufacturers (name, image)
-values ('Soho Industri Pharmasi', ''),
-       ('Amarox Pharma Global', '');
+values ('Soho Industri Pharmasi', 'https://byebyesick-bucket.irfancen.com/doctor_specializations/soho.png'),
+       ('Amarox Pharma Global', 'https://byebyesick-bucket.irfancen.com/doctor_specializations/amarox.jpeg');
 
 INSERT INTO shipping_methods (name)
 values ('Official Instant'),
@@ -462,7 +467,7 @@ values ('Open'),
 
 INSERT INTO order_statuses (name)
 values ('Waiting for Payment'),
-       ('Paid '),
+       ('Paid'),
        ('Waiting for Pharmacy'),
        ('Pharmacy Confirmed'),
        ('Order Packed'),
@@ -1544,6 +1549,41 @@ VALUES ('Kota Tebing Tinggi', 470, 34);
 INSERT INTO cities (name, id, province_id)
 VALUES ('Kab. Toba Samosir', 481, 34);
 
+INSERT INTO products(name, generic_name, content, manufacturer_id, description, drug_classification_id,
+                     product_category_id, drug_form, unit_in_pack, selling_unit, weight, length, width, height, image)
+VALUES ('Panadol 500 mg 10 Kaplet', 'Panadol', 'Paracetamol', 1, 'Obat sakit kepala', 1,
+        1, 'Blister', 10, 'Strip', 0.05, 50, 50, 50,
+        'https://byebyesick-bucket.irfancen.com/products/panadol.jpg'),
+       ('Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 1,
+        'Obat sakit kepala', 1,
+        1, 'Tablet', 4, 'Strip', 0.05, 50, 50, 50,
+        'https://byebyesick-bucket.irfancen.com/products/saridon.jpg');
+
+INSERT INTO pharmacies(name, address, sub_district, district, city, province, postal_code, latitude, longitude,
+                       pharmacist_name, pharmacist_license_no, pharmacist_phone_no, operational_hours, operational_days,
+                       pharmacy_admin_id)
+VALUES ('Kimia Farma Kuningan', 'Jalan Gatau', 'Kuningan', 'Setia Budi', 153, 6, '12950', '-6.230060', '106.827363',
+        'M. Irfan Junaidi',
+        '69696969', '08123456789', '0-20', 'mon,tue,wed,thu,fri', 2),
+       ('Kimia Farma Pasar Minggu', 'Jalan Jalan', 'Ragunan', 'Pasar Minggu', 153, 6, '12560', '-6.290963',
+        '106.817317',
+        'M. Yafi Al Hakim',
+        '42042042', '08998239082', '0-22', 'mon,tue,wed,thu,fri,sat,sun', 2),
+       ('Apotek Sinar Jaya', 'Jalan Jaya', 'Merdeka', 'Medan Baru', 278, 34, '20222', '3.576816', '98.659355',
+        'Victor Castor',
+        '10090900', '0892308932', '0-18', 'mon,tue,wed,thu,fri', 4);
+
+INSERT INTO pharmacy_products(pharmacy_id, product_id, is_active, price, stock)
+VALUES (1, 1, true, '12000', 100),
+       (1, 2, true, '5000', 95),
+       (3, 1, true, '15000', 87);
+
+INSERT INTO pharmacy_shipping_methods(pharmacy_id, shipping_method_id)
+VALUES (1, 1),
+       (1, 2),
+       (1, 3),
+       (2, 2);
+
 
 -- CREATE FUNCTIONS --
 
@@ -1551,30 +1591,43 @@ VALUES ('Kab. Toba Samosir', 481, 34);
 -- using the haversine formula
 
 -- Define the radius of the Earth in kilometers
-CREATE OR REPLACE FUNCTION earth_radius()
-    RETURNS DECIMAL AS $$
+CREATE
+OR REPLACE FUNCTION earth_radius()
+    RETURNS DECIMAL AS
+$$
 BEGIN
-    RETURN 6371;
+RETURN 6371;
 END;
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 -- Create a function that takes two pairs of coordinates as input
 -- and returns the distance between them as output
-CREATE OR REPLACE FUNCTION distance (lat1 VARCHAR, lon1 VARCHAR, lat2 VARCHAR, lon2 VARCHAR) RETURNS DECIMAL AS $$
+CREATE
+OR REPLACE FUNCTION distance(lat1 VARCHAR, lon1 VARCHAR, lat2 VARCHAR, lon2 VARCHAR) RETURNS DECIMAL AS
+$$
 DECLARE
     -- Convert degrees to radians
-    radLat1 DECIMAL := RADIANS(lat1::DECIMAL);
-    radLon1 DECIMAL := RADIANS(lon1::DECIMAL);
-    radLat2 DECIMAL := RADIANS(lat2::DECIMAL);
-    radLon2 DECIMAL := RADIANS(lon2::DECIMAL);
+radLat1 DECIMAL := RADIANS(lat1::DECIMAL);
+    radLon1
+DECIMAL := RADIANS(lon1::DECIMAL);
+    radLat2
+DECIMAL := RADIANS(lat2::DECIMAL);
+    radLon2
+DECIMAL := RADIANS(lon2::DECIMAL);
     -- Calculate the difference between the coordinates
-    dLat DECIMAL := radLat2 - radLat1;
-    dLon DECIMAL := radLon2 - radLon1;
+    dLat
+DECIMAL := radLat2 - radLat1;
+    dLon
+DECIMAL := radLon2 - radLon1;
     -- Apply the haversine formula
-    a DECIMAL := SIN(dLat/2)^2 + COS(radLat1) * COS(radLat2) * SIN(dLon/2)^2;
-    c DECIMAL := 2 * ATAN2(SQRT(a), SQRT(1-a));
+    a
+DECIMAL := SIN(dLat / 2) ^ 2 + COS(radLat1) * COS(radLat2) * SIN(dLon / 2) ^ 2;
+    c
+DECIMAL := 2 * ATAN2(SQRT(a), SQRT(1 - a));
 BEGIN
     -- Calculate the distance in kilometers
-    RETURN earth_radius() * c;
+RETURN earth_radius() * c;
 END
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;

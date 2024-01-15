@@ -8,4 +8,5 @@
 *.jpeg
 *.jpg
 *.txt
+seeding-data.md
 /app/cmd/cmd
