@@ -21,6 +21,7 @@ type DoctorProfile struct {
 	CreatedAt              time.Time       `json:"created_at"`
 	UpdatedAt              time.Time       `json:"updated_at"`
 	DeletedAt              sql.NullTime    `json:"deleted_at"`
+	DoctorSpecialization   *DoctorSpecialization
 }
 
 func (u *DoctorProfile) GetEntityName() string {

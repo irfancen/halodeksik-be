@@ -9,8 +9,8 @@ import (
 )
 
 type ProfileRepository interface {
-	FindUserProfileByUserId(ctx context.Context, userId int64) (*entity.UserProfile, error)
-	FindDoctorProfileByUserId(ctx context.Context, userId int64) (*entity.DoctorProfile, error)
+	FindUserProfileByUserId(ctx context.Context, userId int64) (*entity.User, error)
+	FindDoctorProfileByUserId(ctx context.Context, userId int64) (*entity.User, error)
 	UpdateUserProfileByUserId(ctx context.Context, profile entity.UserProfile) (*entity.UserProfile, error)
 	UpdateDoctorProfileByUserId(ctx context.Context, profile entity.DoctorProfile) (*entity.DoctorProfile, error)
 }
@@ -24,26 +24,29 @@ func NewProfileRepository(db *sql.DB) *ProfileRepositoryImpl {
 	return &repo
 }
 
-func (repo *ProfileRepositoryImpl) FindUserProfileByUserId(ctx context.Context, userId int64) (*entity.UserProfile, error) {
-	const getUserProfileByUserId = `
-	SELECT user_id, name, profile_photo, date_of_birth, created_at, updated_at, deleted_at FROM user_profiles
-	WHERE user_id = $1
+func (repo *ProfileRepositoryImpl) FindUserProfileByUserId(ctx context.Context, userId int64) (*entity.User, error) {
+	const getUserWithProfile = `
+	SELECT id, email, user_role_id, is_verified, name, profile_photo, date_of_birth
+	FROM users INNER JOIN user_profiles ON users.id = user_profiles.user_id WHERE users.id = $1
 	`
 
-	row := repo.db.QueryRowContext(ctx, getUserProfileByUserId,
+	row := repo.db.QueryRowContext(ctx, getUserWithProfile,
 		userId,
 	)
 
-	var profile entity.UserProfile
+	var user entity.User
+	var (
+		profile entity.UserProfile
+	)
 
 	err := row.Scan(
-		&profile.UserId,
+		&user.Id,
+		&user.Email,
+		&user.UserRoleId,
+		&user.IsVerified,
 		&profile.Name,
 		&profile.ProfilePhoto,
 		&profile.DateOfBirth,
-		&profile.CreatedAt,
-		&profile.UpdatedAt,
-		&profile.DeletedAt,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -51,32 +54,40 @@ func (repo *ProfileRepositoryImpl) FindUserProfileByUserId(ctx context.Context, 
 		}
 		return nil, err
 	}
-	return &profile, nil
+	user.UserProfile = &profile
+	return &user, nil
 }
 
-func (repo *ProfileRepositoryImpl) FindDoctorProfileByUserId(ctx context.Context, userId int64) (*entity.DoctorProfile, error) {
-	const getDoctorProfileByUserId = `
-	SELECT user_id, name, profile_photo, starting_year, doctor_certificate, doctor_specialization_id, consultation_fee, is_online, created_at, updated_at, deleted_at FROM doctor_profiles
-	WHERE user_id = $1
+func (repo *ProfileRepositoryImpl) FindDoctorProfileByUserId(ctx context.Context, userId int64) (*entity.User, error) {
+	const getDoctorWithProfile = `
+	SELECT u.id, email, user_role_id, is_verified, user_id, dp.name, profile_photo, starting_year, doctor_certificate, doctor_specialization_id, consultation_fee, is_online, ds.name spec
+	FROM users u INNER JOIN doctor_profiles dp ON u.id = dp.user_id INNER JOIN doctor_specializations ds ON dp.doctor_specialization_id = ds.id WHERE u.id = $1
 	`
 
-	row := repo.db.QueryRowContext(ctx, getDoctorProfileByUserId,
+	row := repo.db.QueryRowContext(ctx, getDoctorWithProfile,
 		userId,
 	)
 
-	var profile entity.DoctorProfile
+	var doctor entity.User
+	var (
+		profile entity.DoctorProfile
+		spec    entity.DoctorSpecialization
+	)
 
 	err := row.Scan(
-		&profile.UserId, &profile.Name,
+		&doctor.Id,
+		&doctor.Email,
+		&doctor.UserRoleId,
+		&doctor.IsVerified,
+		&profile.UserId,
+		&profile.Name,
 		&profile.ProfilePhoto,
 		&profile.StartingYear,
 		&profile.DoctorCertificate,
 		&profile.DoctorSpecializationId,
 		&profile.ConsultationFee,
 		&profile.IsOnline,
-		&profile.CreatedAt,
-		&profile.UpdatedAt,
-		&profile.DeletedAt,
+		&spec.Name,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -84,7 +95,10 @@ func (repo *ProfileRepositoryImpl) FindDoctorProfileByUserId(ctx context.Context
 		}
 		return nil, err
 	}
-	return &profile, nil
+	profile.DoctorSpecialization = &spec
+	doctor.DoctorProfile = &profile
+
+	return &doctor, nil
 }
 
 func (repo *ProfileRepositoryImpl) UpdateUserProfileByUserId(ctx context.Context, profile entity.UserProfile) (*entity.UserProfile, error) {
@@ -116,9 +130,11 @@ func (repo *ProfileRepositoryImpl) UpdateUserProfileByUserId(ctx context.Context
 
 func (repo *ProfileRepositoryImpl) UpdateDoctorProfileByUserId(ctx context.Context, profile entity.DoctorProfile) (*entity.DoctorProfile, error) {
 	const updateDoctorProfileByUserId = `
-	UPDATE doctor_profiles
-	SET name = $1, profile_photo = $2, starting_year = $3, doctor_certificate = $4, doctor_specialization_id = $5, consultation_fee = $6 WHERE user_id = $7
-	RETURNING user_id, name, profile_photo, starting_year, doctor_certificate, doctor_specialization_id, consultation_fee, is_online, created_at, updated_at, deleted_at
+	WITH updated_profile AS (
+		UPDATE doctor_profiles
+			SET name = $1, profile_photo =  $2, starting_year =  $3, doctor_certificate =  $4, doctor_specialization_id = $5, consultation_fee = $6, updated_at = now() WHERE user_id = $7
+			RETURNING user_id, name, profile_photo, starting_year, doctor_certificate, doctor_specialization_id, consultation_fee, is_online
+	) SELECT up.*, ds.name AS spec FROM updated_profile up INNER JOIN doctor_specializations ds ON up.doctor_specialization_id = ds.id;
 	`
 	row := repo.db.QueryRowContext(ctx, updateDoctorProfileByUserId,
 		profile.Name, profile.ProfilePhoto, profile.StartingYear, profile.DoctorCertificate, profile.DoctorSpecializationId,
@@ -126,6 +142,7 @@ func (repo *ProfileRepositoryImpl) UpdateDoctorProfileByUserId(ctx context.Conte
 	)
 
 	var updatedProfile entity.DoctorProfile
+	var spec entity.DoctorSpecialization
 
 	err := row.Scan(
 		&updatedProfile.UserId,
@@ -136,11 +153,10 @@ func (repo *ProfileRepositoryImpl) UpdateDoctorProfileByUserId(ctx context.Conte
 		&updatedProfile.DoctorSpecializationId,
 		&updatedProfile.ConsultationFee,
 		&updatedProfile.IsOnline,
-		&updatedProfile.CreatedAt,
-		&updatedProfile.UpdatedAt,
-		&updatedProfile.DeletedAt,
+		&spec.Name,
 	)
 
+	updatedProfile.DoctorSpecialization = &spec
 	return &updatedProfile, err
 
 }

@@ -2,14 +2,17 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto"
+	"halodeksik-be/app/dto/requestdto"
 	"halodeksik-be/app/dto/responsedto"
 	"halodeksik-be/app/usecase"
 	"net/http"
 )
 
 type AddressAreaHandler struct {
-	uc usecase.AddressAreaUseCase
+	uc        usecase.AddressAreaUseCase
+	validator appvalidator.AppValidator
 }
 
 func NewAddressAreaHandler(uc usecase.AddressAreaUseCase) *AddressAreaHandler {
@@ -57,5 +60,34 @@ func (h *AddressAreaHandler) GetAllCities(ctx *gin.Context) {
 		resps = append(resps, city.ToResponse())
 	}
 	resp := dto.ResponseDto{Data: resps}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *AddressAreaHandler) ValidateLatLong(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	req := requestdto.RequestValidateLatLong{}
+	err = ctx.ShouldBindJSON(&req)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(req)
+	if err != nil {
+		return
+	}
+
+	err = h.uc.ValidateCityWithLatLong(ctx.Request.Context(), req.CityId, req.ProvinceId, req.Latitude, req.Longitude)
+	if err != nil {
+		return
+	}
+
+	resp := dto.ResponseDto{Data: "Latitude and Longitude is valid."}
 	ctx.JSON(http.StatusOK, resp)
 }

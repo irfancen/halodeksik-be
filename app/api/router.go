@@ -30,6 +30,8 @@ type RouterOpts struct {
 	DoctorSpecsHandler          *handler.DoctorSpecializationHandler
 	ForgotTokenHandler          *handler.ForgotTokenHandler
 	RegisterTokenHandler        *handler.RegisterTokenHandler
+	ProfileHandler              *handler.ProfileHandler
+	UserAddressHandler          *handler.UserAddressHandler
 }
 
 func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
@@ -49,6 +51,8 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		DoctorSpecsHandler:          handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase, appvalidator.Validator),
 		ForgotTokenHandler:          handler.NewForgotTokenHandler(allUC.ForgotTokenUseCase, appvalidator.Validator),
 		RegisterTokenHandler:        handler.NewRegisterTokenHandler(allUC.RegisterTokenUseCase, appvalidator.Validator),
+		ProfileHandler:              handler.NewProfileHandler(allUC.ProfileUseCase, appvalidator.Validator),
+		UserAddressHandler:          handler.NewAddressHandler(allUC.UserAddressUseCase, appvalidator.Validator),
 	}
 }
 
@@ -95,6 +99,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		{
 			addressArea.GET("/provinces/no-params", rOpts.AddressAreaHandler.GetAllProvince)
 			addressArea.GET("/cities/no-params", rOpts.AddressAreaHandler.GetAllCities)
+			addressArea.POST("/validate", rOpts.AddressAreaHandler.ValidateLatLong)
 		}
 
 		auth := v1.Group("/auth")
@@ -313,6 +318,23 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				admin.DELETE("/:id", rOpts.UserHandler.RemoveAdmin)
 			}
 		}
+
+		profile := v1.Group("/profile",
+			middleware.LoginMiddleware())
+		{
+			profile.GET("/doctor",
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor), rOpts.ProfileHandler.GetProfile)
+			profile.GET("/user",
+				middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.ProfileHandler.GetProfile)
+			profile.PUT("/doctor", middleware.AllowRoles(appconstant.UserRoleIdDoctor), rOpts.ProfileHandler.EditDoctorProfile)
+			profile.PUT("/user", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.ProfileHandler.EditUserProfile)
+			profile.GET("/addresses", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.UserAddressHandler.GetAll)
+			profile.POST("/addresses", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.UserAddressHandler.Add)
+			profile.PUT("/addresses/:id", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.UserAddressHandler.Update)
+			profile.GET("/addresses/:id", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.UserAddressHandler.GetById)
+			profile.DELETE("/addresses/:id", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.UserAddressHandler.Remove)
+		}
+
 	}
 
 	return router

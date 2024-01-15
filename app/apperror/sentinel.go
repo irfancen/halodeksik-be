@@ -29,6 +29,7 @@ var (
 
 	ErrInvalidDecimal     = errors.New("invalid decimal")
 	ErrInvalidIntInString = errors.New("invalid integer in string")
+	ErrInvalidLatLong     = errors.New("invalid lat and long")
 
 	ErrPharmacyProductUniqueConstraint = errors.New("pharmacy_id and product_id combinations violate unique constraint")
 

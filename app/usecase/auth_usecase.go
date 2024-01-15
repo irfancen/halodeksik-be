@@ -188,15 +188,15 @@ func (uc *AuthUseCaseImpl) Login(ctx context.Context, req requestdto.LoginReques
 		if err != nil {
 			return nil, nil, err
 		}
-		name = userProfile.Name
-		image = userProfile.ProfilePhoto
+		name = userProfile.DoctorProfile.Name
+		image = userProfile.DoctorProfile.ProfilePhoto
 	} else if user.UserRoleId == appconstant.UserRoleIdUser {
 		userProfile, err := uc.profileRepository.FindUserProfileByUserId(ctx, user.Id)
 		if err != nil {
 			return nil, nil, err
 		}
-		name = userProfile.Name
-		image = userProfile.ProfilePhoto
+		name = userProfile.UserProfile.Name
+		image = userProfile.UserProfile.ProfilePhoto
 	}
 
 	if !uc.authUtil.ComparePassword(user.Password, req.Password) {

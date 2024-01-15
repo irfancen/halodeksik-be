@@ -11,6 +11,7 @@ import (
 type AddressAreaRepository interface {
 	FindAllProvince(ctx context.Context) ([]*entity.Province, error)
 	FindCityById(ctx context.Context, cityId int64) (*entity.City, error)
+	FindProvinceById(ctx context.Context, cityId int64) (*entity.Province, error)
 	FindAllCities(ctx context.Context) ([]*entity.City, error)
 }
 
@@ -91,4 +92,25 @@ func (repo *AddressAreaRepositoryImpl) FindAllCities(ctx context.Context) ([]*en
 	}
 
 	return items, nil
+}
+
+func (repo *AddressAreaRepositoryImpl) FindProvinceById(ctx context.Context, provinceId int64) (*entity.Province, error) {
+	getById := `SELECT p.id, p.name FROM provinces p WHERE p.id = $1 AND p.deleted_at IS NULL;`
+	row := repo.db.QueryRowContext(ctx, getById, provinceId)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	var province entity.Province
+	err := row.Scan(
+		&province.Id, &province.Name,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+
+	return &province, nil
 }
