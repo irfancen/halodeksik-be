@@ -46,12 +46,13 @@ func (pp *PharmacyProduct) ToPharmacyProductResponse() *responsedto.PharmacyProd
 		return nil
 	}
 	return &responsedto.PharmacyProductResponse{
-		Id:              pp.Id,
-		PharmacyId:      pp.PharmacyId,
-		ProductId:       pp.ProductId,
-		IsActive:        pp.IsActive,
-		Price:           pp.Price.String(),
-		Stock:           &pp.Stock,
-		ProductResponse: pp.Product.ToProductResponse(),
+		Id:               pp.Id,
+		PharmacyId:       pp.PharmacyId,
+		ProductId:        pp.ProductId,
+		IsActive:         pp.IsActive,
+		Price:            pp.Price.String(),
+		Stock:            &pp.Stock,
+		PharmacyResponse: pp.Pharmacy.ToPharmacyResponse(),
+		ProductResponse:  pp.Product.ToProductResponse(),
 	}
 }

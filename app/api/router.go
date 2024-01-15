@@ -293,7 +293,10 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			stockMutation.POST("", rOpts.ProductStockMutationHandler.Add)
 
 			stockMutationRequest := stockMutation.Group("/requests")
-			stockMutationRequest.POST("", rOpts.ProductStockMutationRequestHandler.Add)
+			{
+				stockMutationRequest.GET("", rOpts.ProductStockMutationRequestHandler.GetAll)
+				stockMutationRequest.POST("", rOpts.ProductStockMutationRequestHandler.Add)
+			}
 		}
 
 		users := v1.Group(

@@ -18,6 +18,8 @@ type ProductStockMutationRequest struct {
 	CreatedAt                           time.Time    `json:"created_at"`
 	UpdatedAt                           time.Time    `json:"updated_at"`
 	DeletedAt                           sql.NullTime `json:"deleted_at"`
+	PharmacyProductDest                 *PharmacyProduct
+	ProductStockMutationRequestStatus   *ProductStockMutationRequestStatus
 }
 
 func (e *ProductStockMutationRequest) GetEntityName() string {
@@ -36,13 +38,25 @@ func (e *ProductStockMutationRequest) GetSqlColumnFromField(fieldName string) st
 	return fmt.Sprintf("%s.%s", e.GetEntityName(), e.GetFieldStructTag(fieldName, appconstant.JsonStructTag))
 }
 
-func (e *ProductStockMutationRequest) ToResponse() responsedto.ProductStockMutationRequestResponse {
-	return responsedto.ProductStockMutationRequestResponse{
+func (e *ProductStockMutationRequest) ToResponse() *responsedto.ProductStockMutationRequestResponse {
+	pharmacyProduct := e.PharmacyProductDest.ToPharmacyProductResponse()
+	if pharmacyProduct != nil {
+		pharmacyProduct.Price = ""
+		pharmacyProduct.Stock = nil
+
+		if pharmacyProduct.PharmacyResponse != nil {
+			pharmacyProduct.PharmacyResponse.OperationalDays = nil
+		}
+	}
+
+	return &responsedto.ProductStockMutationRequestResponse{
 		Id:                                  e.Id,
 		PharmacyProductOriginId:             e.PharmacyProductOriginId,
 		PharmacyProductDestId:               e.PharmacyProductDestId,
 		Stock:                               e.Stock,
 		ProductStockMutationRequestStatusId: e.ProductStockMutationRequestStatusId,
 		RequestDate:                         e.CreatedAt,
+		PharmacyProductResponse:             pharmacyProduct,
+		ProductStockMutationRequestStatusResponse: e.ProductStockMutationRequestStatus.ToResponse(),
 	}
 }
