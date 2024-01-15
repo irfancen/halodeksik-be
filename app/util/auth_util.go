@@ -18,12 +18,12 @@ type AuthUtil interface {
 }
 
 func NewAuthUtil() AuthUtil {
-	return &authUtil{}
+	return &AuthUtilImpl{}
 }
 
-type authUtil struct{}
+type AuthUtilImpl struct{}
 
-func (u *authUtil) ComparePassword(hashedPwd, plainPwd string) bool {
+func (u *AuthUtilImpl) ComparePassword(hashedPwd, plainPwd string) bool {
 	byteHash := []byte(hashedPwd)
 	password := []byte(plainPwd)
 	err := bcrypt.CompareHashAndPassword(byteHash, password)
@@ -33,7 +33,7 @@ func (u *authUtil) ComparePassword(hashedPwd, plainPwd string) bool {
 	return true
 }
 
-func (u *authUtil) GenerateSecureToken() (string, error) {
+func (u *AuthUtilImpl) GenerateSecureToken() (string, error) {
 	token, err := uuid.NewRandom()
 	if err != nil {
 		return "", err
@@ -41,7 +41,7 @@ func (u *authUtil) GenerateSecureToken() (string, error) {
 	return token.String(), nil
 }
 
-func (u *authUtil) SignToken(token *jwt.Token) (string, error) {
+func (u *AuthUtilImpl) SignToken(token *jwt.Token) (string, error) {
 	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
 	if err != nil {
 		return "", err
@@ -49,7 +49,7 @@ func (u *authUtil) SignToken(token *jwt.Token) (string, error) {
 	return tokenString, nil
 }
 
-func (u *authUtil) HashAndSalt(pwd string) (string, error) {
+func (u *AuthUtilImpl) HashAndSalt(pwd string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.MinCost)
 	if errors.Is(err, bcrypt.ErrPasswordTooLong) {
 		return "", apperror.ErrPasswordTooLong

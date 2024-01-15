@@ -90,6 +90,9 @@ func WrapError(err error, customCode ...int) error {
 	case errors.As(errWrapper.ErrorStored, &errAuth):
 		errWrapper.Code = http.StatusUnauthorized
 
+	case errors.Is(err, apperror.ErrUnauthorized):
+		errWrapper.Code = http.StatusUnauthorized
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrForbiddenViewEntity):
 		errWrapper.Code = http.StatusForbidden
 
@@ -108,7 +111,13 @@ func WrapError(err error, customCode ...int) error {
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductUniqueConstraint):
 		fallthrough
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidLatLong):
+		fallthrough
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidRegisterRole):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrRecordNotFound):
 		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrWrongCredentials):
@@ -133,6 +142,9 @@ func WrapError(err error, customCode ...int) error {
 		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductAddedToCartMustHaveAtLeastOne):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrMainAddressNotFound):
 		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidIntInString):

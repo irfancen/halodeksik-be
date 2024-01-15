@@ -27,8 +27,10 @@ var (
 
 	ErrDeleteAlreadyAssignedAdmin = errors.New("cannot delete already assigned pharmacy admin")
 
-	ErrInvalidDecimal     = errors.New("invalid decimal")
-	ErrInvalidIntInString = errors.New("invalid integer in string")
+	ErrInvalidDecimal      = errors.New("invalid decimal")
+	ErrInvalidIntInString  = errors.New("invalid integer in string")
+	ErrInvalidLatLong      = errors.New("invalid lat and long")
+	ErrMainAddressNotFound = errors.New("this user does not have main address")
 
 	ErrPharmacyProductUniqueConstraint = errors.New("pharmacy_id and product_id combinations violate unique constraint")
 

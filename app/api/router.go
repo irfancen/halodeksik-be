@@ -30,6 +30,8 @@ type RouterOpts struct {
 	DoctorSpecsHandler          *handler.DoctorSpecializationHandler
 	ForgotTokenHandler          *handler.ForgotTokenHandler
 	RegisterTokenHandler        *handler.RegisterTokenHandler
+	ProfileHandler              *handler.ProfileHandler
+	UserAddressHandler          *handler.UserAddressHandler
 }
 
 func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
@@ -49,6 +51,8 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		DoctorSpecsHandler:          handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase, appvalidator.Validator),
 		ForgotTokenHandler:          handler.NewForgotTokenHandler(allUC.ForgotTokenUseCase, appvalidator.Validator),
 		RegisterTokenHandler:        handler.NewRegisterTokenHandler(allUC.RegisterTokenUseCase, appvalidator.Validator),
+		ProfileHandler:              handler.NewProfileHandler(allUC.ProfileUseCase, appvalidator.Validator),
+		UserAddressHandler:          handler.NewAddressHandler(allUC.UserAddressUseCase, appvalidator.Validator),
 	}
 }
 
@@ -95,6 +99,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		{
 			addressArea.GET("/provinces/no-params", rOpts.AddressAreaHandler.GetAllProvince)
 			addressArea.GET("/cities/no-params", rOpts.AddressAreaHandler.GetAllCities)
+			addressArea.POST("/validate", rOpts.AddressAreaHandler.ValidateLatLong)
 		}
 
 		auth := v1.Group("/auth")
@@ -313,6 +318,40 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				admin.DELETE("/:id", rOpts.UserHandler.RemoveAdmin)
 			}
 		}
+
+		doctors := v1.Group("/users/doctor")
+		{
+			doctors.GET("", rOpts.UserHandler.GetAllDoctors)
+			doctors.GET("/:id", rOpts.UserHandler.GetDoctorById)
+		}
+
+		profile := v1.Group("/profile",
+			middleware.LoginMiddleware())
+		{
+			profileDoctor := profile.Group("/doctor")
+			{
+				profileDoctor.GET("",
+					middleware.AllowRoles(appconstant.UserRoleIdDoctor), rOpts.ProfileHandler.GetProfile)
+				profileDoctor.PUT("", middleware.AllowRoles(appconstant.UserRoleIdDoctor), rOpts.ProfileHandler.EditDoctorProfile)
+
+			}
+			profileUser := profile.Group("/user")
+			{
+				profileUser.GET("",
+					middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.ProfileHandler.GetProfile)
+				profileUser.PUT("", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.ProfileHandler.EditUserProfile)
+			}
+			addressProfile := profile.Group("/addresses", middleware.AllowRoles(appconstant.UserRoleIdUser))
+			{
+				addressProfile.GET("", rOpts.UserAddressHandler.GetAll)
+				addressProfile.POST("", rOpts.UserAddressHandler.Add)
+				addressProfile.PUT("/:id", rOpts.UserAddressHandler.Update)
+				addressProfile.GET("/:id", rOpts.UserAddressHandler.GetById)
+				addressProfile.DELETE("/:id", rOpts.UserAddressHandler.Remove)
+				addressProfile.GET("/main", rOpts.UserAddressHandler.GetMain)
+			}
+		}
+
 	}
 
 	return router

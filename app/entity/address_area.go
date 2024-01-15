@@ -18,7 +18,7 @@ type Province struct {
 }
 
 func (e *Province) GetEntityName() string {
-	return "pharmacies"
+	return "provinces"
 }
 
 func (e *Province) GetFieldStructTag(fieldName string, structTag string) string {
@@ -50,7 +50,7 @@ type City struct {
 }
 
 func (e *City) GetEntityName() string {
-	return "pharmacies"
+	return "cities"
 }
 
 func (e *City) GetFieldStructTag(fieldName string, structTag string) string {

@@ -21,6 +21,7 @@ type AllUseCases struct {
 	DoctorSpecializationUseCase usecase.DoctorSpecializationUseCase
 	ForgotTokenUseCase          usecase.ForgotTokenUseCase
 	RegisterTokenUseCase        usecase.RegisterTokenUseCase
+	UserAddressUseCase          usecase.AddressUseCase
 }
 
 func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases {
@@ -36,7 +37,7 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 	authCases := usecase.AuthUseCases{TForgotUseCase: forgotTokenUseCase, TRegisterUseCase: registerTokenUseCase}
 
 	return &AllUseCases{
-		AddressAreaUseCase:          usecase.NewAddressAreaUseCaseImpl(allRepo.AddressAreaRepository),
+		AddressAreaUseCase:          usecase.NewAddressAreaUseCaseImpl(allRepo.AddressAreaRepository, allUtil.LocUtil),
 		AuthUseCase:                 usecase.NewAuthUsecase(authRepos, allUtil.AuthUtil, appcloud.AppFileUploader, authCases),
 		CartItemUseCase:             usecase.NewCartItemUseCaseImpl(allRepo.CartItemRepository, allRepo.ProductRepository, allRepo.PharmacyProductRepository),
 		DrugClassificationUseCase:   usecase.NewDrugClassificationUseCaseImpl(allRepo.DrugClassificationRepository),
@@ -47,9 +48,10 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 		ProductUseCase:              usecase.NewProductUseCaseImpl(allRepo.ProductRepository, allRepo.PharmacyRepository, appcloud.AppFileUploader),
 		ProductStockMutation:        usecase.NewProductStockMutationUseCaseImpl(allRepo.ProductStockMutationRepository, allRepo.PharmacyProductRepository, allRepo.PharmacyRepository),
 		UserUseCase:                 usecase.NewUserUseCaseImpl(allRepo.UserRepository, allRepo.PharmacyRepository, allUtil.AuthUtil),
-		ProfileUseCase:              usecase.NewProfileUseCaseImpl(allRepo.ProfileRepository),
+		ProfileUseCase:              usecase.NewProfileUseCaseImpl(allRepo.ProfileRepository, appcloud.AppFileUploader),
 		DoctorSpecializationUseCase: usecase.NewDoctorSpecializationUseCaseImpl(allRepo.DoctorSpecializationRepository, appcloud.AppFileUploader),
 		ForgotTokenUseCase:          forgotTokenUseCase,
 		RegisterTokenUseCase:        registerTokenUseCase,
+		UserAddressUseCase:          usecase.NewAddressUseCaseImpl(allRepo.UserAddressRepository, allRepo.AddressAreaRepository, allUtil.LocUtil),
 	}
 }
