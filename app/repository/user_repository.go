@@ -14,9 +14,11 @@ type UserRepository interface {
 	CreateAndDoctorProfile(ctx context.Context, user entity.User, profile entity.DoctorProfile) (*entity.User, error)
 	CreateAndUserProfile(ctx context.Context, user entity.User, profile entity.UserProfile) (*entity.User, error)
 	FindById(ctx context.Context, id int64) (*entity.User, error)
+	FindDoctorById(ctx context.Context, id int64) (*entity.User, error)
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error)
 	FindAllDoctors(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error)
+	CountFindAllDoctors(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 	Update(ctx context.Context, user entity.User) (*entity.User, error)
 	Delete(ctx context.Context, id int64) error
@@ -28,8 +30,89 @@ type UserRepositoryImpl struct {
 }
 
 func (repo *UserRepositoryImpl) FindAllDoctors(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error) {
-	//TODO implement me
-	panic("implement me")
+	const getAllDoctors = `SELECT users.id, email, user_role_id, is_verified, doctor_profiles.name AS name, 
+	doctor_profiles.profile_photo, doctor_profiles.starting_year, doctor_profiles.doctor_certificate, doctor_specializations.name FROM users
+	INNER JOIN doctor_profiles ON users.id = doctor_profiles.user_id INNER JOIN doctor_specializations ON 
+	doctor_profiles.doctor_specialization_id = doctor_specializations.id WHERE user_role_id = 3 AND users.deleted_at IS NULL `
+
+	query, values := buildQuery(getAllDoctors, &entity.User{}, param, true)
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*entity.User, 0)
+	for rows.Next() {
+		var user entity.User
+		var profile entity.DoctorProfile
+		var profileSpec entity.DoctorSpecialization
+		if err := rows.Scan(
+			&user.Id, &user.Email, &user.UserRoleId, &user.IsVerified, &profile.Name, &profile.ProfilePhoto, &profile.StartingYear,
+			&profile.DoctorCertificate, &profileSpec.Name,
+		); err != nil {
+			return nil, err
+		}
+		profile.DoctorSpecialization = &profileSpec
+		user.DoctorProfile = &profile
+		items = append(items, &user)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+
+}
+
+func (repo *UserRepositoryImpl) CountFindAllDoctors(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
+	initQuery := `SELECT count(users.id) FROM users
+	INNER JOIN doctor_profiles ON users.id = doctor_profiles.user_id INNER JOIN doctor_specializations ON 
+	doctor_profiles.doctor_specialization_id = doctor_specializations.id WHERE user_role_id = 3 AND users.deleted_at IS NULL `
+
+	query, values := buildQuery(initQuery, &entity.User{}, param, false)
+
+	var totalItems int64
+
+	row := repo.db.QueryRowContext(ctx, query, values...)
+	if row.Err() != nil {
+		return totalItems, row.Err()
+	}
+
+	if err := row.Scan(
+		&totalItems,
+	); err != nil {
+		return totalItems, err
+	}
+
+	return totalItems, nil
+}
+
+func (repo *UserRepositoryImpl) FindDoctorById(ctx context.Context, id int64) (*entity.User, error) {
+	const getDoctorById = `SELECT users.id, email, user_role_id, is_verified, doctor_profiles.name AS name, doctor_profiles.profile_photo, doctor_profiles.starting_year, doctor_profiles.doctor_certificate, doctor_specializations.name FROM users
+	INNER JOIN doctor_profiles ON users.id = doctor_profiles.user_id INNER JOIN doctor_specializations ON doctor_profiles.doctor_specialization_id = doctor_specializations.id
+	WHERE user_role_id = 3 AND users.deleted_at IS NULL AND users.id = $1`
+
+	row := repo.db.QueryRowContext(ctx, getDoctorById,
+		id,
+	)
+	var user entity.User
+	var profile entity.DoctorProfile
+	var profileSpec entity.DoctorSpecialization
+	err := row.Scan(
+		&user.Id, &user.Email, &user.UserRoleId, &user.IsVerified, &profile.Name, &profile.ProfilePhoto, &profile.StartingYear,
+		&profile.DoctorCertificate, &profileSpec.Name,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, apperror.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	profile.DoctorSpecialization = &profileSpec
+	user.DoctorProfile = &profile
+
+	return &user, err
 }
 
 func (repo *UserRepositoryImpl) ChangePassword(ctx context.Context, user entity.User, newPassword string) (*entity.User, error) {
@@ -352,16 +435,8 @@ RETURNING id, email, password, user_role_id, is_verified, created_at, updated_at
 }
 
 func (repo *UserRepositoryImpl) Delete(ctx context.Context, id int64) error {
-	const deleteById = `UPDATE users
-SET deleted_at = now()
-WHERE id = $1 AND deleted_at IS NULL
-`
+	const deleteById = `UPDATE users SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL`
 
 	_, err := repo.db.ExecContext(ctx, deleteById, id)
 	return err
 }
-
-//func (repo *UserRepositoryImpl) FindAllDoctors(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error)
-//{
-//
-//}

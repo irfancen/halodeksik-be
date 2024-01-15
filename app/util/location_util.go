@@ -58,19 +58,25 @@ type LocationUtil interface {
 }
 
 func NewLocationUtil(region string) LocationUtil {
+
 	return &LocationUtilImpl{
 		googleUrl:    os.Getenv("GMAP_URL"),
 		region:       region,
 		responseType: "json",
 		apiKey:       os.Getenv("GMAP_KEY"),
+		shortenedArea: map[string]string{
+			"DKI Jakarta":   "Daerah Khusus Ibukota Jakarta",
+			"DI Yogyakarta": "Daerah Istimewa Yogyakarta",
+		},
 	}
 }
 
 type LocationUtilImpl struct {
-	googleUrl    string
-	responseType string
-	region       string
-	apiKey       string
+	googleUrl     string
+	responseType  string
+	region        string
+	apiKey        string
+	shortenedArea map[string]string
 }
 
 func (l *LocationUtilImpl) ValidateLatLong(city string, province string, lat string, long string) error {
@@ -96,15 +102,25 @@ func (l *LocationUtilImpl) ValidateLatLong(city string, province string, lat str
 
 	latLongCity = l.parseRegency(latLongCity)
 
-	if latLongCity != city {
+	if !strings.Contains(city, latLongCity) {
 		return apperror.ErrInvalidLatLong
 	}
-	if latLongProvince != province {
+
+	province = l.getLongProvinceName(province)
+
+	if !strings.Contains(province, latLongProvince) {
 		return apperror.ErrInvalidLatLong
 	}
 
 	return nil
 
+}
+
+func (l *LocationUtilImpl) getLongProvinceName(province string) string {
+	if val, ok := l.shortenedArea[province]; ok {
+		return val
+	}
+	return province
 }
 
 func (l *LocationUtilImpl) getCityAndProvince(data LocationJSONData) (string, string) {

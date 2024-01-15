@@ -144,6 +144,9 @@ func WrapError(err error, customCode ...int) error {
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductAddedToCartMustHaveAtLeastOne):
 		fallthrough
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrMainAddressNotFound):
+		fallthrough
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidIntInString):
 		errWrapper.Code = http.StatusBadRequest
 

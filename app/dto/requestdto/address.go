@@ -14,7 +14,6 @@ type RequestAddress struct {
 	PostalCode  string `json:"postal_code" validate:"required"`
 	Latitude    string `json:"latitude" validate:"required,latitude"`
 	Longitude   string `json:"longitude" validate:"required,longitude"`
-	Status      int32  `json:"status" validate:"required,oneof=1 2"`
 }
 
 func (r RequestAddress) ToAddress() entity.Address {
@@ -29,6 +28,5 @@ func (r RequestAddress) ToAddress() entity.Address {
 		PostalCode:  r.PostalCode,
 		Latitude:    r.Latitude,
 		Longitude:   r.Longitude,
-		Status:      r.Status,
 	}
 }

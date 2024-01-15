@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
@@ -15,6 +16,7 @@ type AddressUseCase interface {
 	Edit(ctx context.Context, id int64, address entity.Address) (*entity.Address, error)
 	Add(ctx context.Context, address entity.Address) (*entity.Address, error)
 	GetById(ctx context.Context, id int64) (*entity.Address, error)
+	GetMain(ctx context.Context) (*entity.Address, error)
 	Remove(ctx context.Context, id int64) error
 }
 
@@ -61,6 +63,28 @@ func (uc *AddressUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.G
 	return paginatedItems, nil
 }
 
+func (uc *AddressUseCaseImpl) GetMain(ctx context.Context) (*entity.Address, error) {
+	userId := ctx.Value(appconstant.ContextKeyUserId)
+	if userId == nil {
+		return nil, apperror.ErrUnauthorized
+	}
+
+	addressDb, err := uc.userAddressRepo.FindMainByUserId(ctx, userId.(int64))
+	if errors.Is(err, apperror.ErrRecordNotFound) {
+		return nil, apperror.ErrMainAddressNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if addressDb.ProfileId != userId {
+		return nil, apperror.ErrUnauthorized
+	}
+
+	return addressDb, nil
+
+}
+
 func (uc *AddressUseCaseImpl) Add(ctx context.Context, address entity.Address) (*entity.Address, error) {
 	userId := ctx.Value(appconstant.ContextKeyUserId)
 	if userId == nil {
@@ -73,6 +97,7 @@ func (uc *AddressUseCaseImpl) Add(ctx context.Context, address entity.Address) (
 	}
 
 	address.ProfileId = userId.(int64)
+	address.Status = appconstant.SecondaryAddressStatusId
 	created, err := uc.userAddressRepo.Create(ctx, address)
 	if err != nil {
 		return nil, err
@@ -92,7 +117,7 @@ func (uc *AddressUseCaseImpl) Edit(ctx context.Context, id int64, address entity
 	}
 
 	address.Id = addressDb.Id
-
+	address.Status = addressDb.Status
 	updated, err := uc.userAddressRepo.Update(ctx, address)
 	if err != nil {
 		return nil, err
