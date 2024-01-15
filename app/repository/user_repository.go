@@ -16,6 +16,7 @@ type UserRepository interface {
 	FindById(ctx context.Context, id int64) (*entity.User, error)
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 	FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error)
+	FindAllDoctors(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 	Update(ctx context.Context, user entity.User) (*entity.User, error)
 	Delete(ctx context.Context, id int64) error
@@ -24,6 +25,11 @@ type UserRepository interface {
 
 type UserRepositoryImpl struct {
 	db *sql.DB
+}
+
+func (repo *UserRepositoryImpl) FindAllDoctors(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (repo *UserRepositoryImpl) ChangePassword(ctx context.Context, user entity.User, newPassword string) (*entity.User, error) {
@@ -354,3 +360,8 @@ WHERE id = $1 AND deleted_at IS NULL
 	_, err := repo.db.ExecContext(ctx, deleteById, id)
 	return err
 }
+
+//func (repo *UserRepositoryImpl) FindAllDoctors(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error)
+//{
+//
+//}

@@ -20,6 +20,7 @@ type AllRepositories struct {
 	RegisterTokenRepository        repository.RegisterTokenRepository
 	ProfileRepository              repository.ProfileRepository
 	DoctorSpecializationRepository repository.DoctorSpecializationRepository
+	UserAddressRepository          repository.UserAddressRepository
 }
 
 func InitializeRepositories(db *sql.DB) *AllRepositories {
@@ -38,5 +39,6 @@ func InitializeRepositories(db *sql.DB) *AllRepositories {
 		ProfileRepository:              repository.NewProfileRepository(db),
 		DoctorSpecializationRepository: repository.NewDoctorSpecializationRepositoryImpl(db),
 		RegisterTokenRepository:        repository.NewRegisterTokenRepository(db),
+		UserAddressRepository:          repository.NewUserAddressRepositoryImpl(db),
 	}
 }
