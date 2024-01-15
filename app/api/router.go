@@ -319,20 +319,37 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			}
 		}
 
+		doctors := v1.Group("/users/doctor")
+		{
+			doctors.GET("", rOpts.UserHandler.GetAllDoctors)
+			doctors.GET("/:id", rOpts.UserHandler.GetDoctorById)
+		}
+
 		profile := v1.Group("/profile",
 			middleware.LoginMiddleware())
 		{
-			profile.GET("/doctor",
-				middleware.AllowRoles(appconstant.UserRoleIdDoctor), rOpts.ProfileHandler.GetProfile)
-			profile.GET("/user",
-				middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.ProfileHandler.GetProfile)
-			profile.PUT("/doctor", middleware.AllowRoles(appconstant.UserRoleIdDoctor), rOpts.ProfileHandler.EditDoctorProfile)
-			profile.PUT("/user", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.ProfileHandler.EditUserProfile)
-			profile.GET("/addresses", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.UserAddressHandler.GetAll)
-			profile.POST("/addresses", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.UserAddressHandler.Add)
-			profile.PUT("/addresses/:id", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.UserAddressHandler.Update)
-			profile.GET("/addresses/:id", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.UserAddressHandler.GetById)
-			profile.DELETE("/addresses/:id", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.UserAddressHandler.Remove)
+			profileDoctor := profile.Group("/doctor")
+			{
+				profileDoctor.GET("",
+					middleware.AllowRoles(appconstant.UserRoleIdDoctor), rOpts.ProfileHandler.GetProfile)
+				profileDoctor.PUT("", middleware.AllowRoles(appconstant.UserRoleIdDoctor), rOpts.ProfileHandler.EditDoctorProfile)
+
+			}
+			profileUser := profile.Group("/user")
+			{
+				profileUser.GET("",
+					middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.ProfileHandler.GetProfile)
+				profileUser.PUT("", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.ProfileHandler.EditUserProfile)
+			}
+			addressProfile := profile.Group("/addresses", middleware.AllowRoles(appconstant.UserRoleIdUser))
+			{
+				addressProfile.GET("", rOpts.UserAddressHandler.GetAll)
+				addressProfile.POST("", rOpts.UserAddressHandler.Add)
+				addressProfile.PUT("/:id", rOpts.UserAddressHandler.Update)
+				addressProfile.GET("/:id", rOpts.UserAddressHandler.GetById)
+				addressProfile.DELETE("/:id", rOpts.UserAddressHandler.Remove)
+				addressProfile.GET("/main", rOpts.UserAddressHandler.GetMain)
+			}
 		}
 
 	}

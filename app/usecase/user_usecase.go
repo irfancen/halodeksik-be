@@ -15,7 +15,9 @@ import (
 type UserUseCase interface {
 	AddAdmin(ctx context.Context, admin entity.User) (*entity.User, error)
 	GetById(ctx context.Context, id int64) (*entity.User, error)
+	GetDoctorById(ctx context.Context, id int64) (*entity.User, error)
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	GetAllDoctors(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	EditAdmin(ctx context.Context, id int64, user entity.User) (*entity.User, error)
 	RemoveAdmin(ctx context.Context, id int64) error
 }
@@ -28,6 +30,29 @@ type UserUseCaseImpl struct {
 
 func NewUserUseCaseImpl(userRepository repository.UserRepository, pharmacyRepository repository.PharmacyRepository, util util.AuthUtil) *UserUseCaseImpl {
 	return &UserUseCaseImpl{userRepository: userRepository, pharmacyRepository: pharmacyRepository, util: util}
+}
+
+func (uc *UserUseCaseImpl) GetAllDoctors(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	users, err := uc.userRepository.FindAllDoctors(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	totalItems, err := uc.userRepository.CountFindAllDoctors(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	totalPages := totalItems / int64(*param.PageSize)
+	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
+		totalPages += 1
+	}
+
+	paginatedItems := entity.NewPaginationInfo(
+		totalItems, totalPages, int64(len(users)), int64(*param.PageId), users,
+	)
+
+	return paginatedItems, nil
 }
 
 func (uc *UserUseCaseImpl) AddAdmin(ctx context.Context, admin entity.User) (*entity.User, error) {
@@ -61,8 +86,21 @@ func (uc *UserUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.User,
 
 	currentUserId := ctx.Value(appconstant.ContextKeyUserId).(int64)
 	currentUserRoleId := ctx.Value(appconstant.ContextKeyRoleId).(int64)
+
 	if currentUserRoleId != appconstant.UserRoleIdAdmin && currentUserId != user.Id {
 		return nil, apperror.ErrForbiddenViewEntity
+	}
+
+	return user, nil
+}
+
+func (uc *UserUseCaseImpl) GetDoctorById(ctx context.Context, id int64) (*entity.User, error) {
+	user, err := uc.userRepository.FindDoctorById(ctx, id)
+	if errors.Is(err, apperror.ErrRecordNotFound) {
+		return nil, apperror.NewNotFound(user, "Id", id)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	return user, nil

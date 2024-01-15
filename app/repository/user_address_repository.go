@@ -14,6 +14,7 @@ type UserAddressRepository interface {
 	FindAllByUserId(ctx context.Context, userId int64, param *queryparamdto.GetAllParams) ([]*entity.Address, error)
 	CountFindAllUserId(ctx context.Context, userId int64, param *queryparamdto.GetAllParams) (int64, error)
 	FindById(ctx context.Context, id int64) (*entity.Address, error)
+	FindMainByUserId(ctx context.Context, userId int64) (*entity.Address, error)
 	Create(ctx context.Context, address entity.Address) (*entity.Address, error)
 	Update(ctx context.Context, address entity.Address) (*entity.Address, error)
 	Delete(ctx context.Context, id int64) error
@@ -25,6 +26,35 @@ type UserAddressRepositoryImpl struct {
 
 func NewUserAddressRepositoryImpl(db *sql.DB) *UserAddressRepositoryImpl {
 	return &UserAddressRepositoryImpl{db: db}
+}
+
+func (repo *UserAddressRepositoryImpl) FindMainByUserId(ctx context.Context, userId int64) (*entity.Address, error) {
+	const findMainAddress = `
+	SELECT id, name, address, sub_district, district, city, province, postal_code, latitude, longitude, status, profile_id FROM addresses where profile_id = $1 and status = 1
+	`
+	row := repo.db.QueryRowContext(ctx, findMainAddress, userId)
+	var address entity.Address
+	err := row.Scan(
+		&address.Id,
+		&address.Name,
+		&address.Address,
+		&address.SubDistrict,
+		&address.District,
+		&address.CityId,
+		&address.ProvinceId,
+		&address.PostalCode,
+		&address.Latitude,
+		&address.Longitude,
+		&address.Status,
+		&address.ProfileId,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	return &address, nil
 }
 
 func (repo *UserAddressRepositoryImpl) FindAllByUserId(ctx context.Context, userId int64, param *queryparamdto.GetAllParams) ([]*entity.Address, error) {

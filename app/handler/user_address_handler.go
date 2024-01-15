@@ -62,6 +62,24 @@ func (h *UserAddressHandler) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+func (h *UserAddressHandler) GetMain(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	address, err := h.uc.GetMain(ctx.Request.Context())
+	if err != nil {
+		return
+	}
+
+	resp := dto.ResponseDto{Data: address.ToAddressResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 func (h *UserAddressHandler) Add(ctx *gin.Context) {
 	var err error
 	defer func() {

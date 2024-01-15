@@ -79,6 +79,34 @@ func (h *UserHandler) GetById(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+func (h *UserHandler) GetDoctorById(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	user, err := h.uc.GetDoctorById(ctx.Request.Context(), uri.Id)
+	if err != nil {
+		return
+	}
+	resp := dto.ResponseDto{Data: user.ToDoctorProfileResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 func (h *UserHandler) GetAll(ctx *gin.Context) {
 	var err error
 	defer func() {
@@ -105,6 +133,39 @@ func (h *UserHandler) GetAll(ctx *gin.Context) {
 	for _, user := range paginatedItems.Items.([]*entity.User) {
 		resps = append(resps, user.ToUserResponse())
 	}
+	paginatedItems.Items = resps
+
+	resp := dto.ResponseDto{Data: paginatedItems}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *UserHandler) GetAllDoctors(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	getAllUserQuery := queryparamdto.GetAllDoctorsQuery{}
+	_ = ctx.ShouldBindQuery(&getAllUserQuery)
+
+	param, err := getAllUserQuery.ToGetAllParams()
+	if err != nil {
+		return
+	}
+
+	paginatedItems, err := h.uc.GetAllDoctors(ctx.Request.Context(), param)
+	if err != nil {
+		return
+	}
+
+	resps := make([]*responsedto.DoctorProfileResponse, 0)
+	for _, user := range paginatedItems.Items.([]*entity.User) {
+		resps = append(resps, user.ToDoctorProfileResponse())
+	}
+
 	paginatedItems.Items = resps
 
 	resp := dto.ResponseDto{Data: paginatedItems}

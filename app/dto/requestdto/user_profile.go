@@ -8,7 +8,7 @@ import (
 
 type RequestUserProfile struct {
 	Name        string `json:"name" form:"name" validate:"required"`
-	DateOfBirth string `json:"date_of_birth" form:"date_of_birth" validate:"required,datetime"`
+	DateOfBirth string `json:"date_of_birth" form:"date_of_birth" validate:"required,datetime=2006-01-02"`
 }
 
 func (p *RequestUserProfile) ToUserProfile() (entity.UserProfile, error) {
