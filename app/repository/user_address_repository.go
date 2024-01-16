@@ -236,7 +236,7 @@ func (repo *UserAddressRepositoryImpl) Update(ctx context.Context, address entit
 
 func (repo *UserAddressRepositoryImpl) Delete(ctx context.Context, id int64) error {
 	const deleteAddress = `
-	update addresses set deleted_at = now() where id = $1 and deleted_at is null
+	UPDATE addresses SET deleted_at = now(), status = 2 WHERE id = $1 AND deleted_at IS NULL
 	`
 	_, err := repo.db.ExecContext(ctx, deleteAddress, id)
 	if err != nil {

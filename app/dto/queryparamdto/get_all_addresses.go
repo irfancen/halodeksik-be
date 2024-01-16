@@ -2,6 +2,8 @@ package queryparamdto
 
 import (
 	"halodeksik-be/app/appconstant"
+	"halodeksik-be/app/appdb"
+	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
 	"strconv"
 )
@@ -13,6 +15,11 @@ type GetAllAddressesQuery struct {
 
 func (q *GetAllAddressesQuery) ToGetAllParams() (*GetAllParams, error) {
 	param := NewGetAllParams()
+	address := new(entity.Address)
+
+	sortClause := appdb.NewSort(address.GetSqlColumnFromField("Status"))
+	sortClause.Order = appdb.OrderAsc
+	param.SortClauses = append(param.SortClauses, sortClause)
 
 	pageSize := appconstant.DefaultGetAllPageSize
 	if !util.IsEmptyString(q.Limit) {
