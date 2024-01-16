@@ -89,7 +89,7 @@ FROM product_stock_mutations
          INNER JOIN manufacturers ON products.manufacturer_id = manufacturers.id
 	WHERE product_stock_mutations.deleted_at IS NULL 
 `
-	query, values := buildQuery(initQuery, &entity.ProductStockMutation{}, param, true)
+	query, values := buildQuery(initQuery, &entity.ProductStockMutation{}, param, true, true)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -144,7 +144,7 @@ FROM product_stock_mutations
          INNER JOIN manufacturers ON products.manufacturer_id = manufacturers.id
 	WHERE product_stock_mutations.deleted_at IS NULL 
 `
-	query, values := buildQuery(initQuery, &entity.ProductStockMutation{}, param, false)
+	query, values := buildQuery(initQuery, &entity.ProductStockMutation{}, param, false, false)
 
 	var (
 		totalItems int64

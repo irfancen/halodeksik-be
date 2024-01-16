@@ -9,13 +9,7 @@ import (
 	"strings"
 )
 
-func buildQuery(
-	initQuery string,
-	resourcer entity.Resourcer,
-	param *queryparamdto.GetAllParams,
-	setLimit bool,
-	initIndex ...int,
-) (string, []interface{}) {
+func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamdto.GetAllParams, setLimit bool, setPaginated bool, initIndex ...int) (string, []interface{}) {
 	var query strings.Builder
 	var values []interface{}
 
@@ -85,7 +79,14 @@ func buildQuery(
 		for _, sortClause := range param.SortClauses {
 			query.WriteString(fmt.Sprintf("%s %s,", sortClause.Column, sortClause.Order))
 		}
-		query.WriteString(fmt.Sprintf(" %s ASC ", resourcer.GetSqlColumnFromField("Id")))
+		if setPaginated {
+			query.WriteString(fmt.Sprintf(" %s ASC ", resourcer.GetSqlColumnFromField("Id")))
+		}
+		if !setPaginated {
+			lastQuery := strings.TrimSuffix(query.String(), ",")
+			query = strings.Builder{}
+			query.WriteString(lastQuery)
+		}
 	}
 
 	if setLimit && param.PageSize != nil {

@@ -35,7 +35,7 @@ func (repo *UserRepositoryImpl) FindAllDoctors(ctx context.Context, param *query
 	INNER JOIN doctor_profiles ON users.id = doctor_profiles.user_id INNER JOIN doctor_specializations ON 
 	doctor_profiles.doctor_specialization_id = doctor_specializations.id WHERE user_role_id = 3 AND users.deleted_at IS NULL `
 
-	query, values := buildQuery(getAllDoctors, &entity.User{}, param, true)
+	query, values := buildQuery(getAllDoctors, &entity.User{}, param, true, true)
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (repo *UserRepositoryImpl) CountFindAllDoctors(ctx context.Context, param *
 	INNER JOIN doctor_profiles ON users.id = doctor_profiles.user_id INNER JOIN doctor_specializations ON 
 	doctor_profiles.doctor_specialization_id = doctor_specializations.id WHERE user_role_id = 3 AND users.deleted_at IS NULL `
 
-	query, values := buildQuery(initQuery, &entity.User{}, param, false)
+	query, values := buildQuery(initQuery, &entity.User{}, param, false, false)
 
 	var totalItems int64
 
@@ -361,7 +361,7 @@ WHERE email = $1
 
 func (repo *UserRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error) {
 	initQuery := `SELECT id, email, user_role_id, is_verified FROM users WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.User{}, param, true)
+	query, values := buildQuery(initQuery, &entity.User{}, param, true, true)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -388,7 +388,7 @@ func (repo *UserRepositoryImpl) FindAll(ctx context.Context, param *queryparamdt
 
 func (repo *UserRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
 	initQuery := `SELECT count(id) FROM users WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.User{}, param, false)
+	query, values := buildQuery(initQuery, &entity.User{}, param, false, false)
 
 	var totalItems int64
 

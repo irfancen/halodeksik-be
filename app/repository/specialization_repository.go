@@ -60,7 +60,7 @@ func (repo *DoctorSpecializationRepositoryImpl) FindById(ctx context.Context, id
 
 func (repo *DoctorSpecializationRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.DoctorSpecialization, error) {
 	initQuery := `SELECT id, name, image FROM doctor_specializations WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.DoctorSpecialization{}, param, true)
+	query, values := buildQuery(initQuery, &entity.DoctorSpecialization{}, param, true, true)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -87,7 +87,7 @@ func (repo *DoctorSpecializationRepositoryImpl) FindAll(ctx context.Context, par
 
 func (repo *DoctorSpecializationRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
 	initQuery := `SELECT count(id) FROM doctor_specializations WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.DoctorSpecialization{}, param, false)
+	query, values := buildQuery(initQuery, &entity.DoctorSpecialization{}, param, false, false)
 
 	var totalItems int64
 

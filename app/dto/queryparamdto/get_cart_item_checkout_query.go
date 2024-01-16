@@ -41,10 +41,6 @@ func (q *GetCartItemCheckoutQuery) ToGetAllParams() *GetAllParams {
 			fmt.Sprintf("distance(%s, %s, '%s', '%s') %s %v", latColName, lonColName, q.Latitude, q.Longitude, appdb.LessOrEqualTo, appconstant.ClosestPharmacyRangeRadius),
 			appdb.OrderAsc,
 		),
-		appdb.NewSort(
-			fmt.Sprintf("%s", pharmacyProduct.GetSqlColumnFromField("Stock")),
-			appdb.OrderDesc,
-		),
 	)
 
 	param.GroupClauses = append(

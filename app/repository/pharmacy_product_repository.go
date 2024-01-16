@@ -140,7 +140,7 @@ func (repo *PharmacyProductRepositoryImpl) FindByProductIdJoinPharmacy(ctx conte
 	  AND pharmacy_products.product_id = $1 `
 	indexPreparedStatement := 1
 
-	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, true, indexPreparedStatement)
+	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, true, false, indexPreparedStatement)
 	values = util.AppendAtIndex(values, 0, interface{}(productId))
 
 	row := repo.db.QueryRowContext(ctx, query, values...)
@@ -184,7 +184,7 @@ func (repo *PharmacyProductRepositoryImpl) SumTotalStocksByProductsId(ctx contex
 	  AND pharmacy_products.product_id = $1 `
 	indexPreparedStatement := 1
 
-	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, false, indexPreparedStatement)
+	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, false, false, indexPreparedStatement)
 	values = util.AppendAtIndex(values, 0, interface{}(productId))
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
@@ -218,7 +218,7 @@ func (repo *PharmacyProductRepositoryImpl) FindAllJoinProducts(ctx context.Conte
 	        INNER JOIN drug_classifications ON products.drug_classification_id = drug_classifications.id
 	WHERE pharmacy_products.deleted_at IS NULL AND products.deleted_at IS NULL `
 
-	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, true)
+	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, true, true)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -293,7 +293,7 @@ func (repo *PharmacyProductRepositoryImpl) CountFindAll(ctx context.Context, par
 	INNER JOIN manufacturers ON products.manufacturer_id = manufacturers.id
 	INNER JOIN drug_classifications ON products.drug_classification_id = drug_classifications.id
 	WHERE pharmacy_products.deleted_at IS NULL AND products.deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, false)
+	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, false, false)
 
 	var totalItems int64
 

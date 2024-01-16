@@ -64,7 +64,7 @@ func (repo *UserAddressRepositoryImpl) FindAllByUserId(ctx context.Context, user
 	`
 	indexPreparedStatement := 1
 
-	query, values := buildQuery(getAddresses, &entity.Address{}, param, true, indexPreparedStatement)
+	query, values := buildQuery(getAddresses, &entity.Address{}, param, true, true, indexPreparedStatement)
 	values = util.AppendAtIndex(values, 0, interface{}(userId))
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
@@ -97,7 +97,7 @@ func (repo *UserAddressRepositoryImpl) CountFindAllUserId(ctx context.Context, u
 	SELECT count(id) FROM addresses 
 	WHERE profile_id = $1 AND deleted_at is null
 	`
-	query, values := buildQuery(getAddresses, &entity.Address{}, param, false)
+	query, values := buildQuery(getAddresses, &entity.Address{}, param, false, false)
 	values = util.AppendAtIndex(values, 0, interface{}(userId))
 
 	var (
