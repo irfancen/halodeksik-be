@@ -14,6 +14,7 @@ type ProductStockMutationRequestUseCase interface {
 	Add(ctx context.Context, mutationRequest entity.ProductStockMutationRequest) (*entity.ProductStockMutationRequest, error)
 	GetAllIncoming(ctx context.Context, pharmacyOriginId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	GetAllOutgoing(ctx context.Context, pharmacyDestId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	EditStatus(ctx context.Context, id int64, mutationRequest entity.ProductStockMutationRequest) (*entity.ProductStockMutationRequest, error)
 }
 
 type ProductStockMutationRequestUseCaseImpl struct {
@@ -149,4 +150,34 @@ func (uc *ProductStockMutationRequestUseCaseImpl) GetAllOutgoing(ctx context.Con
 	paginatedItems.CurrentPageTotalItems = int64(len(mutationRequest))
 	paginatedItems.CurrentPage = int64(*param.PageId)
 	return paginatedItems, nil
+}
+
+func (uc *ProductStockMutationRequestUseCaseImpl) EditStatus(ctx context.Context, id int64, mutationRequest entity.ProductStockMutationRequest) (*entity.ProductStockMutationRequest, error) {
+	mutationRequestdb, err := uc.productStockMutationRequestRepo.FindByIdJoinPharmacyOrigin(ctx, id)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound(mutationRequestdb, "Id", id)
+		}
+		return nil, err
+	}
+
+	if mutationRequestdb.PharmacyProductOrigin.Pharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
+		return nil, apperror.ErrForbiddenModifyEntity
+	}
+
+	if mutationRequest.ProductStockMutationRequestStatusId == appconstant.StockMutationRequestStatusAccepted &&
+		mutationRequestdb.PharmacyProductOrigin.Stock < mutationRequest.Stock {
+		return nil, apperror.ErrInsufficientProductStock
+	}
+
+	if mutationRequestdb.ProductStockMutationRequestStatusId != appconstant.StockMutationRequestStatusPending {
+		return nil, apperror.ErrAlreadyFinishedRequest
+	}
+
+	mutationRequestdb.ProductStockMutationRequestStatusId = mutationRequest.ProductStockMutationRequestStatusId
+	updated, err := uc.productStockMutationRequestRepo.Update(ctx, *mutationRequestdb)
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }

@@ -9,6 +9,7 @@ import (
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/dto/requestdto"
 	"halodeksik-be/app/dto/responsedto"
+	"halodeksik-be/app/dto/uriparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"net/http"
@@ -146,5 +147,37 @@ func (h *ProductStockMutationRequestHandler) GetAllOutgoing(ctx *gin.Context) {
 	paginatedItems.Items = resps
 
 	resp := dto.ResponseDto{Data: paginatedItems}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *ProductStockMutationRequestHandler) EditStatus(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	req := requestdto.EditProductStockMutationRequest{}
+	if err = ctx.ShouldBindJSON(&req); err != nil {
+		return
+	}
+
+	if err = h.validator.Validate(req); err != nil {
+		return
+	}
+
+	updated, err := h.uc.EditStatus(ctx, uri.Id, req.ToProductStockMutationRequest())
+	if err != nil {
+		return
+	}
+	resp := dto.ResponseDto{Data: updated.ToResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }

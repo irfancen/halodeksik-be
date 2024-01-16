@@ -141,6 +141,9 @@ func WrapError(err error, customCode ...int) error {
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrRequestStockMutationDifferentProduct):
 		fallthrough
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrAlreadyFinishedRequest):
+		fallthrough
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidIntInString):
 		errWrapper.Code = http.StatusBadRequest
 

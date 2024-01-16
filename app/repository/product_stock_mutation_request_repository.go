@@ -15,6 +15,7 @@ type ProductStockMutationRequestRepository interface {
 	FindByIdJoinPharmacyOrigin(ctx context.Context, id int64) (*entity.ProductStockMutationRequest, error)
 	FindAllJoin(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.ProductStockMutationRequest, error)
 	CountFindAllJoin(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
+	Update(ctx context.Context, mutationRequest entity.ProductStockMutationRequest) (*entity.ProductStockMutationRequest, error)
 }
 
 type ProductStockMutationRequestRepositoryImpl struct {
@@ -188,4 +189,83 @@ WHERE product_stock_mutation_requests.deleted_at IS NULL `
 		return totalItems, err
 	}
 	return totalItems, nil
+}
+
+func (repo *ProductStockMutationRequestRepositoryImpl) Update(ctx context.Context, mutationRequest entity.ProductStockMutationRequest) (*entity.ProductStockMutationRequest, error) {
+	tx, err := repo.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	update := `UPDATE product_stock_mutation_requests
+SET product_stock_mutation_request_status_id = $1
+WHERE id = $2
+RETURNING id, pharmacy_product_origin_id, pharmacy_product_dest_id, stock, product_stock_mutation_request_status_id, created_at
+`
+
+	row1 := tx.QueryRowContext(ctx, update,
+		mutationRequest.ProductStockMutationRequestStatusId,
+		mutationRequest.Id,
+	)
+
+	var updated entity.ProductStockMutationRequest
+	if err := row1.Scan(
+		&updated.Id, &updated.PharmacyProductOriginId, &updated.PharmacyProductDestId, &updated.Stock, &updated.ProductStockMutationRequestStatusId, &updated.CreatedAt,
+	); err != nil {
+		return nil, err
+	}
+
+	if mutationRequest.ProductStockMutationRequestStatusId != appconstant.StockMutationRequestStatusAccepted {
+		if err := tx.Commit(); err != nil {
+			return nil, err
+		}
+		return &updated, nil
+	}
+
+	getbyId := `SELECT stock FROM pharmacy_products WHERE id = $1 AND deleted_at IS NULL`
+	row2 := tx.QueryRowContext(ctx, getbyId, mutationRequest.PharmacyProductOriginId)
+	var pharmacyProductOrigin entity.PharmacyProduct
+	if err := row2.Scan(
+		&pharmacyProductOrigin.Stock,
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+
+	if pharmacyProductOrigin.Stock < mutationRequest.Stock {
+		return nil, apperror.ErrInsufficientProductStock
+	}
+
+	createMutation := `INSERT INTO product_stock_mutations(pharmacy_product_id, product_stock_mutation_type_id, stock) VALUES ($1, $2, $3)`
+	updateStock := `UPDATE pharmacy_products SET stock = stock + $1 WHERE id = $2`
+
+	if _, err := tx.ExecContext(ctx, createMutation,
+		mutationRequest.PharmacyProductOriginId, appconstant.StockMutationTypeReduction, mutationRequest.Stock,
+	); err != nil {
+		return nil, err
+	}
+	if _, err := tx.ExecContext(ctx, updateStock,
+		0-mutationRequest.Stock, mutationRequest.PharmacyProductOriginId,
+	); err != nil {
+		return nil, err
+	}
+
+	if _, err := tx.ExecContext(ctx, createMutation,
+		mutationRequest.PharmacyProductDestId, appconstant.StockMutationTypeAddition, mutationRequest.Stock,
+	); err != nil {
+		return nil, err
+	}
+	if _, err := tx.ExecContext(ctx, updateStock,
+		mutationRequest.Stock, mutationRequest.PharmacyProductDestId,
+	); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return &updated, err
 }

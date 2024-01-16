@@ -41,4 +41,5 @@ var (
 
 	ErrRequestStockMutationFromOwnPharmacy  = errors.New("cannot request stock mutation from own pharmacy")
 	ErrRequestStockMutationDifferentProduct = errors.New("requested product from destination pharmacy is not the same as origin pharmacy")
+	ErrAlreadyFinishedRequest               = errors.New("request already finished")
 )
