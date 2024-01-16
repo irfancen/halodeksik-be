@@ -212,6 +212,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			pharmacyProducts.GET("/:id", rOpts.PharmacyProductsHandler.GetById)
 			pharmacyProducts.POST("", rOpts.PharmacyProductsHandler.Add)
 			pharmacyProducts.PUT("/:id", rOpts.PharmacyProductsHandler.Edit)
+			pharmacyProducts.GET("/:id/request", rOpts.PharmacyProductsHandler.GetAllByProductId)
 		}
 
 		productCategories := v1.Group("/product-categories")

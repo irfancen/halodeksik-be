@@ -15,6 +15,8 @@ type PharmacyProductRepository interface {
 	Create(ctx context.Context, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error)
 	FindById(ctx context.Context, id int64) (*entity.PharmacyProduct, error)
 	FindByIdJoinPharmacy(ctx context.Context, id int64) (*entity.PharmacyProduct, error)
+	FindAllJoinPharmacy(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error)
+	CountFindAllJoinPharmacy(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 	FindAllJoinProducts(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error)
 	FindAllByProductId(ctx context.Context, productId int64) ([]*entity.PharmacyProduct, error)
 	CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
@@ -119,6 +121,75 @@ func (repo *PharmacyProductRepositoryImpl) FindByIdJoinPharmacy(ctx context.Cont
 	pharmacyProducts.Pharmacy = &pharmacy
 
 	return &pharmacyProducts, nil
+}
+
+func (repo *PharmacyProductRepositoryImpl) FindAllJoinPharmacy(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error) {
+	initQuery := `
+	SELECT pharmacy_products.id, pharmacy_products.pharmacy_id, pharmacy_products.product_id, pharmacy_products.is_active, pharmacy_products.price, pharmacy_products.stock,
+	       pharmacies.id, pharmacies.name, pharmacies.address, pharmacies.sub_district, pharmacies.district, pharmacies.city, pharmacies.province, pharmacies.postal_code, pharmacies.latitude, pharmacies.longitude, pharmacies.pharmacist_name, pharmacies.pharmacist_license_no, pharmacies.pharmacist_phone_no, pharmacies.operational_hours, pharmacies.operational_days, pharmacies.pharmacy_admin_id
+	FROM pharmacy_products
+			INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+	WHERE pharmacy_products.deleted_at IS NULL AND pharmacies.deleted_at IS NULL `
+
+	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, true)
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*entity.PharmacyProduct, 0)
+	for rows.Next() {
+		var (
+			pharmacyProduct entity.PharmacyProduct
+			pharmacy        entity.Pharmacy
+		)
+		if err := rows.Scan(
+			&pharmacyProduct.Id, &pharmacyProduct.PharmacyId, &pharmacyProduct.ProductId, &pharmacyProduct.IsActive, &pharmacyProduct.Price, &pharmacyProduct.Stock,
+			&pharmacy.Id, &pharmacy.Name,
+			&pharmacy.Address, &pharmacy.SubDistrict, &pharmacy.District, &pharmacy.CityId, &pharmacy.ProvinceId, &pharmacy.PostalCode, &pharmacy.Latitude, &pharmacy.Longitude,
+			&pharmacy.PharmacistName, &pharmacy.PharmacistLicenseNo, &pharmacy.PharmacistPhoneNo,
+			&pharmacy.OperationalHours, &pharmacy.OperationalDays, &pharmacy.PharmacyAdminId,
+		); err != nil {
+			return nil, err
+		}
+		pharmacyProduct.Pharmacy = &pharmacy
+		items = append(items, &pharmacyProduct)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (repo *PharmacyProductRepositoryImpl) CountFindAllJoinPharmacy(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
+	initQuery := `SELECT count(pharmacy_products.id) FROM pharmacy_products
+			INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+	WHERE pharmacy_products.deleted_at IS NULL AND pharmacies.deleted_at IS NULL `
+	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, false)
+
+	var totalItems int64
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if err != nil {
+		return totalItems, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(
+			&totalItems,
+		); err != nil {
+			return totalItems, err
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return totalItems, err
+	}
+	return totalItems, nil
 }
 
 func (repo *PharmacyProductRepositoryImpl) FindAllJoinProducts(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error) {
