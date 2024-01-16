@@ -428,6 +428,12 @@ VALUES ('byebyesick@gmail.com', '$2a$04$MYf2/GkfNPUUZUj8zInF.ej7KqSVO3KlJrbNEwkC
        ('wasikamin4@gmail.com', '$2a$04$s0eeWG0MEJ6b.ffuGsibcuhqHZJyIxHbb5Cc/EckWD2GY9ZnvUj9S', 3, true),
        ('lumbanraja.boy@gmail.com', '$2a$04$s0eeWG0MEJ6b.ffuGsibcuhqHZJyIxHbb5Cc/EckWD2GY9ZnvUj9S', 4, true);
 
+INSERT INTO doctor_profiles (user_id, name, profile_photo, starting_year, doctor_certificate, doctor_specialization_id, consultation_fee, is_online)
+VALUES (5, 'dokter wasik', '', 2021, '',1,10,false);
+
+INSERT INTO user_profiles(user_id, name, profile_photo, date_of_birth)
+VALUES (6, 'lumban boy', '', '2000-11-25');
+
 INSERT INTO doctor_specializations (name, image)
 values ('General Practitioners',
         'https://byebyesick-bucket.irfancen.com/doctor_specializations/doctor-specs.jpg'),
