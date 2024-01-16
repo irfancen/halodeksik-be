@@ -4,7 +4,6 @@
 DROP TABLE IF EXISTS order_details;
 DROP TABLE IF EXISTS order_status_logs;
 DROP TABLE IF EXISTS orders;
-DROP TABLE IF EXISTS payment_methods;
 DROP TABLE IF EXISTS order_statuses;
 DROP TABLE IF EXISTS sick_leave_forms;
 DROP TABLE IF EXISTS prescription_products;
@@ -35,3 +34,4 @@ DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS user_roles;
 DROP TABLE IF EXISTS cities;
 DROP TABLE IF EXISTS provinces;
+DROP TABLE IF EXISTS payment_methods;
