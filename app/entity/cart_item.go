@@ -39,11 +39,11 @@ func (ci *CartItem) GetSqlColumnFromField(fieldName string) string {
 
 func (ci *CartItem) ToResponse() *responsedto.CartItemResponse {
 	return &responsedto.CartItemResponse{
-		Id:                      ci.Id,
-		UserId:                  ci.UserId,
-		ProductId:               ci.ProductId,
-		Quantity:                ci.Quantity,
-		ProductResponse:         ci.Product.ToProductResponse(),
-		PharmacyProductResponse: ci.PharmacyProduct.ToPharmacyProductResponse(),
+		Id:                              ci.Id,
+		UserId:                          ci.UserId,
+		ProductId:                       ci.ProductId,
+		Quantity:                        ci.Quantity,
+		ProductResponse:                 ci.Product.ToProductResponse(),
+		PharmacyProductCheckoutResponse: ci.PharmacyProduct.ToPharmacyProductCheckoutResponse(),
 	}
 }

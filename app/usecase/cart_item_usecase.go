@@ -152,12 +152,23 @@ func (uc *CartItemUseCaseImpl) Checkout(ctx context.Context, param *queryparamdt
 			}
 			return nil, err
 		}
+
 		cartItem.PharmacyProduct, err = uc.pharmacyProductRepo.FindByProductIdJoinPharmacy(ctx, cartItem.ProductId, param)
-		if err != nil {
-			if errors.Is(err, apperror.ErrRecordNotFound) {
-				return nil, apperror.NewNotFound(cartItem.PharmacyProduct, "ProductId", cartItem.ProductId)
-			}
+		if err != nil && !errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, err
+		}
+		// product is not available in the closest area (25 km)
+		if err != nil && errors.Is(err, apperror.ErrRecordNotFound) {
+			cartItem.PharmacyProduct = &entity.PharmacyProduct{}
+		}
+
+		stock, err := uc.pharmacyProductRepo.SumTotalStocksByProductsId(ctx, cartItem.ProductId, param)
+		if err != nil {
+			return nil, err
+		}
+		// stock in the closest area is not enough
+		if stock < cartItem.Quantity {
+			cartItem.PharmacyProduct = &entity.PharmacyProduct{}
 		}
 	}
 

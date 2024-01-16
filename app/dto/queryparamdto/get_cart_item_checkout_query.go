@@ -47,6 +47,14 @@ func (q *GetCartItemCheckoutQuery) ToGetAllParams() *GetAllParams {
 		),
 	)
 
+	param.GroupClauses = append(
+		param.GroupClauses,
+		appdb.NewGroupClause(pharmacyProduct.GetSqlColumnFromField("Id")),
+		appdb.NewGroupClause(pharmacy.GetSqlColumnFromField("Id")),
+		appdb.NewGroupClause(pharmacy.GetSqlColumnFromField("Latitude")),
+		appdb.NewGroupClause(pharmacy.GetSqlColumnFromField("Longitude")),
+	)
+
 	pageSize := 1
 	param.PageSize = &pageSize
 

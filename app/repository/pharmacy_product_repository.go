@@ -18,6 +18,7 @@ type PharmacyProductRepository interface {
 	FindByIdJoinPharmacy(ctx context.Context, id int64) (*entity.PharmacyProduct, error)
 
 	FindByProductIdJoinPharmacy(ctx context.Context, productId int64, param *queryparamdto.GetAllParams) (*entity.PharmacyProduct, error)
+	SumTotalStocksByProductsId(ctx context.Context, productId int64, param *queryparamdto.GetAllParams) (int32, error)
 
 	FindAllJoinProducts(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error)
 	FindAllByProductId(ctx context.Context, productId int64) ([]*entity.PharmacyProduct, error)
@@ -136,7 +137,6 @@ func (repo *PharmacyProductRepositoryImpl) FindByProductIdJoinPharmacy(ctx conte
 	WHERE pharmacies.deleted_at IS NULL 
 	  AND pharmacy_products.deleted_at IS NULL 
 	  AND pharmacy_products.is_active 
-	  AND pharmacy_products.stock > 0 
 	  AND pharmacy_products.product_id = $1 `
 	indexPreparedStatement := 1
 
@@ -167,6 +167,43 @@ func (repo *PharmacyProductRepositoryImpl) FindByProductIdJoinPharmacy(ctx conte
 	}
 	pharmacyProduct.Pharmacy = &pharmacy
 	return &pharmacyProduct, nil
+}
+
+func (repo *PharmacyProductRepositoryImpl) SumTotalStocksByProductsId(ctx context.Context, productId int64, param *queryparamdto.GetAllParams) (int32, error) {
+	var (
+		stock      int32
+		totalStock int32
+	)
+
+	initQuery := `SELECT sum(pharmacy_products.stock) 
+	FROM pharmacy_products
+	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+	WHERE pharmacies.deleted_at IS NULL 
+	  AND pharmacy_products.deleted_at IS NULL 
+	  AND pharmacy_products.is_active
+	  AND pharmacy_products.product_id = $1 `
+	indexPreparedStatement := 1
+
+	query, values := buildQuery(initQuery, &entity.PharmacyProduct{}, param, false, indexPreparedStatement)
+	values = util.AppendAtIndex(values, 0, interface{}(productId))
+
+	rows, err := repo.db.QueryContext(ctx, query, values...)
+	if rows.Err() != nil {
+		return totalStock, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(&stock); err != nil {
+			return totalStock, err
+		}
+		totalStock += stock
+	}
+	if err := rows.Err(); err != nil {
+		return totalStock, err
+	}
+
+	return totalStock, nil
 }
 
 func (repo *PharmacyProductRepositoryImpl) FindAllJoinProducts(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error) {
