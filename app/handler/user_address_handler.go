@@ -80,6 +80,36 @@ func (h *UserAddressHandler) GetMain(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+func (h *UserAddressHandler) SetMain(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	added, err := h.uc.SetMain(ctx.Request.Context(), uri.Id)
+	if err != nil {
+		return
+	}
+
+	resp := dto.ResponseDto{Data: added.ToAddressResponse()}
+	ctx.JSON(http.StatusOK, resp)
+
+}
+
 func (h *UserAddressHandler) Add(ctx *gin.Context) {
 	var err error
 	defer func() {
@@ -141,7 +171,10 @@ func (h *UserAddressHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	added, err := h.uc.Edit(ctx.Request.Context(), uri.Id, req.ToAddress())
+	address := req.ToAddress()
+	address.Id = uri.Id
+
+	added, err := h.uc.Edit(ctx.Request.Context(), address)
 	if err != nil {
 		return
 	}

@@ -349,6 +349,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				addressProfile.GET("/:id", rOpts.UserAddressHandler.GetById)
 				addressProfile.DELETE("/:id", rOpts.UserAddressHandler.Remove)
 				addressProfile.GET("/main", rOpts.UserAddressHandler.GetMain)
+				addressProfile.POST(":id/main", rOpts.UserAddressHandler.SetMain)
 			}
 		}
 

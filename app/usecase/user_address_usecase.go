@@ -13,10 +13,11 @@ import (
 
 type AddressUseCase interface {
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
-	Edit(ctx context.Context, id int64, address entity.Address) (*entity.Address, error)
+	Edit(ctx context.Context, address entity.Address) (*entity.Address, error)
 	Add(ctx context.Context, address entity.Address) (*entity.Address, error)
 	GetById(ctx context.Context, id int64) (*entity.Address, error)
 	GetMain(ctx context.Context) (*entity.Address, error)
+	SetMain(ctx context.Context, id int64) (*entity.Address, error)
 	Remove(ctx context.Context, id int64) error
 }
 
@@ -32,6 +33,33 @@ func NewAddressUseCaseImpl(addressRepo repository.UserAddressRepository, areaRep
 		areaRepo:        areaRepository,
 		locUtil:         locationUtil,
 	}
+}
+
+func (uc *AddressUseCaseImpl) SetMain(ctx context.Context, id int64) (*entity.Address, error) {
+
+	addressDb, err := uc.GetById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	mainAddress, err := uc.GetMain(ctx)
+	if mainAddress != nil {
+		mainAddress.Status = appconstant.SecondaryAddressStatusId
+		_, err2 := uc.userAddressRepo.Update(ctx, *mainAddress)
+		if err2 != nil {
+			return nil, err2
+		}
+	}
+	if err != nil && !errors.Is(err, apperror.ErrMainAddressNotFound) {
+		return nil, err
+	}
+
+	addressDb.Status = appconstant.MainAddressStatusId
+	updated, err := uc.userAddressRepo.Update(ctx, *addressDb)
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (uc *AddressUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
@@ -105,8 +133,8 @@ func (uc *AddressUseCaseImpl) Add(ctx context.Context, address entity.Address) (
 	return created, nil
 }
 
-func (uc *AddressUseCaseImpl) Edit(ctx context.Context, id int64, address entity.Address) (*entity.Address, error) {
-	addressDb, err := uc.GetById(ctx, id)
+func (uc *AddressUseCaseImpl) Edit(ctx context.Context, address entity.Address) (*entity.Address, error) {
+	addressDb, err := uc.GetById(ctx, address.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +157,7 @@ func (uc *AddressUseCaseImpl) validateCityAndProvince(ctx context.Context, addre
 	city, err := uc.areaRepo.FindCityById(ctx, address.CityId)
 
 	if err != nil {
-		return apperror.NewNotFound(city, "id", address.CityId)
+		return apperror.NewNotFound(city, "Id", address.CityId)
 	}
 
 	if city.ProvinceId != address.ProvinceId {
@@ -138,7 +166,7 @@ func (uc *AddressUseCaseImpl) validateCityAndProvince(ctx context.Context, addre
 
 	province, err := uc.areaRepo.FindProvinceById(ctx, address.ProvinceId)
 	if err != nil {
-		return apperror.NewNotFound(province, "id", address.ProvinceId)
+		return apperror.NewNotFound(province, "Id", address.ProvinceId)
 	}
 
 	err = uc.locUtil.ValidateLatLong(city.Name, province.Name, address.Latitude, address.Longitude)
@@ -157,7 +185,7 @@ func (uc *AddressUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.Ad
 
 	addressDb, err := uc.userAddressRepo.FindById(ctx, id)
 	if err != nil {
-		return nil, apperror.NewNotFound(addressDb, "id", id)
+		return nil, apperror.NewNotFound(addressDb, "Id", id)
 	}
 
 	if addressDb.ProfileId != userId {
