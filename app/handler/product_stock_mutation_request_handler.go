@@ -49,7 +49,7 @@ func (h *ProductStockMutationRequestHandler) Add(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h *ProductStockMutationRequestHandler) GetAll(ctx *gin.Context) {
+func (h *ProductStockMutationRequestHandler) GetAllIncoming(ctx *gin.Context) {
 	var err error
 	var notFound *apperror.NotFound
 	defer func() {
@@ -74,12 +74,67 @@ func (h *ProductStockMutationRequestHandler) GetAll(ctx *gin.Context) {
 		return
 	}
 
-	param, pharmacyOriginId, err := getAllMutationRequestQuery.ToGetAllParams()
+	incomingMutationReqQuery := queryparamdto.GetAllIncomingMutationRequestQuery{PharmacyOriginId: getAllMutationRequestQuery.PharmacyOriginId}
+	if err = h.validator.Validate(incomingMutationReqQuery); err != nil {
+		return
+	}
+
+	param, pharmacyOriginId, err := getAllMutationRequestQuery.ToGetAllParams(true)
 	if err != nil {
 		return
 	}
 
-	paginatedItems, err := h.uc.GetAll(ctx, pharmacyOriginId, param)
+	paginatedItems, err := h.uc.GetAllIncoming(ctx, pharmacyOriginId, param)
+	if err != nil {
+		return
+	}
+
+	resps := make([]*responsedto.ProductStockMutationRequestResponse, 0)
+	for _, mutationRequest := range paginatedItems.Items.([]*entity.ProductStockMutationRequest) {
+		resps = append(resps, mutationRequest.ToResponse())
+	}
+	paginatedItems.Items = resps
+
+	resp := dto.ResponseDto{Data: paginatedItems}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *ProductStockMutationRequestHandler) GetAllOutgoing(ctx *gin.Context) {
+	var err error
+	var notFound *apperror.NotFound
+	defer func() {
+		if err != nil {
+			if errors.As(err, &notFound) {
+				err = WrapError(err, http.StatusBadRequest)
+			} else {
+				err = WrapError(err)
+			}
+			_ = ctx.Error(err)
+		}
+	}()
+
+	getAllMutationRequestQuery := queryparamdto.GetAllMutationRequestQuery{}
+	err = ctx.ShouldBindQuery(&getAllMutationRequestQuery)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(getAllMutationRequestQuery)
+	if err != nil {
+		return
+	}
+
+	outgoingMutationReqQuery := queryparamdto.GetAllOutgoingMutationRequestQuery{PharmacyDestId: getAllMutationRequestQuery.PharmacyDestId}
+	if err = h.validator.Validate(outgoingMutationReqQuery); err != nil {
+		return
+	}
+
+	param, pharmacyDestId, err := getAllMutationRequestQuery.ToGetAllParams(false)
+	if err != nil {
+		return
+	}
+
+	paginatedItems, err := h.uc.GetAllOutgoing(ctx, pharmacyDestId, param)
 	if err != nil {
 		return
 	}

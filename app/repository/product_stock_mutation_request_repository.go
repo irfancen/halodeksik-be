@@ -3,12 +3,16 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"halodeksik-be/app/appconstant"
+	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 )
 
 type ProductStockMutationRequestRepository interface {
 	Create(ctx context.Context, mutationRequest entity.ProductStockMutationRequest) (*entity.ProductStockMutationRequest, error)
+	FindByIdJoinPharmacyOrigin(ctx context.Context, id int64) (*entity.ProductStockMutationRequest, error)
 	FindAllJoin(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.ProductStockMutationRequest, error)
 	CountFindAllJoin(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 }
@@ -48,6 +52,41 @@ RETURNING id, pharmacy_product_origin_id, pharmacy_product_dest_id, stock, produ
 	return &created, nil
 }
 
+func (repo *ProductStockMutationRequestRepositoryImpl) FindByIdJoinPharmacyOrigin(ctx context.Context, id int64) (*entity.ProductStockMutationRequest, error) {
+	getById := `SELECT psmr.id, psmr.pharmacy_product_origin_id, psmr.pharmacy_product_dest_id, psmr.stock, psmr.product_stock_mutation_request_status_id,
+	ppo.stock,
+    p.pharmacy_admin_id
+FROM product_stock_mutation_requests psmr
+INNER JOIN pharmacy_products ppo on psmr.pharmacy_product_origin_id = ppo.id
+INNER JOIN pharmacies p on ppo.pharmacy_id = p.id
+WHERE psmr.id = $1 AND psmr.deleted_at IS NULL`
+
+	row := repo.db.QueryRowContext(ctx, getById, id)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	var (
+		mutationRequest entity.ProductStockMutationRequest
+		pharmacyProduct entity.PharmacyProduct
+		pharmacy        entity.Pharmacy
+	)
+	err := row.Scan(
+		&mutationRequest.Id, &mutationRequest.PharmacyProductOriginId, &mutationRequest.PharmacyProductDestId, &mutationRequest.Stock, &mutationRequest.ProductStockMutationRequestStatusId,
+		&pharmacyProduct.Stock,
+		&pharmacy.PharmacyAdminId,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	pharmacyProduct.Pharmacy = &pharmacy
+	mutationRequest.PharmacyProductOrigin = &pharmacyProduct
+	return &mutationRequest, err
+}
+
 func (repo *ProductStockMutationRequestRepositoryImpl) FindAllJoin(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.ProductStockMutationRequest, error) {
 	initQuery := `
 SELECT product_stock_mutation_requests.id,
@@ -63,8 +102,8 @@ SELECT product_stock_mutation_requests.id,
 FROM product_stock_mutation_requests
          INNER JOIN pharmacy_products ppo ON ppo.id = product_stock_mutation_requests.pharmacy_product_origin_id
          INNER JOIN pharmacy_products ppd ON ppd.id = product_stock_mutation_requests.pharmacy_product_dest_id
-         INNER JOIN pharmacies p ON ppd.pharmacy_id = p.id
-         INNER JOIN products pr ON ppo.product_id = pr.id
+         INNER JOIN pharmacies p ON ppo.pharmacy_id = p.id
+         INNER JOIN products pr ON ppd.product_id = pr.id
     	 INNER JOIN manufacturers m ON pr.manufacturer_id = m.id
          INNER JOIN product_stock_mutation_request_statuses psmrs
                     ON product_stock_mutation_requests.product_stock_mutation_request_status_id = psmrs.id
@@ -100,7 +139,7 @@ WHERE product_stock_mutation_requests.deleted_at IS NULL `
 		product.Manufacturer = &manufacturer
 		pharmacyProduct.Pharmacy = &pharmacy
 		pharmacyProduct.Product = &product
-		mutationRequest.PharmacyProductDest = &pharmacyProduct
+		mutationRequest.PharmacyProductOrigin = &pharmacyProduct
 		mutationRequest.ProductStockMutationRequestStatus = &mutationRequestStatus
 		items = append(items, &mutationRequest)
 	}
@@ -117,8 +156,8 @@ func (repo *ProductStockMutationRequestRepositoryImpl) CountFindAllJoin(ctx cont
 FROM product_stock_mutation_requests
          INNER JOIN pharmacy_products ppo ON ppo.id = product_stock_mutation_requests.pharmacy_product_origin_id
          INNER JOIN pharmacy_products ppd ON ppd.id = product_stock_mutation_requests.pharmacy_product_dest_id
-         INNER JOIN pharmacies p ON ppd.pharmacy_id = p.id
-         INNER JOIN products pr ON ppo.product_id = pr.id
+         INNER JOIN pharmacies p ON ppo.pharmacy_id = p.id
+         INNER JOIN products pr ON ppd.product_id = pr.id
          INNER JOIN product_stock_mutation_request_statuses psmrs
                     ON product_stock_mutation_requests.product_stock_mutation_request_status_id = psmrs.id
 WHERE product_stock_mutation_requests.deleted_at IS NULL `

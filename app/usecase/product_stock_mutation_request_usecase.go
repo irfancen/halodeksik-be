@@ -12,7 +12,8 @@ import (
 
 type ProductStockMutationRequestUseCase interface {
 	Add(ctx context.Context, mutationRequest entity.ProductStockMutationRequest) (*entity.ProductStockMutationRequest, error)
-	GetAll(ctx context.Context, pharmacyOriginId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	GetAllIncoming(ctx context.Context, pharmacyOriginId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	GetAllOutgoing(ctx context.Context, pharmacyDestId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 }
 
 type ProductStockMutationRequestUseCaseImpl struct {
@@ -37,30 +38,30 @@ func (uc *ProductStockMutationRequestUseCaseImpl) findPharmacyProductById(ctx co
 }
 
 func (uc *ProductStockMutationRequestUseCaseImpl) Add(ctx context.Context, mutationRequest entity.ProductStockMutationRequest) (*entity.ProductStockMutationRequest, error) {
-	originPharmacyProduct, err := uc.findPharmacyProductById(ctx, mutationRequest.PharmacyProductOriginId)
-	if err != nil {
-		return nil, err
-	}
-
 	destPharmacyProduct, err := uc.findPharmacyProductById(ctx, mutationRequest.PharmacyProductDestId)
 	if err != nil {
 		return nil, err
 	}
 
-	originPharmacy, err := uc.pharmacyRepo.FindById(ctx, originPharmacyProduct.PharmacyId)
+	originPharmacyProduct, err := uc.findPharmacyProductById(ctx, mutationRequest.PharmacyProductOriginId)
 	if err != nil {
 		return nil, err
 	}
 
-	if originPharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
+	destPharmacy, err := uc.pharmacyRepo.FindById(ctx, destPharmacyProduct.PharmacyId)
+	if err != nil {
+		return nil, err
+	}
+
+	if destPharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
 		return nil, apperror.ErrForbiddenModifyEntity
 	}
 
-	if originPharmacyProduct.ProductId != destPharmacyProduct.ProductId {
+	if destPharmacyProduct.ProductId != originPharmacyProduct.ProductId {
 		return nil, apperror.ErrRequestStockMutationDifferentProduct
 	}
 
-	if originPharmacyProduct.Id == destPharmacyProduct.Id {
+	if destPharmacyProduct.Id == originPharmacyProduct.Id {
 		return nil, apperror.ErrRequestStockMutationFromOwnPharmacy
 	}
 
@@ -76,11 +77,48 @@ func (uc *ProductStockMutationRequestUseCaseImpl) Add(ctx context.Context, mutat
 	return created, nil
 }
 
-func (uc *ProductStockMutationRequestUseCaseImpl) GetAll(ctx context.Context, pharmacyOriginId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+func (uc *ProductStockMutationRequestUseCaseImpl) GetAllIncoming(ctx context.Context, pharmacyOriginId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
 	if pharmacyOriginId != 0 {
 		pharmacy, err := uc.pharmacyRepo.FindById(ctx, pharmacyOriginId)
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFound(pharmacy, "Id", pharmacyOriginId)
+		}
+		if err != nil {
+			return nil, err
+		}
+		if pharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
+			return nil, apperror.ErrForbiddenViewEntity
+		}
+	}
+
+	mutationRequest, err := uc.productStockMutationRequestRepo.FindAllJoin(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	totalItems, err := uc.productStockMutationRequestRepo.CountFindAllJoin(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	totalPages := totalItems / int64(*param.PageSize)
+	if totalItems%int64(*param.PageSize) != 0 || totalPages == 0 {
+		totalPages += 1
+	}
+
+	paginatedItems := new(entity.PaginatedItems)
+	paginatedItems.Items = mutationRequest
+	paginatedItems.TotalItems = totalItems
+	paginatedItems.TotalPages = totalPages
+	paginatedItems.CurrentPageTotalItems = int64(len(mutationRequest))
+	paginatedItems.CurrentPage = int64(*param.PageId)
+	return paginatedItems, nil
+}
+
+func (uc *ProductStockMutationRequestUseCaseImpl) GetAllOutgoing(ctx context.Context, pharmacyDestId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	if pharmacyDestId != 0 {
+		pharmacy, err := uc.pharmacyRepo.FindById(ctx, pharmacyDestId)
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound(pharmacy, "Id", pharmacyDestId)
 		}
 		if err != nil {
 			return nil, err

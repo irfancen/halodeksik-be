@@ -23,7 +23,15 @@ type GetAllMutationRequestQuery struct {
 	Page             string `form:"page"`
 }
 
-func (q *GetAllMutationRequestQuery) ToGetAllParams() (*GetAllParams, int64, error) {
+type GetAllIncomingMutationRequestQuery struct {
+	PharmacyOriginId string `json:"pharmacy_origin_id" validate:"required,number"`
+}
+
+type GetAllOutgoingMutationRequestQuery struct {
+	PharmacyDestId string `json:"pharmacy_dest_id" validate:"required,number"`
+}
+
+func (q *GetAllMutationRequestQuery) ToGetAllParams(isIncoming bool) (*GetAllParams, int64, error) {
 	param := NewGetAllParams()
 	mutationRequest := new(entity.ProductStockMutationRequest)
 	mutationRequestStatus := new(entity.ProductStockMutationRequestStatus)
@@ -100,5 +108,8 @@ func (q *GetAllMutationRequestQuery) ToGetAllParams() (*GetAllParams, int64, err
 	}
 	param.PageId = &pageId
 
-	return param, pharmacyOriginId, nil
+	if isIncoming {
+		return param, pharmacyOriginId, nil
+	}
+	return param, pharmacyDestId, nil
 }

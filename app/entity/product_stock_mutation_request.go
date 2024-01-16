@@ -18,7 +18,7 @@ type ProductStockMutationRequest struct {
 	CreatedAt                           time.Time    `json:"created_at"`
 	UpdatedAt                           time.Time    `json:"updated_at"`
 	DeletedAt                           sql.NullTime `json:"deleted_at"`
-	PharmacyProductDest                 *PharmacyProduct
+	PharmacyProductOrigin               *PharmacyProduct
 	ProductStockMutationRequestStatus   *ProductStockMutationRequestStatus
 }
 
@@ -39,7 +39,7 @@ func (e *ProductStockMutationRequest) GetSqlColumnFromField(fieldName string) st
 }
 
 func (e *ProductStockMutationRequest) ToResponse() *responsedto.ProductStockMutationRequestResponse {
-	pharmacyProduct := e.PharmacyProductDest.ToPharmacyProductResponse()
+	pharmacyProduct := e.PharmacyProductOrigin.ToPharmacyProductResponse()
 	if pharmacyProduct != nil {
 		pharmacyProduct.Price = ""
 		pharmacyProduct.Stock = nil

@@ -34,6 +34,9 @@ func (e *ProductStockMutationRequestStatus) GetSqlColumnFromField(fieldName stri
 }
 
 func (e *ProductStockMutationRequestStatus) ToResponse() *responsedto.ProductStockMutationRequestStatusResponse {
+	if e == nil {
+		return nil
+	}
 	return &responsedto.ProductStockMutationRequestStatusResponse{
 		Id:   e.Id,
 		Name: e.Name,

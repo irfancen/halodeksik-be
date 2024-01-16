@@ -294,7 +294,8 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 
 			stockMutationRequest := stockMutation.Group("/requests")
 			{
-				stockMutationRequest.GET("", rOpts.ProductStockMutationRequestHandler.GetAll)
+				stockMutationRequest.GET("/in", rOpts.ProductStockMutationRequestHandler.GetAllIncoming)
+				stockMutationRequest.GET("/out", rOpts.ProductStockMutationRequestHandler.GetAllOutgoing)
 				stockMutationRequest.POST("", rOpts.ProductStockMutationRequestHandler.Add)
 			}
 		}
