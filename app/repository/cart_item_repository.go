@@ -70,11 +70,21 @@ func (repo *CartItemRepositoryImpl) FindByUserIdAndProductId(ctx context.Context
 func (repo *CartItemRepositoryImpl) FindAllByUserId(ctx context.Context, userId int64) ([]*entity.CartItem, error) {
 	const findAll = `
 	SELECT ci.id, ci.user_id, ci.product_id, ci.quantity, 
-	       p.id, p.name, p.generic_name, p.content, p.manufacturer_id, 
-	       p.description, p.drug_classification_id, p.product_category_id, p.drug_form, 
-	       p.unit_in_pack, p.selling_unit, p.weight, p.length, p.width, p.height, p.image
-	FROM cart_items ci INNER JOIN products p ON ci.product_id = p.id
-	WHERE ci.user_id = $1 AND ci.deleted_at IS NULL AND p.deleted_at IS NULL ORDER BY ci.updated_at DESC`
+	       products.id, products.name, products.generic_name, products.content, products.manufacturer_id, 
+	       products.description, products.drug_classification_id, products.product_category_id, products.drug_form, 
+	       products.unit_in_pack, products.selling_unit, products.weight, products.length, products.width, products.height, products.image,
+			min(pharmacy_products.price), max(pharmacy_products.price)
+	FROM cart_items ci 
+	    INNER JOIN products ON ci.product_id = products.id
+		INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id
+		INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id 
+	WHERE ci.user_id = $1 
+  		AND ci.deleted_at IS NULL 
+  		AND products.deleted_at IS NULL
+		AND pharmacy_products.deleted_at IS NULL
+		AND pharmacies.deleted_at IS NULL
+	GROUP BY ci.id, ci.updated_at, products.id
+	ORDER BY ci.updated_at DESC`
 
 	rows, err := repo.db.QueryContext(ctx, findAll, userId)
 	if err != nil {
@@ -92,7 +102,7 @@ func (repo *CartItemRepositoryImpl) FindAllByUserId(ctx context.Context, userId 
 			&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId,
 			&product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm,
 			&product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width,
-			&product.Height, &product.Image,
+			&product.Height, &product.Image, &product.MinimumPrice, &product.MaximumPrice,
 		); err != nil {
 			return nil, err
 		}
