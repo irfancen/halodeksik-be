@@ -85,6 +85,52 @@ func (h *PharmacyProductHandler) GetById(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+func (h *PharmacyProductHandler) GetAllByProductId(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	getAllPharmacyProductsByProductId := queryparamdto.GetAllPharmacyProductsByProductId{}
+	err = ctx.ShouldBindQuery(&getAllPharmacyProductsByProductId)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(getAllPharmacyProductsByProductId)
+	if err != nil {
+		return
+	}
+
+	param, err := getAllPharmacyProductsByProductId.ToGetAllParams()
+	if err != nil {
+		return
+	}
+
+	paginatedItems, err := h.uc.GetAllByProductId(ctx.Request.Context(), uri.Id, param)
+	if err != nil {
+		return
+	}
+
+	resps := make([]*responsedto.PharmacyProductResponse, 0)
+	for _, pharmacyProduct := range paginatedItems.Items.([]*entity.PharmacyProduct) {
+		resps = append(resps, pharmacyProduct.ToPharmacyProductResponse())
+	}
+	paginatedItems.Items = resps
+
+	resp := dto.ResponseDto{Data: paginatedItems}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 func (h *PharmacyProductHandler) GetAllByPharmacy(ctx *gin.Context) {
 	var err error
 	defer func() {
@@ -119,7 +165,6 @@ func (h *PharmacyProductHandler) GetAllByPharmacy(ctx *gin.Context) {
 
 func (h *PharmacyProductHandler) Edit(ctx *gin.Context) {
 	var err error
-
 	defer func() {
 		if err != nil {
 			err = WrapError(err)

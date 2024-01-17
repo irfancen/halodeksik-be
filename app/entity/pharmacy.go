@@ -54,9 +54,16 @@ func (p *Pharmacy) ToPharmacyResponse() *responsedto.PharmacyResponse {
 		return nil
 	}
 
-	operationalHours := strings.Split(p.OperationalHours, "-")
-	operationalHoursOpen, _ := strconv.Atoi(operationalHours[0])
-	operationalHoursClose, _ := strconv.Atoi(operationalHours[1])
+	var (
+		operationalHoursOpen  int
+		operationalHoursClose int
+	)
+
+	if p.OperationalHours != "" {
+		operationalHours := strings.Split(p.OperationalHours, "-")
+		operationalHoursOpen, _ = strconv.Atoi(operationalHours[0])
+		operationalHoursClose, _ = strconv.Atoi(operationalHours[1])
+	}
 
 	return &responsedto.PharmacyResponse{
 		Id:                    p.Id,

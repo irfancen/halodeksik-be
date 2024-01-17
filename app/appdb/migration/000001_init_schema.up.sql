@@ -464,8 +464,9 @@ values ('Addition'),
        ('Deduction');
 
 INSERT INTO product_stock_mutation_request_statuses (name)
-values ('Approved'),
-       ('Canceled');
+values ('Pending'),
+       ('Accepted'),
+       ('Rejected');
 
 INSERT INTO consultation_session_statuses (name)
 values ('Open'),

@@ -61,7 +61,10 @@ func (uc *ProductStockMutationUseCaseImpl) Add(ctx context.Context, stockMutatio
 func (uc *ProductStockMutationUseCaseImpl) GetAllByPharmacy(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
 	if pharmacyId != 0 {
 		pharmacy, err := uc.pharmacyRepository.FindById(ctx, pharmacyId)
-		if err != nil && !errors.Is(err, apperror.ErrRecordNotFound) {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound(pharmacy, "Id", pharmacyId)
+		}
+		if err != nil {
 			return nil, err
 		}
 		if pharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
@@ -83,11 +86,12 @@ func (uc *ProductStockMutationUseCaseImpl) GetAllByPharmacy(ctx context.Context,
 		totalPages += 1
 	}
 
-	paginatedItems := new(entity.PaginatedItems)
-	paginatedItems.Items = productStockMutation
-	paginatedItems.TotalItems = totalItems
-	paginatedItems.TotalPages = totalPages
-	paginatedItems.CurrentPageTotalItems = int64(len(productStockMutation))
-	paginatedItems.CurrentPage = int64(*param.PageId)
+	paginatedItems := entity.NewPaginationInfo(
+		totalItems,
+		totalPages,
+		int64(len(productStockMutation)),
+		int64(*param.PageId),
+		productStockMutation,
+	)
 	return paginatedItems, nil
 }
