@@ -10,6 +10,9 @@ func AddCustomValidators(validator AppValidator) error {
 	if err := validator.AddNewCustomValidation("numericgt", StringNumericGreaterThanValidation); err != nil {
 		return err
 	}
+	if err := validator.AddNewCustomValidation("numbergt", StringNumberGreaterThanValidation); err != nil {
+		return err
+	}
 	if err := validator.AddNewCustomValidation("datetime", StringDateTimeValidation); err != nil {
 		return err
 	}

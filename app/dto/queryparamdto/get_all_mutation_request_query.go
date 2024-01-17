@@ -24,11 +24,11 @@ type GetAllMutationRequestQuery struct {
 }
 
 type GetAllIncomingMutationRequestQuery struct {
-	PharmacyOriginId string `json:"pharmacy_origin_id" validate:"required,number"`
+	PharmacyOriginId string `json:"pharmacy_origin_id" validate:"required,number,numbergt=0"`
 }
 
 type GetAllOutgoingMutationRequestQuery struct {
-	PharmacyDestId string `json:"pharmacy_dest_id" validate:"required,number"`
+	PharmacyDestId string `json:"pharmacy_dest_id" validate:"required,number,numbergt=0"`
 }
 
 func (q *GetAllMutationRequestQuery) ToGetAllParams(isIncoming bool) (*GetAllParams, int64, error) {

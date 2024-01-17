@@ -79,17 +79,15 @@ func (uc *ProductStockMutationRequestUseCaseImpl) Add(ctx context.Context, mutat
 }
 
 func (uc *ProductStockMutationRequestUseCaseImpl) GetAllIncoming(ctx context.Context, pharmacyOriginId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
-	if pharmacyOriginId != 0 {
-		pharmacy, err := uc.pharmacyRepo.FindById(ctx, pharmacyOriginId)
-		if errors.Is(err, apperror.ErrRecordNotFound) {
-			return nil, apperror.NewNotFound(pharmacy, "Id", pharmacyOriginId)
-		}
-		if err != nil {
-			return nil, err
-		}
-		if pharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
-			return nil, apperror.ErrForbiddenViewEntity
-		}
+	pharmacy, err := uc.pharmacyRepo.FindById(ctx, pharmacyOriginId)
+	if errors.Is(err, apperror.ErrRecordNotFound) {
+		return nil, apperror.NewNotFound(pharmacy, "Id", pharmacyOriginId)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if pharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
+		return nil, apperror.ErrForbiddenViewEntity
 	}
 
 	mutationRequest, err := uc.productStockMutationRequestRepo.FindAllJoin(ctx, param)
@@ -106,27 +104,26 @@ func (uc *ProductStockMutationRequestUseCaseImpl) GetAllIncoming(ctx context.Con
 		totalPages += 1
 	}
 
-	paginatedItems := new(entity.PaginatedItems)
-	paginatedItems.Items = mutationRequest
-	paginatedItems.TotalItems = totalItems
-	paginatedItems.TotalPages = totalPages
-	paginatedItems.CurrentPageTotalItems = int64(len(mutationRequest))
-	paginatedItems.CurrentPage = int64(*param.PageId)
+	paginatedItems := entity.NewPaginationInfo(
+		totalItems,
+		totalPages,
+		int64(len(mutationRequest)),
+		int64(*param.PageId),
+		mutationRequest,
+	)
 	return paginatedItems, nil
 }
 
 func (uc *ProductStockMutationRequestUseCaseImpl) GetAllOutgoing(ctx context.Context, pharmacyDestId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
-	if pharmacyDestId != 0 {
-		pharmacy, err := uc.pharmacyRepo.FindById(ctx, pharmacyDestId)
-		if errors.Is(err, apperror.ErrRecordNotFound) {
-			return nil, apperror.NewNotFound(pharmacy, "Id", pharmacyDestId)
-		}
-		if err != nil {
-			return nil, err
-		}
-		if pharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
-			return nil, apperror.ErrForbiddenViewEntity
-		}
+	pharmacy, err := uc.pharmacyRepo.FindById(ctx, pharmacyDestId)
+	if errors.Is(err, apperror.ErrRecordNotFound) {
+		return nil, apperror.NewNotFound(pharmacy, "Id", pharmacyDestId)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if pharmacy.PharmacyAdminId != ctx.Value(appconstant.ContextKeyUserId) {
+		return nil, apperror.ErrForbiddenViewEntity
 	}
 
 	mutationRequest, err := uc.productStockMutationRequestRepo.FindAllJoin(ctx, param)
@@ -143,12 +140,13 @@ func (uc *ProductStockMutationRequestUseCaseImpl) GetAllOutgoing(ctx context.Con
 		totalPages += 1
 	}
 
-	paginatedItems := new(entity.PaginatedItems)
-	paginatedItems.Items = mutationRequest
-	paginatedItems.TotalItems = totalItems
-	paginatedItems.TotalPages = totalPages
-	paginatedItems.CurrentPageTotalItems = int64(len(mutationRequest))
-	paginatedItems.CurrentPage = int64(*param.PageId)
+	paginatedItems := entity.NewPaginationInfo(
+		totalItems,
+		totalPages,
+		int64(len(mutationRequest)),
+		int64(*param.PageId),
+		mutationRequest,
+	)
 	return paginatedItems, nil
 }
 

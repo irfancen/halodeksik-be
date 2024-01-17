@@ -176,6 +176,8 @@ func createErrValidationMsgTag(fieldError validator.FieldError) string {
 		return fmt.Sprintf("field '%s' must follow the format %s", fieldName, fieldError.Param())
 	case "number":
 		return fmt.Sprintf("field '%s' must be a number", fieldName)
+	case "numbergt":
+		return fmt.Sprintf("field '%s' must be a number greater than %s", fieldName, fieldError.Param())
 	case "numeric":
 		return fmt.Sprintf("field '%s' must be numeric", fieldName)
 	case "numericgt":
