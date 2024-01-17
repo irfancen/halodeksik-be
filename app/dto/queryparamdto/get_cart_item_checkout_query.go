@@ -6,7 +6,6 @@ import (
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
-	"strconv"
 	"strings"
 )
 
@@ -64,7 +63,7 @@ func (q *GetCartItemCheckoutQuery) GetCartItemIds() ([]int64, error) {
 	idsStr := strings.Split(valuesInStr, ",")
 
 	for _, idStr := range idsStr {
-		id, err := strconv.ParseInt(idStr, 10, 64)
+		id, err := util.ParseInt64(idStr)
 		if err != nil {
 			return nil, err
 		}
