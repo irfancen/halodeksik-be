@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"halodeksik-be/app/env"
 	"strconv"
+	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -19,6 +20,11 @@ func Connect() (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	db.SetMaxIdleConns(10)
+	db.SetMaxOpenConns(10)
+	db.SetConnMaxLifetime(30 * time.Second)
+	db.SetConnMaxIdleTime(30 * time.Second)
 
 	return db, err
 }
