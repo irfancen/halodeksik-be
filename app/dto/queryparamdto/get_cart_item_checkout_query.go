@@ -11,7 +11,7 @@ import (
 )
 
 type GetCartItemCheckoutQuery struct {
-	CartItemIds string `form:"cart_item_ids" validate:"required"`
+	CartItemIds string `form:"cart_item_ids" validate:"required,comma_separated"`
 	Latitude    string `form:"latitude" validate:"required,latitude"`
 	Longitude   string `form:"longitude" validate:"required,longitude"`
 }
@@ -58,8 +58,10 @@ func (q *GetCartItemCheckoutQuery) ToGetAllParams() *GetAllParams {
 }
 
 func (q *GetCartItemCheckoutQuery) GetCartItemIds() ([]int64, error) {
+	valuesInStr := strings.TrimSpace(q.CartItemIds)
+
 	ids := make([]int64, 0)
-	idsStr := strings.Split(q.CartItemIds, ",")
+	idsStr := strings.Split(valuesInStr, ",")
 
 	for _, idStr := range idsStr {
 		id, err := strconv.ParseInt(idStr, 10, 64)
