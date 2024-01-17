@@ -17,6 +17,7 @@ type ProfileUseCase interface {
 	GetDoctorProfileByUserId(ctx context.Context, userId int64) (*entity.User, error)
 	UpdateUserProfile(ctx context.Context, profile entity.UserProfile) (*entity.User, error)
 	UpdateDoctorProfile(ctx context.Context, profile entity.DoctorProfile) (*entity.User, error)
+	UpdateDoctorIsOnline(ctx context.Context, isOnline bool) (*entity.User, error)
 }
 
 type ProfileUseCaseImpl struct {
@@ -26,13 +27,37 @@ type ProfileUseCaseImpl struct {
 	cloudFolderCertificate string
 }
 
+func (uc *ProfileUseCaseImpl) UpdateDoctorIsOnline(ctx context.Context, isOnline bool) (*entity.User, error) {
+	userId := ctx.(*gin.Context).Request.Context().Value(appconstant.ContextKeyUserId)
+	if userId == nil {
+		return nil, apperror.ErrUnauthorized
+	}
+
+	profile := new(entity.DoctorProfile)
+
+	user, err := uc.repo.FindDoctorProfileByUserId(ctx, userId.(int64))
+	if err != nil {
+		return nil, err
+	}
+
+	profile = user.DoctorProfile
+	profile.IsOnline = isOnline
+
+	updatedProfile, err := uc.repo.UpdateDoctorProfileByUserId(ctx, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	user.DoctorProfile = updatedProfile
+	return user, nil
+}
+
 func (uc *ProfileUseCaseImpl) UpdateUserProfile(ctx context.Context, profile entity.UserProfile) (*entity.User, error) {
 	userId := ctx.(*gin.Context).Request.Context().Value(appconstant.ContextKeyUserId)
 	if userId == nil {
 		return nil, apperror.ErrUnauthorized
 	}
 	profile.UserId = userId.(int64)
-
 	user, err := uc.repo.FindUserProfileByUserId(ctx, userId.(int64))
 	if err != nil {
 		return nil, err
@@ -70,6 +95,7 @@ func (uc *ProfileUseCaseImpl) UpdateDoctorProfile(ctx context.Context, profile e
 	}
 
 	profile.ProfilePhoto = user.DoctorProfile.ProfilePhoto
+	profile.IsOnline = user.DoctorProfile.IsOnline
 	photo := ctx.Value(appconstant.FormProfilePhoto)
 	if photo != nil {
 		url, err2 := uc.uploader.Upload(ctx, photo, uc.cloudFolderProfile)

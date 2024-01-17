@@ -21,6 +21,10 @@ type RequestProfilePhoto struct {
 	ProfilePhoto *multipart.FileHeader `json:"profile_photo" form:"profile_photo" validate:"omitempty,filetype=png jpg jpeg,filesize=500"`
 }
 
+type RequestDoctorIsOnline struct {
+	IsOnline *bool `json:"is_online" validate:"required"`
+}
+
 func (p RequestDoctorProfile) ToDoctorProfile() entity.DoctorProfile {
 	fee, _ := decimal.NewFromString(p.ConsultationFee)
 	return entity.DoctorProfile{
