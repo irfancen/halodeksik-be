@@ -110,7 +110,7 @@ FROM product_stock_mutation_requests
                     ON product_stock_mutation_requests.product_stock_mutation_request_status_id = psmrs.id
 WHERE product_stock_mutation_requests.deleted_at IS NULL `
 
-	query, values := buildQuery(initQuery, &entity.ProductStockMutationRequest{}, param, true)
+	query, values := buildQuery(initQuery, &entity.ProductStockMutationRequest{}, param, true, true)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -163,7 +163,7 @@ FROM product_stock_mutation_requests
                     ON product_stock_mutation_requests.product_stock_mutation_request_status_id = psmrs.id
 WHERE product_stock_mutation_requests.deleted_at IS NULL `
 
-	query, values := buildQuery(initQuery, &entity.ProductStockMutationRequest{}, param, false)
+	query, values := buildQuery(initQuery, &entity.ProductStockMutationRequest{}, param, false, false)
 
 	var (
 		totalItems int64
