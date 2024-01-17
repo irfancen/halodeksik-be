@@ -56,6 +56,8 @@ func (q *GetAllStockMutationsQuery) ToGetAllParams(pharmacyAdminId int64) (*GetA
 
 	param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(pharmacy.GetSqlColumnFromField("PharmacyAdminId"), appdb.EqualTo, pharmacyAdminId))
 
+	param.SortClauses = append(param.SortClauses, appdb.NewSort(stockMutation.GetSqlColumnFromField("CreatedAt"), appdb.OrderDesc))
+
 	param.GroupClauses = append(
 		param.GroupClauses,
 		appdb.NewGroupClause(stockMutation.GetSqlColumnFromField("Id")),
