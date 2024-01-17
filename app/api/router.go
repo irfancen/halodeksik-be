@@ -124,6 +124,13 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				rOpts.CartItemHandler.GetAllByUserId,
 			)
 
+			cartItems.GET(
+				"/checkout",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdUser),
+				rOpts.CartItemHandler.Checkout,
+			)
+
 			cartItems.POST(
 				"",
 				middleware.LoginMiddleware(),

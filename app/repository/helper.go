@@ -6,16 +6,11 @@ import (
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
+	"log"
 	"strings"
 )
 
-func buildQuery(
-	initQuery string,
-	resourcer entity.Resourcer,
-	param *queryparamdto.GetAllParams,
-	setLimit bool,
-	initIndex ...int,
-) (string, []interface{}) {
+func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamdto.GetAllParams, setLimit bool, setPaginated bool, initIndex ...int) (string, []interface{}) {
 	var query strings.Builder
 	var values []interface{}
 
@@ -81,20 +76,40 @@ func buildQuery(
 	}
 
 	if setLimit {
-		query.WriteString(" ORDER BY ")
-		for _, sortClause := range param.SortClauses {
-			query.WriteString(fmt.Sprintf("%s %s,", sortClause.Column, sortClause.Order))
+		for index, sortClause := range param.SortClauses {
+			if index == 0 {
+				query.WriteString(" ORDER BY ")
+			}
+			query.WriteString(fmt.Sprintf("%s %s", sortClause.Column, sortClause.Order))
+			if index != len(param.SortClauses)-1 {
+				query.WriteString(", ")
+			}
+			if index == len(param.SortClauses)-1 && setPaginated {
+				query.WriteString(fmt.Sprintf(", %s ASC ", resourcer.GetSqlColumnFromField("Id")))
+			}
 		}
-		query.WriteString(fmt.Sprintf(" %s ASC ", resourcer.GetSqlColumnFromField("Id")))
+		if len(param.SortClauses) == 0 && setPaginated {
+			query.WriteString(fmt.Sprintf(" ORDER BY %s ASC ", resourcer.GetSqlColumnFromField("Id")))
+		}
+	}
+
+	if setLimit && param.PageSize != nil {
+		size := *param.PageSize
+		query.WriteString(fmt.Sprintf(" LIMIT $%d ", indexPreparedStatement+1))
+
+		indexPreparedStatement += 1
+		values = append(values, size)
 	}
 
 	if setLimit && param.PageId != nil && param.PageSize != nil {
 		size := *param.PageSize
 		offset := (*param.PageId - 1) * size
+		query.WriteString(fmt.Sprintf(" OFFSET $%d ", indexPreparedStatement+1))
 
-		query.WriteString(fmt.Sprintf("LIMIT $%d OFFSET $%d", indexPreparedStatement+1, indexPreparedStatement+2))
-		values = append(values, size, offset)
+		indexPreparedStatement += 1
+		values = append(values, offset)
 	}
 
+	log.Println(query.String())
 	return query.String(), values
 }

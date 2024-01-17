@@ -42,7 +42,7 @@ func (repo *ManufacturerRepositoryImpl) Create(ctx context.Context, manufacturer
 
 func (repo *ManufacturerRepositoryImpl) FindAll(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Manufacturer, error) {
 	initQuery := `SELECT id, name, image FROM manufacturers WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.Manufacturer{}, param, true)
+	query, values := buildQuery(initQuery, &entity.Manufacturer{}, param, true, true)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -69,7 +69,7 @@ func (repo *ManufacturerRepositoryImpl) FindAll(ctx context.Context, param *quer
 
 func (repo *ManufacturerRepositoryImpl) CountFindAll(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
 	initQuery := `SELECT count(id) FROM manufacturers WHERE deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.Manufacturer{}, param, false)
+	query, values := buildQuery(initQuery, &entity.Manufacturer{}, param, false, false)
 
 	var totalItems int64
 

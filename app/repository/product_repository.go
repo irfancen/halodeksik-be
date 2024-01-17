@@ -117,7 +117,7 @@ func (repo *ProductRepositoryImpl) FindByIdForUser(ctx context.Context, id int64
 	WHERE products.id = $1 AND products.deleted_at IS NULL `
 	indexPreparedStatement := 1
 
-	query, values := buildQuery(initQuery, &entity.Product{}, param, false, indexPreparedStatement)
+	query, values := buildQuery(initQuery, &entity.Product{}, param, false, false, indexPreparedStatement)
 	values = util.AppendAtIndex(values, 0, interface{}(id))
 
 	row := repo.db.QueryRowContext(ctx, query, values...)
@@ -155,7 +155,7 @@ func (repo *ProductRepositoryImpl) FindAll(ctx context.Context, param *querypara
 	FROM products 
 	WHERE products.deleted_at IS NULL `
 
-	query, values := buildQuery(initQuery, &entity.Product{}, param, true)
+	query, values := buildQuery(initQuery, &entity.Product{}, param, true, true)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -186,7 +186,7 @@ func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *quer
 	SELECT count(products.id)
 	FROM products 
 	WHERE products.deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.Product{}, param, false)
+	query, values := buildQuery(initQuery, &entity.Product{}, param, false, false)
 
 	var (
 		totalItems int64
@@ -221,7 +221,7 @@ func (repo *ProductRepositoryImpl) FindAllForUser(ctx context.Context, param *qu
 	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id
 	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
 	WHERE products.deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.Product{}, param, true)
+	query, values := buildQuery(initQuery, &entity.Product{}, param, true, true)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if err != nil {
@@ -254,7 +254,7 @@ func (repo *ProductRepositoryImpl) CountFindAllForUser(ctx context.Context, para
 	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id
 	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
 	WHERE products.deleted_at IS NULL `
-	query, values := buildQuery(initQuery, &entity.Product{}, param, false)
+	query, values := buildQuery(initQuery, &entity.Product{}, param, false, false)
 
 	var (
 		totalItems int64
@@ -295,7 +295,7 @@ func (repo *ProductRepositoryImpl) FindAllForAdmin(ctx context.Context, pharmacy
 		WHERE products.deleted_at IS NULL `
 	indexPreparedStatement := 1
 
-	query, values := buildQuery(initQuery, &entity.Product{}, param, true, indexPreparedStatement)
+	query, values := buildQuery(initQuery, &entity.Product{}, param, true, true, indexPreparedStatement)
 	values = util.AppendAtIndex(values, 0, interface{}(pharmacyId))
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
@@ -334,7 +334,7 @@ func (repo *ProductRepositoryImpl) CountFindAllForAdmin(ctx context.Context, pha
 		WHERE products.deleted_at IS NULL `
 	indexPreparedStatement := 1
 
-	query, values := buildQuery(initQuery, &entity.Product{}, param, false, indexPreparedStatement)
+	query, values := buildQuery(initQuery, &entity.Product{}, param, false, false, indexPreparedStatement)
 	values = util.AppendAtIndex(values, 0, interface{}(pharmacyId))
 
 	var (

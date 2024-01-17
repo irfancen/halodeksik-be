@@ -229,6 +229,8 @@ func createErrValidationMsgTag(fieldError validator.FieldError) string {
 	case "filetype":
 		param := strings.ReplaceAll(fieldError.Param(), " ", ", ")
 		return fmt.Sprintf("field '%s' must have a file with type as one of %s", fieldName, param)
+	case "comma_separated":
+		return fmt.Sprintf("field '%s' does not contain valid comma separated values", fieldName)
 	default:
 		msg := fmt.Sprintf("field '%s' failed on validation %s %s", fieldName, fieldError.Tag(), fieldError.Param())
 		return strings.TrimSpace(msg)

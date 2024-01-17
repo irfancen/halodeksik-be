@@ -5,6 +5,7 @@ import (
 	"errors"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
+	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
 )
@@ -15,6 +16,7 @@ type CartItemUseCase interface {
 	GetAllByUserId(ctx context.Context) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, existingCartItem entity.CartItem, cartItem entity.CartItem) (*entity.CartItem, error)
 	Remove(ctx context.Context, productIds []int64) error
+	Checkout(ctx context.Context, param *queryparamdto.GetAllParams, cartItemId ...int64) (*entity.PaginatedItems, error)
 }
 
 type CartItemUseCaseImpl struct {
@@ -134,4 +136,45 @@ func (uc *CartItemUseCaseImpl) Remove(ctx context.Context, productIds []int64) e
 		return err
 	}
 	return nil
+}
+
+func (uc *CartItemUseCaseImpl) Checkout(ctx context.Context, param *queryparamdto.GetAllParams, cartItemId ...int64) (*entity.PaginatedItems, error) {
+	cartItems, err := uc.cartItemRepo.FindByMultipleIds(ctx, cartItemId...)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, cartItem := range cartItems {
+		cartItem.Product, err = uc.productRepo.FindById(ctx, cartItem.ProductId)
+		if err != nil {
+			if errors.Is(err, apperror.ErrRecordNotFound) {
+				return nil, apperror.NewNotFound(cartItem.Product, "Id", cartItem.ProductId)
+			}
+			return nil, err
+		}
+
+		cartItem.PharmacyProduct, err = uc.pharmacyProductRepo.FindByProductIdJoinPharmacy(ctx, cartItem.ProductId, param)
+		if err != nil && !errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, err
+		}
+		// product is not available in the closest area (25 km)
+		if err != nil && errors.Is(err, apperror.ErrRecordNotFound) {
+			cartItem.PharmacyProduct = &entity.PharmacyProduct{}
+		}
+
+		stock, err := uc.pharmacyProductRepo.SumTotalStocksByProductsId(ctx, cartItem.ProductId, param)
+		if err != nil {
+			return nil, err
+		}
+		// stock in the closest area is not enough
+		if stock < cartItem.Quantity {
+			cartItem.PharmacyProduct = &entity.PharmacyProduct{}
+		}
+	}
+
+	paginatedItems := entity.NewPaginationInfo(
+		int64(len(cartItems)), 1, int64(len(cartItems)), 1, cartItems,
+	)
+
+	return paginatedItems, nil
 }
