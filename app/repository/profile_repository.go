@@ -132,13 +132,13 @@ func (repo *ProfileRepositoryImpl) UpdateDoctorProfileByUserId(ctx context.Conte
 	const updateDoctorProfileByUserId = `
 	WITH updated_profile AS (
 		UPDATE doctor_profiles
-			SET name = $1, profile_photo =  $2, starting_year =  $3, doctor_certificate =  $4, doctor_specialization_id = $5, consultation_fee = $6, updated_at = now() WHERE user_id = $7
+			SET name = $1, profile_photo =  $2, starting_year =  $3, doctor_certificate =  $4, doctor_specialization_id = $5, consultation_fee = $6, is_online = $7, updated_at = now() WHERE user_id = $8
 			RETURNING user_id, name, profile_photo, starting_year, doctor_certificate, doctor_specialization_id, consultation_fee, is_online
 	) SELECT up.*, ds.name AS spec FROM updated_profile up INNER JOIN doctor_specializations ds ON up.doctor_specialization_id = ds.id;
 	`
 	row := repo.db.QueryRowContext(ctx, updateDoctorProfileByUserId,
 		profile.Name, profile.ProfilePhoto, profile.StartingYear, profile.DoctorCertificate, profile.DoctorSpecializationId,
-		profile.ConsultationFee, profile.UserId,
+		profile.ConsultationFee, profile.IsOnline, profile.UserId,
 	)
 
 	var updatedProfile entity.DoctorProfile

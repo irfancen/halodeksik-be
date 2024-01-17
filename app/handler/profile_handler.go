@@ -101,6 +101,35 @@ func (h *ProfileHandler) EditDoctorProfile(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+func (h *ProfileHandler) EditDoctorIsOnline(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	req := requestdto.RequestDoctorIsOnline{}
+	err = ctx.ShouldBindJSON(&req)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(req)
+	if err != nil {
+		return
+	}
+
+	doctorProfile, err := h.uc.UpdateDoctorIsOnline(ctx, *req.IsOnline)
+	if err != nil {
+		return
+	}
+
+	resp := dto.ResponseDto{Data: doctorProfile.ToDoctorProfileResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 func (h *ProfileHandler) EditUserProfile(ctx *gin.Context) {
 	var err error
 	defer func() {

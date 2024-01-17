@@ -333,7 +333,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				profileDoctor.GET("",
 					middleware.AllowRoles(appconstant.UserRoleIdDoctor), rOpts.ProfileHandler.GetProfile)
 				profileDoctor.PUT("", middleware.AllowRoles(appconstant.UserRoleIdDoctor), rOpts.ProfileHandler.EditDoctorProfile)
-
+				profileDoctor.POST("/set-online", middleware.AllowRoles(appconstant.UserRoleIdDoctor), rOpts.ProfileHandler.EditDoctorIsOnline)
 			}
 			profileUser := profile.Group("/user")
 			{
