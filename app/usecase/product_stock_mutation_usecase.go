@@ -86,11 +86,12 @@ func (uc *ProductStockMutationUseCaseImpl) GetAllByPharmacy(ctx context.Context,
 		totalPages += 1
 	}
 
-	paginatedItems := new(entity.PaginatedItems)
-	paginatedItems.Items = productStockMutation
-	paginatedItems.TotalItems = totalItems
-	paginatedItems.TotalPages = totalPages
-	paginatedItems.CurrentPageTotalItems = int64(len(productStockMutation))
-	paginatedItems.CurrentPage = int64(*param.PageId)
+	paginatedItems := entity.NewPaginationInfo(
+		totalItems,
+		totalPages,
+		int64(len(productStockMutation)),
+		int64(*param.PageId),
+		productStockMutation,
+	)
 	return paginatedItems, nil
 }

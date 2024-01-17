@@ -79,12 +79,13 @@ func (uc *PharmacyUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.
 		totalPages += 1
 	}
 
-	paginatedItems := new(entity.PaginatedItems)
-	paginatedItems.Items = pharmacies
-	paginatedItems.TotalItems = totalItems
-	paginatedItems.TotalPages = totalPages
-	paginatedItems.CurrentPageTotalItems = int64(len(pharmacies))
-	paginatedItems.CurrentPage = int64(*param.PageId)
+	paginatedItems := entity.NewPaginationInfo(
+		totalItems,
+		totalPages,
+		int64(len(pharmacies)),
+		int64(*param.PageId),
+		pharmacies,
+	)
 	return paginatedItems, nil
 }
 
