@@ -150,12 +150,12 @@ func (h *ProductHandler) GetAll(ctx *gin.Context) {
 		return
 	}
 
-	param, err := getAllProductQuery.ToGetAllParams()
+	param, lat, long, err := getAllProductQuery.ToGetAllParams()
 	if err != nil {
 		return
 	}
 
-	paginatedItems, err := h.uc.GetAllForUser(ctx.Request.Context(), param)
+	paginatedItems, err := h.uc.GetAllForUser(ctx.Request.Context(), lat, long, param)
 	if err != nil {
 		return
 	}

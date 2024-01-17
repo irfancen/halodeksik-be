@@ -249,34 +249,20 @@ func (repo *ProductRepositoryImpl) FindAllForUser(ctx context.Context, param *qu
 }
 
 func (repo *ProductRepositoryImpl) CountFindAllForUser(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
-	initQuery := `SELECT count(products.id) 
+	initQuery := `SELECT count(*) FROM (SELECT count(pharmacy_products.id)
 	FROM products 
 	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id
 	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
 	WHERE products.deleted_at IS NULL `
 	query, values := buildQuery(initQuery, &entity.Product{}, param, false)
 
-	var (
-		totalItems int64
-		temp       int64
-	)
+	var totalItems int64
 
-	rows, err := repo.db.QueryContext(ctx, query, values...)
-	if err != nil {
-		return totalItems, err
+	row := repo.db.QueryRowContext(ctx, query+") as sub", values...)
+	if row.Err() != nil {
+		return totalItems, row.Err()
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		if err := rows.Scan(
-			&temp,
-		); err != nil {
-			return totalItems, err
-		}
-		totalItems++
-	}
-
-	if err := rows.Err(); err != nil {
+	if err := row.Scan(&totalItems); err != nil {
 		return totalItems, err
 	}
 	return totalItems, nil
