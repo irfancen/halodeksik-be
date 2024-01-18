@@ -41,6 +41,15 @@ func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamd
 				values = append(values, v)
 			}
 			query.WriteString(string(") " + whereClause.Logic))
+
+			if index != len(param.WhereClauses)-1 {
+				if util.IsEmptyString(string(whereClause.Logic)) {
+					query.WriteString(appdb.AND + " ")
+				}
+				if !util.IsEmptyString(string(whereClause.Logic)) {
+					query.WriteString(string(whereClause.Logic) + " ")
+				}
+			}
 			continue
 		}
 

@@ -10,7 +10,7 @@ import (
 )
 
 type GetCartItemCheckoutQuery struct {
-	CartItemIds string `form:"cart_item_ids" validate:"required,comma_separated"`
+	CartItemIds string `form:"cart_item_ids" validate:"required,comma_separated=number"`
 	Latitude    string `form:"latitude" validate:"required,latitude"`
 	Longitude   string `form:"longitude" validate:"required,longitude"`
 }

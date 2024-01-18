@@ -14,7 +14,7 @@ type GetAllProductsQuery struct {
 	Search              string `form:"search"`
 	SortBy              string `form:"sort_by"`
 	Sort                string `form:"sort"`
-	DrugClassifications string `form:"drug_class"`
+	DrugClassifications string `form:"drug_class" validate:"omitempty,comma_separated=number"`
 	Latitude            string `form:"latitude" validate:"omitempty,latitude"`
 	Longitude           string `form:"longitude" validate:"omitempty,longitude"`
 	Limit               string `form:"limit"`
