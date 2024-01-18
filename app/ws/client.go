@@ -11,7 +11,6 @@ type Client struct {
 	Message  chan *Message
 	Id       int64           `json:"id"`
 	RoomId   int64           `json:"roomId"`
-	Username string          `json:"username"`
 	Profile  *entity.Profile `json:"profile"`
 }
 
@@ -19,7 +18,6 @@ type Message struct {
 	Content  string          `json:"content"`
 	UserId   int64           `json:"user_id"`
 	RoomId   int64           `json:"roomId"`
-	Username string          `json:"username"`
 	Profile  *entity.Profile `json:"profile"`
 }
 
@@ -60,7 +58,6 @@ func (c *Client) readMessage(hub *Hub) {
 			Content:  string(message),
 			UserId:   c.Id,
 			RoomId:   c.RoomId,
-			Username: c.Username,
 			Profile:  c.Profile,
 		}
 

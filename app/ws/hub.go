@@ -41,7 +41,6 @@ func (h *Hub) Run() {
 						h.Broadcast <- &Message{
 							Content:  "user left the chat",
 							RoomId:   client.RoomId,
-							Username: client.Username,
 						}
 					}
 

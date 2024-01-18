@@ -83,7 +83,6 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 	roleId := roleIdCtx.(int64)
 
 	var user *entity.User
-	username := ctx.Query("username")
 
 	if roleId == appconstant.UserRoleIdDoctor {
 		if room.DoctorId != clientId {
@@ -118,20 +117,18 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 	}
 
 	client := &Client{
-		Conn:     conn,
-		Message:  make(chan *Message, 10),
-		Id:       clientId,
-		RoomId:   roomId,
-		Username: username,
-		Profile:  user.GetProfile(),
+		Conn:    conn,
+		Message: make(chan *Message, 10),
+		Id:      clientId,
+		RoomId:  roomId,
+		Profile: user.GetProfile(),
 	}
 
 	message := &Message{
-		Content:  "A new user has joined the room",
-		UserId:   client.Id,
-		RoomId:   roomId,
-		Username: username,
-		Profile:  client.Profile,
+		Content: "A new user has joined the room",
+		UserId:  client.Id,
+		RoomId:  roomId,
+		Profile: client.Profile,
 	}
 
 	h.hub.Register <- client
@@ -162,8 +159,8 @@ func (h *ChatHandler) GetRooms(ctx *gin.Context) {
 }
 
 type ClientRes struct {
-	Id       int64  `json:"id"`
-	Username string `json:"username"`
+	Id      int64          `json:"id"`
+	Profile *entity.Profile `json:"profile"`
 }
 
 func (h *ChatHandler) GetClients(c *gin.Context) {
@@ -178,8 +175,8 @@ func (h *ChatHandler) GetClients(c *gin.Context) {
 
 	for _, c := range h.hub.Rooms[roomId].Clients {
 		clients = append(clients, ClientRes{
-			Id:       c.Id,
-			Username: c.Username,
+			Id:      c.Id,
+			Profile: c.Profile,
 		})
 	}
 
