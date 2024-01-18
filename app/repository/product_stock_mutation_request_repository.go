@@ -96,14 +96,15 @@ SELECT product_stock_mutation_requests.id,
        product_stock_mutation_requests.stock,
        product_stock_mutation_requests.product_stock_mutation_request_status_id,
        product_stock_mutation_requests.created_at AS request_date,
-       p.name AS pharmacy_name,
+       po.name AS pharmacy_origin_name, pd.name AS pharmacy_destination_name,
        pr.name, pr.generic_name, pr.content, pr.manufacturer_id,
        m.name,
        psmrs.name AS status
 FROM product_stock_mutation_requests
          INNER JOIN pharmacy_products ppo ON ppo.id = product_stock_mutation_requests.pharmacy_product_origin_id
          INNER JOIN pharmacy_products ppd ON ppd.id = product_stock_mutation_requests.pharmacy_product_dest_id
-         INNER JOIN pharmacies p ON ppo.pharmacy_id = p.id
+         INNER JOIN pharmacies po ON ppo.pharmacy_id = po.id
+    	 INNER JOIN pharmacies pd ON ppd.pharmacy_id = pd.id
          INNER JOIN products pr ON ppd.product_id = pr.id
     	 INNER JOIN manufacturers m ON pr.manufacturer_id = m.id
          INNER JOIN product_stock_mutation_request_statuses psmrs
@@ -123,14 +124,17 @@ WHERE product_stock_mutation_requests.deleted_at IS NULL `
 		var (
 			mutationRequest       entity.ProductStockMutationRequest
 			mutationRequestStatus entity.ProductStockMutationRequestStatus
-			pharmacyProduct       entity.PharmacyProduct
-			pharmacy              entity.Pharmacy
+			pharmacyProductOrigin entity.PharmacyProduct
+			pharmacyOrigin        entity.Pharmacy
+			pharmacyProductDest   entity.PharmacyProduct
+			pharmacyDest          entity.Pharmacy
 			product               entity.Product
 			manufacturer          entity.Manufacturer
 		)
 		if err := rows.Scan(
 			&mutationRequest.Id, &mutationRequest.PharmacyProductOriginId, &mutationRequest.PharmacyProductDestId, &mutationRequest.Stock, &mutationRequest.ProductStockMutationRequestStatusId, &mutationRequest.CreatedAt,
-			&pharmacy.Name,
+			&pharmacyOrigin.Name,
+			&pharmacyDest.Name,
 			&product.Name, &product.GenericName, &product.Content, &product.ManufacturerId,
 			&manufacturer.Name,
 			&mutationRequestStatus.Name,
@@ -138,9 +142,12 @@ WHERE product_stock_mutation_requests.deleted_at IS NULL `
 			return nil, err
 		}
 		product.Manufacturer = &manufacturer
-		pharmacyProduct.Pharmacy = &pharmacy
-		pharmacyProduct.Product = &product
-		mutationRequest.PharmacyProductOrigin = &pharmacyProduct
+		pharmacyProductOrigin.Pharmacy = &pharmacyOrigin
+		pharmacyProductOrigin.Product = &product
+		pharmacyProductDest.Pharmacy = &pharmacyDest
+		pharmacyProductDest.Product = &product
+		mutationRequest.PharmacyProductOrigin = &pharmacyProductOrigin
+		mutationRequest.PharmacyProductDest = &pharmacyProductDest
 		mutationRequest.ProductStockMutationRequestStatus = &mutationRequestStatus
 		items = append(items, &mutationRequest)
 	}

@@ -19,6 +19,7 @@ type ProductStockMutationRequest struct {
 	UpdatedAt                           time.Time    `json:"updated_at"`
 	DeletedAt                           sql.NullTime `json:"deleted_at"`
 	PharmacyProductOrigin               *PharmacyProduct
+	PharmacyProductDest                 *PharmacyProduct
 	ProductStockMutationRequestStatus   *ProductStockMutationRequestStatus
 }
 
@@ -39,13 +40,23 @@ func (e *ProductStockMutationRequest) GetSqlColumnFromField(fieldName string) st
 }
 
 func (e *ProductStockMutationRequest) ToResponse() *responsedto.ProductStockMutationRequestResponse {
-	pharmacyProduct := e.PharmacyProductOrigin.ToPharmacyProductResponse()
-	if pharmacyProduct != nil {
-		pharmacyProduct.Price = ""
-		pharmacyProduct.Stock = nil
+	pharmacyProductOrigin := e.PharmacyProductOrigin.ToPharmacyProductResponse()
+	if pharmacyProductOrigin != nil {
+		pharmacyProductOrigin.Price = ""
+		pharmacyProductOrigin.Stock = nil
 
-		if pharmacyProduct.PharmacyResponse != nil {
-			pharmacyProduct.PharmacyResponse.OperationalDays = nil
+		if pharmacyProductOrigin.PharmacyResponse != nil {
+			pharmacyProductOrigin.PharmacyResponse.OperationalDays = nil
+		}
+	}
+
+	pharmacyProductDest := e.PharmacyProductDest.ToPharmacyProductResponse()
+	if pharmacyProductDest != nil {
+		pharmacyProductDest.Price = ""
+		pharmacyProductDest.Stock = nil
+
+		if pharmacyProductDest.PharmacyResponse != nil {
+			pharmacyProductDest.PharmacyResponse.OperationalDays = nil
 		}
 	}
 
@@ -56,7 +67,8 @@ func (e *ProductStockMutationRequest) ToResponse() *responsedto.ProductStockMuta
 		Stock:                               e.Stock,
 		ProductStockMutationRequestStatusId: e.ProductStockMutationRequestStatusId,
 		RequestDate:                         e.CreatedAt,
-		PharmacyProductResponse:             pharmacyProduct,
+		PharmacyProductOriginResponse:       pharmacyProductOrigin,
+		PharmacyProductDestResponse:         pharmacyProductDest,
 		ProductStockMutationRequestStatusResponse: e.ProductStockMutationRequestStatus.ToResponse(),
 	}
 }
