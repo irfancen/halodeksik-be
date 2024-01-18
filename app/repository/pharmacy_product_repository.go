@@ -15,6 +15,7 @@ type PharmacyProductRepository interface {
 	Create(ctx context.Context, pharmacyProduct entity.PharmacyProduct) (*entity.PharmacyProduct, error)
 	FindById(ctx context.Context, id int64) (*entity.PharmacyProduct, error)
 	FindByIdJoinPharmacy(ctx context.Context, id int64) (*entity.PharmacyProduct, error)
+	FindByIdJoinPharmacyAndProduct(ctx context.Context, id int64) (*entity.PharmacyProduct, error)
 	FindAllJoinPharmacy(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error)
 	CountFindAllJoinPharmacy(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 
@@ -123,6 +124,47 @@ func (repo *PharmacyProductRepositoryImpl) FindByIdJoinPharmacy(ctx context.Cont
 		return nil, err
 	}
 	pharmacyProducts.Pharmacy = &pharmacy
+
+	return &pharmacyProducts, nil
+}
+
+func (repo *PharmacyProductRepositoryImpl) FindByIdJoinPharmacyAndProduct(ctx context.Context, id int64) (*entity.PharmacyProduct, error) {
+	getById := `
+	SELECT pharmacy_products.id, pharmacy_products.pharmacy_id, pharmacy_products.product_id, pharmacy_products.is_active, pharmacy_products.price, pharmacy_products.stock,
+	       pharmacies.id, pharmacies.name, pharmacies.address, pharmacies.sub_district, pharmacies.district, pharmacies.city, pharmacies.province, pharmacies.postal_code, pharmacies.latitude, pharmacies.longitude, pharmacies.pharmacist_name, pharmacies.pharmacist_license_no, pharmacies.pharmacist_phone_no, pharmacies.operational_hours, pharmacies.operational_days, pharmacies.pharmacy_admin_id,
+		   products.id, products.name, products.generic_name, products.content, products.manufacturer_id, products.description, products.drug_classification_id, products.product_category_id, products.drug_form, products.unit_in_pack, products.selling_unit, products.weight, products.length, products.width, products.height, products.image
+	FROM pharmacy_products
+	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
+	INNER JOIN products ON pharmacy_products.product_id = products.id
+	WHERE pharmacy_products.id = $1 AND pharmacy_products.deleted_at IS NULL `
+
+	row := repo.db.QueryRowContext(ctx, getById, id)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	var (
+		pharmacyProducts entity.PharmacyProduct
+		pharmacy         entity.Pharmacy
+		product          entity.Product
+	)
+	err := row.Scan(
+		&pharmacyProducts.Id, &pharmacyProducts.PharmacyId, &pharmacyProducts.ProductId,
+		&pharmacyProducts.IsActive, &pharmacyProducts.Price, &pharmacyProducts.Stock,
+		&pharmacy.Id, &pharmacy.Name,
+		&pharmacy.Address, &pharmacy.SubDistrict, &pharmacy.District, &pharmacy.CityId, &pharmacy.ProvinceId, &pharmacy.PostalCode, &pharmacy.Latitude, &pharmacy.Longitude,
+		&pharmacy.PharmacistName, &pharmacy.PharmacistLicenseNo, &pharmacy.PharmacistPhoneNo,
+		&pharmacy.OperationalHours, &pharmacy.OperationalDays, &pharmacy.PharmacyAdminId,
+		&product.Id, &product.Name, &product.GenericName, &product.Content, &product.ManufacturerId, &product.Description, &product.DrugClassificationId, &product.ProductCategoryId, &product.DrugForm, &product.UnitInPack, &product.SellingUnit, &product.Weight, &product.Length, &product.Width, &product.Height, &product.Image,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	pharmacyProducts.Pharmacy = &pharmacy
+	pharmacyProducts.Product = &product
 
 	return &pharmacyProducts, nil
 }
