@@ -1591,6 +1591,9 @@ VALUES (1, 1),
        (1, 3),
        (2, 2);
 
+INSERT INTO consultation_session_statuses(name)
+VALUES ('Ongoing'), ('Ended');
+
 
 -- CREATE FUNCTIONS --
 

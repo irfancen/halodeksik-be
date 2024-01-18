@@ -15,19 +15,31 @@ import (
 )
 
 type ChatHandler struct {
-	hub       *ws.Hub
-	profileUC usecase.ProfileUseCase
-	validator appvalidator.AppValidator
+	hub                   *ws.Hub
+	consultationSessionUC usecase.ConsultationSessionUseCase
+	profileUC             usecase.ProfileUseCase
+	validator             appvalidator.AppValidator
 }
 
-func NewChatHandler(hub *ws.Hub, profileUC usecase.ProfileUseCase, validator appvalidator.AppValidator) *ChatHandler {
-	return &ChatHandler{hub: hub, profileUC: profileUC, validator: validator}
+func NewChatHandler(
+	hub *ws.Hub,
+	consultationSessionUC usecase.ConsultationSessionUseCase,
+	profileUC usecase.ProfileUseCase,
+	validator appvalidator.AppValidator,
+) *ChatHandler {
+	return &ChatHandler{hub: hub, consultationSessionUC: consultationSessionUC, profileUC: profileUC, validator: validator}
 }
 
 func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
 	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
 
-	req := requestdto.AddChatRoom{}
+	req := requestdto.AddConsultationSession{}
 	err = ctx.ShouldBindJSON(&req)
 	if err != nil {
 		return
@@ -38,15 +50,20 @@ func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
 		return
 	}
 
-	roomId := int64(len(h.hub.Rooms) + 1)
+	added, err := h.consultationSessionUC.Add(ctx, req.ToConsultationSessionUseCase())
+	if err != nil {
+		return
+	}
+
+	roomId := added.Id
 	h.hub.Rooms[roomId] = &ws.Room{
 		Id:        roomId,
 		DoctorId:  req.DoctorId,
-		PatientId: req.PatientId,
+		PatientId: req.UserId,
 		Clients:   make(map[int64]*ws.Client),
 	}
 
-	ctx.JSON(http.StatusOK, req)
+	ctx.JSON(http.StatusOK, added)
 }
 
 var upgrader = websocket.Upgrader{
@@ -159,7 +176,7 @@ func (h *ChatHandler) GetRooms(ctx *gin.Context) {
 }
 
 type ClientRes struct {
-	Id      int64          `json:"id"`
+	Id      int64           `json:"id"`
 	Profile *entity.Profile `json:"profile"`
 }
 
