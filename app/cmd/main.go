@@ -17,6 +17,14 @@ func main() {
 		applogger.Log.Error(err)
 	}
 	tmpdir := fmt.Sprintf("%s/%s", pwd, "tmp")
+	_, err = os.Stat(tmpdir)
+	if os.IsNotExist(err) {
+		err = os.Mkdir(tmpdir, os.ModePerm)
+		if err != nil {
+			applogger.Log.Error("failed to create temp directory")
+			return
+		}
+	}
 	err = os.Setenv("TMPDIR", tmpdir)
 	if err != nil {
 		applogger.Log.Error(err)

@@ -1,24 +1,33 @@
 package ws
 
 import (
+	"context"
+	"fmt"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/vincent-petithory/dataurl"
+	"halodeksik-be/app/appcloud"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/entity"
+	"halodeksik-be/app/util"
 	"log"
+	"os"
+	"time"
 )
 
 type Client struct {
-	Conn     *websocket.Conn
-	Message  chan *Message
-	Id       int64           `json:"id"`
-	RoomId   int64           `json:"roomId"`
-	Profile  *entity.Profile `json:"profile"`
+	Conn    *websocket.Conn
+	Message chan *Message
+	Id      int64           `json:"id"`
+	RoomId  int64           `json:"roomId"`
+	Profile *entity.Profile `json:"profile"`
 }
 
 type Message struct {
-	Content  string          `json:"content"`
-	UserId   int64           `json:"user_id"`
-	RoomId   int64           `json:"roomId"`
-	Profile  *entity.Profile `json:"profile"`
+	IsFile  bool   `json:"is_file"`
+	Content string `json:"content"`
+	UserId  int64  `json:"user_id"`
+	RoomId  int64  `json:"roomId"`
 }
 
 func (c *Client) writeMessage() {
@@ -55,10 +64,40 @@ func (c *Client) readMessage(hub *Hub) {
 		}
 
 		msg := &Message{
-			Content:  string(message),
-			UserId:   c.Id,
-			RoomId:   c.RoomId,
-			Profile:  c.Profile,
+			Content: string(message),
+			UserId:  c.Id,
+			RoomId:  c.RoomId,
+		}
+
+		decodeString, decodeErr := dataurl.DecodeString(string(message))
+		if decodeErr == nil && decodeString.Type == appconstant.DataTypeImage && decodeString.Encoding == appconstant.DataEncodingBase64 {
+			msg.IsFile = true
+
+			myUuid, err2 := uuid.NewRandom()
+			if err2 != nil {
+				return
+			}
+
+			fileName := fmt.Sprintf("%s.%s", myUuid.String(), decodeString.Subtype)
+			tempFile, err2 := util.WriteTempFile(decodeString.Data, decodeString.Subtype)
+
+			file, err2 := os.Open(tempFile.Name())
+			if err2 != nil {
+				return
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), appconstant.DefaultRequestTimeout*time.Second)
+			err2 = appcloud.AppFileUploader.SendToBucketWithFile(ctx, file, "chats/", fileName)
+			if err != nil {
+				tempFile.Close()
+				file.Close()
+				os.Remove(tempFile.Name())
+				cancel()
+			}
+
+			tempFile.Close()
+			os.Remove(tempFile.Name())
+			cancel()
 		}
 
 		hub.Broadcast <- msg

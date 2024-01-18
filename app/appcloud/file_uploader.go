@@ -10,6 +10,7 @@ import (
 	"halodeksik-be/app/env"
 	"io"
 	"mime/multipart"
+	"os"
 	"path/filepath"
 )
 
@@ -17,7 +18,8 @@ var AppFileUploader FileUploader
 
 type FileUploader interface {
 	SendToBucket(ctx context.Context, file multipart.File, object, path string) error
-	Upload(ctx context.Context, fileHeader any, folderName string) (string, error)
+	SendToBucketWithFile(ctx context.Context, file *os.File, path, name string) error
+	UploadFromFileHeader(ctx context.Context, fileHeader any, folderName string) (string, error)
 }
 
 func SetAppFileUploader(uploader FileUploader) {
@@ -69,7 +71,26 @@ func (f *FileUploaderImpl) SendToBucket(ctx context.Context, file multipart.File
 	return nil
 }
 
-func (f *FileUploaderImpl) Upload(ctx context.Context, fileHeader any, folderName string) (string, error) {
+func (f *FileUploaderImpl) SendToBucketWithFile(ctx context.Context, file *os.File, path, name string) error {
+	bucketObject := f.client.Bucket(f.bucketName).Object(path + name)
+	wc := bucketObject.NewWriter(ctx)
+	wc.ACL = []storage.ACLRule{
+		{
+			Entity: storage.AllUsers,
+			Role:   storage.RoleReader,
+		},
+	}
+
+	if _, err := io.Copy(wc, file); err != nil {
+		return fmt.Errorf("io.Copy: %v", err)
+	}
+	if err := wc.Close(); err != nil {
+		return fmt.Errorf("Writer.Close: %v", err)
+	}
+	return nil
+}
+
+func (f *FileUploaderImpl) UploadFromFileHeader(ctx context.Context, fileHeader any, folderName string) (string, error) {
 	parsedFileHeader := fileHeader.(*multipart.FileHeader)
 	file, err := parsedFileHeader.Open()
 	if err != nil {

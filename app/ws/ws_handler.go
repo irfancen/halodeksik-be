@@ -128,7 +128,6 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 		Content: "A new user has joined the room",
 		UserId:  client.Id,
 		RoomId:  roomId,
-		Profile: client.Profile,
 	}
 
 	h.hub.Register <- client
