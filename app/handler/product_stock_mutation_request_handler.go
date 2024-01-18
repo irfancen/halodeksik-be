@@ -92,6 +92,7 @@ func (h *ProductStockMutationRequestHandler) GetAllIncoming(ctx *gin.Context) {
 
 	resps := make([]*responsedto.ProductStockMutationRequestResponse, 0)
 	for _, mutationRequest := range paginatedItems.Items.([]*entity.ProductStockMutationRequest) {
+		mutationRequest.PharmacyProductOrigin = nil
 		resps = append(resps, mutationRequest.ToResponse())
 	}
 	paginatedItems.Items = resps
@@ -142,6 +143,7 @@ func (h *ProductStockMutationRequestHandler) GetAllOutgoing(ctx *gin.Context) {
 
 	resps := make([]*responsedto.ProductStockMutationRequestResponse, 0)
 	for _, mutationRequest := range paginatedItems.Items.([]*entity.ProductStockMutationRequest) {
+		mutationRequest.PharmacyProductDest = nil
 		resps = append(resps, mutationRequest.ToResponse())
 	}
 	paginatedItems.Items = resps

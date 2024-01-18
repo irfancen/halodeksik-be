@@ -9,6 +9,7 @@ type ProductStockMutationRequestResponse struct {
 	Stock                                     int32                                      `json:"stock"`
 	ProductStockMutationRequestStatusId       int64                                      `json:"product_stock_mutation_request_status_id"`
 	RequestDate                               time.Time                                  `json:"request_date"`
-	PharmacyProductResponse                   *PharmacyProductResponse                   `json:"pharmacy_product_origin,omitempty"`
+	PharmacyProductOriginResponse             *PharmacyProductResponse                   `json:"pharmacy_product_origin,omitempty"`
+	PharmacyProductDestResponse               *PharmacyProductResponse                   `json:"pharmacy_product_dest,omitempty"`
 	ProductStockMutationRequestStatusResponse *ProductStockMutationRequestStatusResponse `json:"product_stock_mutation_request_status,omitempty"`
 }
