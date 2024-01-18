@@ -32,7 +32,10 @@ type Message struct {
 
 func (c *Client) writeMessage() {
 	defer func() {
-		c.Conn.Close()
+		err := c.Conn.Close()
+		if err != nil {
+			return
+		}
 	}()
 
 	for {
@@ -51,7 +54,10 @@ func (c *Client) writeMessage() {
 func (c *Client) readMessage(hub *Hub) {
 	defer func() {
 		hub.Unregister <- c
-		c.Conn.Close()
+		err := c.Conn.Close()
+		if err != nil {
+			return
+		}
 	}()
 
 	for {
