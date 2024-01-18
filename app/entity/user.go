@@ -74,3 +74,21 @@ func (u *User) ToDoctorProfileResponse() *responsedto.DoctorProfileResponse {
 		IsOnline:             u.DoctorProfile.IsOnline,
 	}
 }
+
+func (u *User) GetProfile() *Profile {
+	if u.UserProfile != nil {
+		return &Profile{
+			UserId:       u.Id,
+			Name:         u.UserProfile.Name,
+			ProfilePhoto: u.UserProfile.ProfilePhoto,
+		}
+	}
+	if u.DoctorProfile != nil {
+		return &Profile{
+			UserId:       u.Id,
+			Name:         u.DoctorProfile.Name,
+			ProfilePhoto: u.DoctorProfile.ProfilePhoto,
+		}
+	}
+	return nil
+}

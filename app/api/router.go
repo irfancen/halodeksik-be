@@ -7,6 +7,7 @@ import (
 	"halodeksik-be/app/dto"
 	"halodeksik-be/app/handler"
 	"halodeksik-be/app/handler/middleware"
+	"halodeksik-be/app/ws"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -18,6 +19,7 @@ type RouterOpts struct {
 	AddressAreaHandler                 *handler.AddressAreaHandler
 	AuthHandler                        *handler.AuthHandler
 	CartItemHandler                    *handler.CartItemHandler
+	ChatHandler                        *ws.ChatHandler
 	DoctorSpecsHandler                 *handler.DoctorSpecializationHandler
 	DrugClassificationHandler          *handler.DrugClassificationHandler
 	ForgotTokenHandler                 *handler.ForgotTokenHandler
@@ -35,11 +37,12 @@ type RouterOpts struct {
 	UserHandler                        *handler.UserHandler
 }
 
-func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
+func InitializeAllRouterOpts(allUC *AllUseCases, hub *ws.Hub) *RouterOpts {
 	return &RouterOpts{
 		AddressAreaHandler:                 handler.NewAddressAreaHandler(allUC.AddressAreaUseCase),
 		AuthHandler:                        handler.NewAuthHandler(allUC.AuthUseCase, appvalidator.Validator),
 		CartItemHandler:                    handler.NewCartItemHandler(allUC.CartItemUseCase, appvalidator.Validator),
+		ChatHandler:                        ws.NewChatHandler(hub, allUC.ProfileUseCase, appvalidator.Validator),
 		DoctorSpecsHandler:                 handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase, appvalidator.Validator),
 		DrugClassificationHandler:          handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
 		ForgotTokenHandler:                 handler.NewForgotTokenHandler(allUC.ForgotTokenUseCase, appvalidator.Validator),
@@ -144,6 +147,19 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				middleware.AllowRoles(appconstant.UserRoleIdUser),
 				rOpts.CartItemHandler.Remove,
 			)
+		}
+
+		chats := v1.Group("/chats")
+		{
+			chats.POST("/ws/createRoom", rOpts.ChatHandler.CreateRoom)
+			chats.GET(
+				"/ws/joinRoom/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
+				rOpts.ChatHandler.JoinRoom,
+			)
+			chats.GET("/ws/getRooms", rOpts.ChatHandler.GetRooms)
+			chats.GET("/ws/getClients/:roomId", rOpts.ChatHandler.GetClients)
 		}
 
 		drugClassifications := v1.Group("/drug-classifications")

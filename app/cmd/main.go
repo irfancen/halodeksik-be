@@ -7,6 +7,7 @@ import (
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/applogger"
 	"halodeksik-be/app/appvalidator"
+	"halodeksik-be/app/ws"
 	"os"
 )
 
@@ -44,8 +45,10 @@ func main() {
 	allRepositories := api.InitializeRepositories(db)
 	allUtil := api.InitializeUtil()
 	allUseCases := api.InitializeUseCases(allRepositories, allUtil)
-	routerOpts := api.InitializeAllRouterOpts(allUseCases)
+	hub := ws.NewHub()
+	routerOpts := api.InitializeAllRouterOpts(allUseCases, hub)
 
+	go hub.Run()
 	ginMode := api.GetGinMode()
 	router := api.NewRouter(routerOpts, ginMode)
 	server := api.NewServer(router)
