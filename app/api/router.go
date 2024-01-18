@@ -299,7 +299,11 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			report.GET("", rOpts.StockReportHandler.FindAll)
 		}
 
-		shippingMethod := v1.Group("/shipping-methods")
+		shippingMethod := v1.Group(
+			"/shipping-methods",
+			middleware.LoginMiddleware(),
+			middleware.AllowRoles(appconstant.UserRoleIdUser),
+		)
 		{
 			shippingMethod.POST("", rOpts.ShippingMethodHandler.GetAll)
 		}
