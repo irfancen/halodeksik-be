@@ -37,6 +37,10 @@ func (uc *ShippingMethodUseCaseImpl) GetAll(ctx context.Context, addressId int64
 		return nil, err
 	}
 
+	if address.ProfileId != ctx.Value(appconstant.ContextKeyUserId) {
+		return nil, apperror.ErrForbiddenViewEntity
+	}
+
 	if len(checkoutItems) < 1 {
 		return nil, apperror.ErrGetShipmentMethodNoItems
 	}
