@@ -30,7 +30,7 @@ type Message struct {
 	RoomId  int64  `json:"roomId"`
 }
 
-func (c *Client) writeMessage() {
+func (c *Client) WriteMessage() {
 	defer func() {
 		err := c.Conn.Close()
 		if err != nil {
@@ -51,7 +51,7 @@ func (c *Client) writeMessage() {
 	}
 }
 
-func (c *Client) readMessage(hub *Hub) {
+func (c *Client) ReadMessage(hub *Hub) {
 	defer func() {
 		hub.Unregister <- c
 		err := c.Conn.Close()

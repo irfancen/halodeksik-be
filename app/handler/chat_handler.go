@@ -1,4 +1,4 @@
-package ws
+package handler
 
 import (
 	"github.com/gin-gonic/gin"
@@ -10,16 +10,17 @@ import (
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"halodeksik-be/app/util"
+	"halodeksik-be/app/ws"
 	"net/http"
 )
 
 type ChatHandler struct {
-	hub       *Hub
+	hub       *ws.Hub
 	profileUC usecase.ProfileUseCase
 	validator appvalidator.AppValidator
 }
 
-func NewChatHandler(hub *Hub, profileUC usecase.ProfileUseCase, validator appvalidator.AppValidator) *ChatHandler {
+func NewChatHandler(hub *ws.Hub, profileUC usecase.ProfileUseCase, validator appvalidator.AppValidator) *ChatHandler {
 	return &ChatHandler{hub: hub, profileUC: profileUC, validator: validator}
 }
 
@@ -38,11 +39,11 @@ func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
 	}
 
 	roomId := int64(len(h.hub.Rooms) + 1)
-	h.hub.Rooms[roomId] = &Room{
+	h.hub.Rooms[roomId] = &ws.Room{
 		Id:        roomId,
 		DoctorId:  req.DoctorId,
 		PatientId: req.PatientId,
-		Clients:   make(map[int64]*Client),
+		Clients:   make(map[int64]*ws.Client),
 	}
 
 	ctx.JSON(http.StatusOK, req)
@@ -116,15 +117,15 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 		return
 	}
 
-	client := &Client{
+	client := &ws.Client{
 		Conn:    conn,
-		Message: make(chan *Message, 10),
+		Message: make(chan *ws.Message, 10),
 		Id:      clientId,
 		RoomId:  roomId,
 		Profile: user.GetProfile(),
 	}
 
-	message := &Message{
+	message := &ws.Message{
 		Content: "A new user has joined the room",
 		UserId:  client.Id,
 		RoomId:  roomId,
@@ -133,8 +134,8 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 	h.hub.Register <- client
 	h.hub.Broadcast <- message
 
-	go client.writeMessage()
-	go client.readMessage(h.hub)
+	go client.WriteMessage()
+	go client.ReadMessage(h.hub)
 }
 
 type RoomRes struct {
