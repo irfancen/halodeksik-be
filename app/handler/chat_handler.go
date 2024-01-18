@@ -63,7 +63,7 @@ func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
 		Clients:   make(map[int64]*ws.Client),
 	}
 
-	ctx.JSON(http.StatusOK, added)
+	ctx.JSON(http.StatusOK, added.ToResponse())
 }
 
 var upgrader = websocket.Upgrader{

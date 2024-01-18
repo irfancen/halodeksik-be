@@ -11,6 +11,7 @@ import (
 type ConsultationSessionRepository interface {
 	Create(ctx context.Context, session entity.ConsultationSession) (*entity.ConsultationSession, error)
 	FindById(ctx context.Context, id int64) (*entity.ConsultationSession, error)
+	FindByUserIdAndDoctorId(ctx context.Context, userId, doctorId int64) (*entity.ConsultationSession, error)
 }
 
 type ConsultationSessionRepositoryImpl struct {
@@ -43,6 +44,34 @@ func (repo *ConsultationSessionRepositoryImpl) FindById(ctx context.Context, id 
 	WHERE consultation_sessions.id = $1`
 
 	row := repo.db.QueryRowContext(ctx, findById, id)
+	var session entity.ConsultationSession
+	var sessionStatus entity.ConsultationSessionStatus
+	err := row.Scan(
+		&session.Id, &session.UserId, &session.DoctorId, &session.ConsultationSessionStatusId,
+		&session.CreatedAt, &session.UpdatedAt,
+		&sessionStatus.Name,
+	)
+	session.ConsultationSessionStatus = &sessionStatus
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	return &session, err
+}
+
+func (repo *ConsultationSessionRepositoryImpl) FindByUserIdAndDoctorId(ctx context.Context, userId, doctorId int64) (*entity.ConsultationSession, error) {
+	const findByUserIdAndDoctorId = `
+	SELECT consultation_sessions.id, user_id, doctor_id, consultation_session_status_id, 
+	       consultation_sessions.created_at, consultation_sessions.updated_at,
+	       consultation_session_statuses.name
+	FROM consultation_sessions
+	INNER JOIN consultation_session_statuses ON consultation_sessions.consultation_session_status_id = consultation_session_statuses.id 
+	WHERE consultation_sessions.user_id = $1 AND consultation_sessions.doctor_id = $2`
+
+	row := repo.db.QueryRowContext(ctx, findByUserIdAndDoctorId, userId, doctorId)
 	var session entity.ConsultationSession
 	var sessionStatus entity.ConsultationSessionStatus
 	err := row.Scan(
