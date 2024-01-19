@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"halodeksik-be/app/api"
 	"halodeksik-be/app/appcloud"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/appencoder"
 	"halodeksik-be/app/applogger"
@@ -35,6 +36,12 @@ func main() {
 	err = os.Setenv("TMPDIR", tmpdir)
 	if err != nil {
 		applogger.Log.Error(err)
+	}
+
+	err = appconfig.LoadConfig()
+	if err != nil {
+		applogger.Log.Error(err)
+		return
 	}
 
 	jsonEncoder := appencoder.NewAppJsonEncoderImpl()

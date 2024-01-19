@@ -11,7 +11,7 @@ import (
 
 const projectDirName = "halodeksik-be"
 
-func loadEnv() error {
+func LoadEnv() error {
 	err := godotenv.Load()
 	if err == nil {
 		return nil
@@ -31,7 +31,7 @@ func loadEnv() error {
 }
 
 func Get(key string) string {
-	err := loadEnv()
+	err := LoadEnv()
 
 	if err != nil {
 		applogger.Log.Error(err)
