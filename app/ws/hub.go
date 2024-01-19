@@ -27,33 +27,33 @@ func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.Register:
-			if _, isRoomExist := h.ConsultationSessions[client.RoomId]; isRoomExist {
-				r := h.ConsultationSessions[client.RoomId]
+			if _, isRoomExist := h.ConsultationSessions[client.SessionId]; isRoomExist {
+				r := h.ConsultationSessions[client.SessionId]
 
 				if _, isClientExist := r.Clients[client.Id]; !isClientExist {
 					r.Clients[client.Id] = client
 				}
 			}
 		case client := <-h.Unregister:
-			if _, isRoomExist := h.ConsultationSessions[client.RoomId]; isRoomExist {
-				if _, isClientExist := h.ConsultationSessions[client.RoomId].Clients[client.Id]; isClientExist {
-					if len(h.ConsultationSessions[client.RoomId].Clients) != 0 {
+			if _, isRoomExist := h.ConsultationSessions[client.SessionId]; isRoomExist {
+				if _, isClientExist := h.ConsultationSessions[client.SessionId].Clients[client.Id]; isClientExist {
+					if len(h.ConsultationSessions[client.SessionId].Clients) != 0 {
 						h.Broadcast <- &Message{
 							Content: ConsultationMessage{
 								Message: "A user has left the room chat",
 							},
-							RoomId: client.RoomId,
+							SessionId: client.SessionId,
 						}
 					}
 
-					delete(h.ConsultationSessions[client.RoomId].Clients, client.Id)
+					delete(h.ConsultationSessions[client.SessionId].Clients, client.Id)
 					close(client.Message)
 				}
 			}
 		case message := <-h.Broadcast:
-			if _, isRoomExist := h.ConsultationSessions[message.RoomId]; isRoomExist {
+			if _, isRoomExist := h.ConsultationSessions[message.SessionId]; isRoomExist {
 
-				for _, client := range h.ConsultationSessions[message.RoomId].Clients {
+				for _, client := range h.ConsultationSessions[message.SessionId].Clients {
 					client.Message <- message
 				}
 			}

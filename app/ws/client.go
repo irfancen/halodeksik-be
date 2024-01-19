@@ -8,6 +8,7 @@ import (
 	"github.com/vincent-petithory/dataurl"
 	"halodeksik-be/app/appcloud"
 	"halodeksik-be/app/appconstant"
+	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/appencoder"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
@@ -17,11 +18,11 @@ import (
 )
 
 type Client struct {
-	Conn    *websocket.Conn
-	Message chan *Message
-	Id      int64           `json:"id"`
-	RoomId  int64           `json:"room_id"`
-	Profile *entity.Profile `json:"profile"`
+	Conn      *websocket.Conn
+	Message   chan *Message
+	Id        int64           `json:"id"`
+	SessionId int64           `json:"session_id"`
+	Profile   *entity.Profile `json:"profile"`
 }
 
 type ConsultationMessage struct {
@@ -32,9 +33,32 @@ type ConsultationMessage struct {
 }
 
 type Message struct {
-	Content ConsultationMessage `json:"content"`
-	UserId  int64               `json:"user_id"`
-	RoomId  int64               `json:"room_id"`
+	Content   ConsultationMessage `json:"content"`
+	SenderId  int64               `json:"sender_id"`
+	SessionId int64               `json:"session_id"`
+}
+
+func NewMessage(message *entity.ConsultationMessage) *Message {
+	return &Message{
+		Content: ConsultationMessage{
+			Message:    message.Message.String,
+			Attachment: message.Attachment.String,
+			CreatedAt:  message.CreatedAt.Time,
+		},
+		SenderId:  message.SenderId.Int64,
+		SessionId: message.SessionId.Int64,
+	}
+}
+
+func (m *Message) ToEntityConsultationMessage() *entity.ConsultationMessage {
+	return &entity.ConsultationMessage{
+		SessionId:  appdb.NewSqlNullInt64(m.SessionId),
+		SenderId:   appdb.NewSqlNullInt64(m.SenderId),
+		Message:    appdb.NewSqlNullString(m.Content.Message),
+		Attachment: appdb.NewSqlNullString(m.Content.Attachment),
+		CreatedAt:  appdb.NewSqlNullTime(m.Content.CreatedAt),
+		UpdatedAt:  appdb.NewSqlNullTime(m.Content.CreatedAt),
+	}
 }
 
 func (c *Client) WriteMessage() {
@@ -84,9 +108,9 @@ func (c *Client) ReadMessage(hub *Hub) {
 		consultationMessage.CreatedAt = time.Now()
 
 		msg := &Message{
-			Content: consultationMessage,
-			UserId:  c.Id,
-			RoomId:  c.RoomId,
+			Content:   consultationMessage,
+			SenderId:  c.Id,
+			SessionId: c.SessionId,
 		}
 
 		if !util.IsEmptyString(msg.Content.Attachment) {

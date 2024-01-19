@@ -104,8 +104,8 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 		return
 	}
 
-	roomId := uri.Id
-	room, isRoomExisted := h.hub.ConsultationSessions[roomId]
+	sessionId := uri.Id
+	room, isRoomExisted := h.hub.ConsultationSessions[sessionId]
 	if !isRoomExisted {
 		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"error": []string{"room not found"},
@@ -154,17 +154,17 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 	}
 
 	client := &ws.Client{
-		Conn:    conn,
-		Message: make(chan *ws.Message, 10),
-		Id:      clientId,
-		RoomId:  roomId,
-		Profile: user.GetProfile(),
+		Conn:      conn,
+		Message:   make(chan *ws.Message, 10),
+		Id:        clientId,
+		SessionId: sessionId,
+		Profile:   user.GetProfile(),
 	}
 
 	message := &ws.Message{
-		Content: ws.ConsultationMessage{Message: "A new user has joined the room"},
-		UserId:  client.Id,
-		RoomId:  roomId,
+		Content:   ws.ConsultationMessage{Message: "A new user has joined the room"},
+		SenderId:  client.Id,
+		SessionId: sessionId,
 	}
 
 	h.hub.Register <- client
