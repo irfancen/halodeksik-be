@@ -13,6 +13,12 @@ import (
 )
 
 func main() {
+	logger, logFile := applogger.NewLogger()
+	if logFile != nil {
+		defer logFile.Close()
+	}
+	applogger.SetLogger(logger)
+
 	pwd, err := os.Getwd()
 	if err != nil {
 		applogger.Log.Error(err)
@@ -30,12 +36,6 @@ func main() {
 	if err != nil {
 		applogger.Log.Error(err)
 	}
-
-	logger, logFile := applogger.NewLogger()
-	if logFile != nil {
-		defer logFile.Close()
-	}
-	applogger.SetLogger(logger)
 
 	jsonEncoder := appencoder.NewAppJsonEncoderImpl()
 	appencoder.SetAppJsonEncoder(jsonEncoder)
