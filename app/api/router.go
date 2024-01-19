@@ -30,6 +30,7 @@ type RouterOpts struct {
 	ProductStockMutationRequestHandler *handler.ProductStockMutationRequestHandler
 	ProfileHandler                     *handler.ProfileHandler
 	RegisterTokenHandler               *handler.RegisterTokenHandler
+	ShippingMethodHandler              *handler.ShippingMethodHandler
 	StockReportHandler                 *handler.StockReportHandler
 	UserAddressHandler                 *handler.UserAddressHandler
 	UserHandler                        *handler.UserHandler
@@ -52,6 +53,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		ProductStockMutationRequestHandler: handler.NewProductStockMutationRequestHandler(allUC.ProductStockMutationRequest, appvalidator.Validator),
 		ProfileHandler:                     handler.NewProfileHandler(allUC.ProfileUseCase, appvalidator.Validator),
 		RegisterTokenHandler:               handler.NewRegisterTokenHandler(allUC.RegisterTokenUseCase, appvalidator.Validator),
+		ShippingMethodHandler:              handler.NewShippingMethodHandler(allUC.ShippingMethodUseCase, appvalidator.Validator),
 		StockReportHandler:                 handler.NewStockReportHandler(allUC.ProductStockMutation, appvalidator.Validator),
 		UserAddressHandler:                 handler.NewAddressHandler(allUC.UserAddressUseCase, appvalidator.Validator),
 		UserHandler:                        handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
@@ -295,6 +297,15 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		)
 		{
 			report.GET("", rOpts.StockReportHandler.FindAll)
+		}
+
+		shippingMethod := v1.Group(
+			"/shipping-methods",
+			middleware.LoginMiddleware(),
+			middleware.AllowRoles(appconstant.UserRoleIdUser),
+		)
+		{
+			shippingMethod.POST("", rOpts.ShippingMethodHandler.GetAll)
 		}
 
 		stockMutation := v1.Group(

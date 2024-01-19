@@ -156,8 +156,17 @@ func WrapError(err error, customCode ...int) error {
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrAlreadyFinishedRequest):
 		fallthrough
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrGetShipmentMethodNoItems):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrGetShipmentMethodDifferentPharmacy):
+		fallthrough
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidIntInString):
 		errWrapper.Code = http.StatusBadRequest
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrGetShipmentCost):
+		errWrapper.Code = http.StatusServiceUnavailable
 
 	default:
 		errWrapper.Code = http.StatusInternalServerError

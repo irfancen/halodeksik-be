@@ -9,7 +9,9 @@ type AllUseCases struct {
 	AddressAreaUseCase          usecase.AddressAreaUseCase
 	AuthUseCase                 usecase.AuthUsecase
 	CartItemUseCase             usecase.CartItemUseCase
+	DoctorSpecializationUseCase usecase.DoctorSpecializationUseCase
 	DrugClassificationUseCase   usecase.DrugClassificationUseCase
+	ForgotTokenUseCase          usecase.ForgotTokenUseCase
 	ManufacturerUseCase         usecase.ManufacturerUseCase
 	PharmacyUseCase             usecase.PharmacyUseCase
 	PharmacyProductUseCase      usecase.PharmacyProductUseCase
@@ -17,12 +19,11 @@ type AllUseCases struct {
 	ProductStockMutation        usecase.ProductStockMutationUseCase
 	ProductStockMutationRequest usecase.ProductStockMutationRequestUseCase
 	ProductUseCase              usecase.ProductUseCase
-	UserUseCase                 usecase.UserUseCase
 	ProfileUseCase              usecase.ProfileUseCase
-	DoctorSpecializationUseCase usecase.DoctorSpecializationUseCase
-	ForgotTokenUseCase          usecase.ForgotTokenUseCase
 	RegisterTokenUseCase        usecase.RegisterTokenUseCase
+	ShippingMethodUseCase       usecase.ShippingMethodUseCase
 	UserAddressUseCase          usecase.AddressUseCase
+	UserUseCase                 usecase.UserUseCase
 }
 
 func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases {
@@ -42,6 +43,8 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 		AuthUseCase:                 usecase.NewAuthUsecase(authRepos, allUtil.AuthUtil, appcloud.AppFileUploader, authCases),
 		CartItemUseCase:             usecase.NewCartItemUseCaseImpl(allRepo.CartItemRepository, allRepo.ProductRepository, allRepo.PharmacyProductRepository),
 		DrugClassificationUseCase:   usecase.NewDrugClassificationUseCaseImpl(allRepo.DrugClassificationRepository),
+		DoctorSpecializationUseCase: usecase.NewDoctorSpecializationUseCaseImpl(allRepo.DoctorSpecializationRepository, appcloud.AppFileUploader),
+		ForgotTokenUseCase:          forgotTokenUseCase,
 		ManufacturerUseCase:         usecase.NewManufacturerUseCaseImpl(allRepo.ManufacturerRepository, appcloud.AppFileUploader),
 		PharmacyUseCase:             usecase.NewPharmacyUseCaseImpl(allRepo.PharmacyRepository, allRepo.AddressAreaRepository),
 		PharmacyProductUseCase:      usecase.NewPharmacyProductUseCaseImpl(allRepo.PharmacyProductRepository, allRepo.PharmacyRepository, allRepo.ProductRepository),
@@ -49,11 +52,10 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 		ProductUseCase:              usecase.NewProductUseCaseImpl(allRepo.ProductRepository, allRepo.PharmacyRepository, appcloud.AppFileUploader),
 		ProductStockMutation:        usecase.NewProductStockMutationUseCaseImpl(allRepo.ProductStockMutationRepository, allRepo.PharmacyProductRepository, allRepo.PharmacyRepository),
 		ProductStockMutationRequest: usecase.NewProductStockMutationRequestUseCaseImpl(allRepo.ProductStockMutationRequestRepository, allRepo.PharmacyProductRepository, allRepo.PharmacyRepository),
-		UserUseCase:                 usecase.NewUserUseCaseImpl(allRepo.UserRepository, allRepo.PharmacyRepository, allUtil.AuthUtil),
 		ProfileUseCase:              usecase.NewProfileUseCaseImpl(allRepo.ProfileRepository, appcloud.AppFileUploader),
-		DoctorSpecializationUseCase: usecase.NewDoctorSpecializationUseCaseImpl(allRepo.DoctorSpecializationRepository, appcloud.AppFileUploader),
-		ForgotTokenUseCase:          forgotTokenUseCase,
+		ShippingMethodUseCase:       usecase.NewShippingMethodUseCaseImpl(allRepo.ShippingMethodRepository, allRepo.UserAddressRepository, allRepo.AddressAreaRepository, allRepo.PharmacyProductRepository, allUtil.OngkirUtil),
 		RegisterTokenUseCase:        registerTokenUseCase,
 		UserAddressUseCase:          usecase.NewAddressUseCaseImpl(allRepo.UserAddressRepository, allRepo.AddressAreaRepository, allUtil.LocUtil),
+		UserUseCase:                 usecase.NewUserUseCaseImpl(allRepo.UserRepository, allRepo.PharmacyRepository, allUtil.AuthUtil),
 	}
 }
