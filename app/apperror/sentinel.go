@@ -44,4 +44,8 @@ var (
 	ErrRequestStockMutationFromOwnPharmacy  = errors.New("cannot request stock mutation from own pharmacy")
 	ErrRequestStockMutationDifferentProduct = errors.New("requested product from destination pharmacy is not the same as origin pharmacy")
 	ErrAlreadyFinishedRequest               = errors.New("request already finished")
+
+	ErrGetShipmentMethodNoItems           = errors.New("there are no items to ship")
+	ErrGetShipmentMethodDifferentPharmacy = errors.New("cannot get shipment method for different pharmacy")
+	ErrGetShipmentCost                    = errors.New("failed to retrieve shipment cost")
 )

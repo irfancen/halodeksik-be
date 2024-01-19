@@ -5,15 +5,17 @@ import (
 )
 
 type AllUtil struct {
-	AuthUtil util.AuthUtil
-	MailUtil util.EmailUtil
-	LocUtil  util.LocationUtil
+	AuthUtil   util.AuthUtil
+	MailUtil   util.EmailUtil
+	LocUtil    util.LocationUtil
+	OngkirUtil util.OngkirUtil
 }
 
 func InitializeUtil() *AllUtil {
 	return &AllUtil{
-		AuthUtil: util.NewAuthUtil(),
-		MailUtil: util.NewEmailUtil(),
-		LocUtil:  util.NewLocationUtil("id"),
+		AuthUtil:   util.NewAuthUtil(),
+		MailUtil:   util.NewEmailUtil(),
+		LocUtil:    util.NewLocationUtil("id"),
+		OngkirUtil: util.NewRajaOngkirUtil(),
 	}
 }
