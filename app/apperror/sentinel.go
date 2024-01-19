@@ -46,4 +46,5 @@ var (
 	ErrAlreadyFinishedRequest               = errors.New("request already finished")
 
 	ErrChatStillOngoing = errors.New("chat still ongoing")
+	ErrChatAlreadyEnded = errors.New("chat already ended")
 )

@@ -105,6 +105,12 @@ var upgrader = websocket.Upgrader{
 
 func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
 
 	uri := uriparamdto.ResourceById{}
 	err = ctx.ShouldBindUri(&uri)
@@ -113,12 +119,24 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 	}
 
 	sessionId := uri.Id
-	room, isRoomExisted := h.hub.ConsultationSessions[sessionId]
-	if !isRoomExisted {
-		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-			"error": []string{"room not found"},
-		})
+	sessionDb, err := h.consultationSessionUC.GetById(ctx, sessionId)
+	if err != nil {
 		return
+	}
+
+	if sessionDb.ConsultationSessionStatusId != appconstant.ConsultationSessionStatusOngoing {
+		err = apperror.ErrChatAlreadyEnded
+		return
+	}
+
+	_, isRoomExisted := h.hub.ConsultationSessions[sessionId]
+	if !isRoomExisted {
+		h.hub.ConsultationSessions[sessionId] = &ws.ConsultationSession{
+			Id:        sessionId,
+			DoctorId:  sessionDb.DoctorId,
+			PatientId: sessionDb.UserId,
+			Clients:   make(map[int64]*ws.Client),
+		}
 	}
 
 	clientIdCtx := ctx.Request.Context().Value(appconstant.ContextKeyUserId)
@@ -130,26 +148,26 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 	var user *entity.User
 
 	if roleId == appconstant.UserRoleIdDoctor {
-		if room.DoctorId != clientId {
+		if sessionDb.DoctorId != clientId {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": []string{"you are not allowed here"},
 			})
 			return
 		}
-		user, err = h.profileUC.GetDoctorProfileByUserId(ctx, room.DoctorId)
+		user, err = h.profileUC.GetDoctorProfileByUserId(ctx, sessionDb.DoctorId)
 		if err != nil {
 			return
 		}
 	}
 
 	if roleId == appconstant.UserRoleIdUser {
-		if room.PatientId != clientId {
+		if sessionDb.UserId != clientId {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": []string{"you are not allowed here"},
 			})
 			return
 		}
-		user, err = h.profileUC.GetUserProfileByUserId(ctx, room.PatientId)
+		user, err = h.profileUC.GetUserProfileByUserId(ctx, sessionDb.UserId)
 		if err != nil {
 			return
 		}
@@ -170,7 +188,7 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 	}
 
 	message := &ws.Message{
-		Content:   ws.ConsultationMessage{Message: "A new user has joined the room"},
+		Content:   ws.ConsultationMessage{Message: "A new user has joined the session"},
 		SenderId:  client.Id,
 		SessionId: sessionId,
 	}

@@ -12,6 +12,7 @@ import (
 
 type ConsultationSessionUseCase interface {
 	Add(ctx context.Context, session entity.ConsultationSession) (*entity.ConsultationSession, error)
+	GetById(ctx context.Context, id int64) (*entity.ConsultationSession, error)
 	GetAllByUserIdOrDoctorId(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 }
 
@@ -39,6 +40,18 @@ func (uc *ConsultationSessionUseCaseImpl) Add(ctx context.Context, session entit
 		return nil, err
 	}
 	return added, nil
+}
+
+func (uc *ConsultationSessionUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.ConsultationSession, error) {
+	sessionDb, err := uc.repo.FindById(ctx, id)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound(sessionDb, "Id", id)
+		}
+		return nil, err
+	}
+
+	return sessionDb, nil
 }
 
 func (uc *ConsultationSessionUseCaseImpl) GetAllByUserIdOrDoctorId(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {

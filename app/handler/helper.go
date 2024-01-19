@@ -160,6 +160,9 @@ func WrapError(err error, customCode ...int) error {
 		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrChatStillOngoing):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrChatAlreadyEnded):
 		errWrapper.Code = http.StatusBadRequest
 
 	default:
