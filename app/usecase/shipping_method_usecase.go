@@ -45,7 +45,7 @@ func (uc *ShippingMethodUseCaseImpl) GetAll(ctx context.Context, addressId int64
 		return nil, apperror.ErrGetShipmentMethodNoItems
 	}
 
-	totalWeight := 0.0
+	var totalWeight float64
 	pharmacy := new(entity.Pharmacy)
 	for _, item := range checkoutItems {
 		pharmacyProduct, err := uc.pharmacyProductRepository.FindByIdJoinPharmacyAndProduct(ctx, item.PharmacyProductId)
@@ -80,9 +80,9 @@ func (uc *ShippingMethodUseCaseImpl) GetAll(ctx context.Context, addressId int64
 	for _, method := range shippingMethods {
 		switch method.Id {
 		case appconstant.ShippingMethodOfficialInstant:
-			method.Cost = decimal.NewFromFloat(math.Ceil(distance) * 2000)
+			method.Cost = decimal.NewFromFloat(math.Ceil(distance) * appconstant.ShippingCostPerKMOfficialInstant)
 		case appconstant.ShippingMethodOfficialSameDay:
-			method.Cost = decimal.NewFromFloat(math.Ceil(distance) * 1000)
+			method.Cost = decimal.NewFromFloat(math.Ceil(distance) * appconstant.ShippingCostPerKMOfficialSameDay)
 		default:
 			method.Cost = cost
 		}
