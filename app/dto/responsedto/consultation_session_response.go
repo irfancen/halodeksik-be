@@ -14,5 +14,5 @@ type ConsultationSessionResponse struct {
 	ConsultationSessionStatus   *ConsultationSessionStatusResponse `json:"consultation_session_status,omitempty"`
 	UserProfile                 *ProfileResponse                   `json:"user,omitempty"`
 	DoctorProfile               *ProfileResponse                   `json:"doctor,omitempty"`
-	LatestMessage               *ConsultationMessageResponse       `json:"latest_message"`
+	Message                     []*ConsultationMessageResponse     `json:"latest_message"`
 }

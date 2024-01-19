@@ -20,7 +20,7 @@ type ConsultationSession struct {
 	ConsultationSessionStatus   *ConsultationSessionStatus
 	UserProfile                 *UserProfile
 	DoctorProfile               *DoctorProfile
-	LatestMessage               *ConsultationMessage
+	Message                     []*ConsultationMessage
 }
 
 func (e *ConsultationSession) GetEntityName() string {
@@ -43,6 +43,12 @@ func (e *ConsultationSession) ToResponse() *responsedto.ConsultationSessionRespo
 	if e == nil {
 		return nil
 	}
+
+	messageResp := make([]*responsedto.ConsultationMessageResponse, 0)
+	for _, message := range e.Message {
+		messageResp = append(messageResp, message.ToResponse())
+	}
+
 	return &responsedto.ConsultationSessionResponse{
 		Id:                          e.Id,
 		UserId:                      e.UserId,
@@ -53,6 +59,6 @@ func (e *ConsultationSession) ToResponse() *responsedto.ConsultationSessionRespo
 		ConsultationSessionStatus:   e.ConsultationSessionStatus.ToResponse(),
 		UserProfile:                 e.UserProfile.GetProfile().ToResponse(),
 		DoctorProfile:               e.DoctorProfile.GetProfile().ToResponse(),
-		LatestMessage:               e.LatestMessage.ToResponse(),
+		Message:                     messageResp,
 	}
 }

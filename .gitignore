@@ -10,3 +10,4 @@
 *.txt
 seeding-data.md
 /app/cmd/cmd
+main

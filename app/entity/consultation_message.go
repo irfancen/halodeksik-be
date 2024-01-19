@@ -13,6 +13,7 @@ type ConsultationMessage struct {
 	Attachment sql.NullString `json:"attachment"`
 	CreatedAt  sql.NullTime   `json:"created_at"`
 	UpdatedAt  sql.NullTime   `json:"updated_at"`
+	DeletedAt  sql.NullTime   `json:"deleted_at"`
 }
 
 func (e *ConsultationMessage) ToResponse() *responsedto.ConsultationMessageResponse {

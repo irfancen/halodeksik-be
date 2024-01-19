@@ -149,7 +149,7 @@ func (repo *ConsultationSessionRepositoryImpl) FindAllByUserIdOrDoctorId(ctx con
 		session.ConsultationSessionStatus = &sessionStatus
 		session.UserProfile = &userProfile
 		session.DoctorProfile = &doctorProfile
-		session.LatestMessage = &message
+		session.Message = []*entity.ConsultationMessage{&message}
 		sessions = append(sessions, &session)
 	}
 	if err := rows.Close(); err != nil {
