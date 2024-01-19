@@ -27,8 +27,8 @@ func (uc *ConsultationSessionUseCaseImpl) Add(ctx context.Context, session entit
 		return nil, err
 	}
 
-	if sessionDb.ConsultationSessionStatusId == appconstant.ConsultationSessionStatusOngoing {
-		return nil, apperror.ErrChatStillOngoing
+	if !errors.Is(err, apperror.ErrRecordNotFound) && sessionDb.ConsultationSessionStatusId == appconstant.ConsultationSessionStatusOngoing {
+		return sessionDb, apperror.ErrChatStillOngoing
 	}
 
 	session.ConsultationSessionStatusId = appconstant.ConsultationSessionStatusOngoing

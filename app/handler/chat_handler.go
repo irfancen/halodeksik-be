@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"halodeksik-be/app/appconstant"
+	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/dto/requestdto"
 	"halodeksik-be/app/dto/uriparamdto"
@@ -50,12 +52,26 @@ func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
 		return
 	}
 
-	added, err := h.consultationSessionUC.Add(ctx, req.ToConsultationSessionUseCase())
-	if err != nil {
+	addedOrFound, err := h.consultationSessionUC.Add(ctx, req.ToConsultationSessionUseCase())
+	if err != nil && errors.Is(err, apperror.ErrChatStillOngoing) {
+		roomId := addedOrFound.Id
+		_, isRoomExisted := h.hub.Rooms[roomId]
+		if !isRoomExisted {
+			h.hub.Rooms[roomId] = &ws.Room{
+				Id:        roomId,
+				DoctorId:  req.DoctorId,
+				PatientId: req.UserId,
+				Clients:   make(map[int64]*ws.Client),
+			}
+		}
 		return
 	}
 
-	roomId := added.Id
+	if err != nil && !errors.Is(err, apperror.ErrChatStillOngoing) {
+		return
+	}
+
+	roomId := addedOrFound.Id
 	h.hub.Rooms[roomId] = &ws.Room{
 		Id:        roomId,
 		DoctorId:  req.DoctorId,
@@ -63,7 +79,7 @@ func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
 		Clients:   make(map[int64]*ws.Client),
 	}
 
-	ctx.JSON(http.StatusOK, added.ToResponse())
+	ctx.JSON(http.StatusOK, addedOrFound.ToResponse())
 }
 
 var upgrader = websocket.Upgrader{
