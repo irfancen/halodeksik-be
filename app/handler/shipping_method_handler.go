@@ -52,16 +52,17 @@ func (h *ShippingMethodHandler) GetAll(ctx *gin.Context) {
 		checkoutItems = append(checkoutItems, cItem.ToCheckoutItem())
 	}
 
-	shippingMethods, err := h.uc.GetAll(ctx, req.AddressId, checkoutItems)
+	paginatedItems, err := h.uc.GetAll(ctx, req.AddressId, checkoutItems)
 	if err != nil {
 		return
 	}
 
 	resps := make([]*responsedto.ShippingMethodResponse, 0)
-	for _, shipMethod := range shippingMethods {
+	for _, shipMethod := range paginatedItems.Items.([]*entity.ShippingMethod) {
 		resps = append(resps, shipMethod.ToResponse())
 	}
+	paginatedItems.Items = resps
 
-	resp := dto.ResponseDto{Data: resps}
+	resp := dto.ResponseDto{Data: paginatedItems}
 	ctx.JSON(http.StatusOK, resp)
 }

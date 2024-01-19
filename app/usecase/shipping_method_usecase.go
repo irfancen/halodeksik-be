@@ -13,7 +13,7 @@ import (
 )
 
 type ShippingMethodUseCase interface {
-	GetAll(ctx context.Context, addressId int64, checkoutItems []entity.CheckoutItem) ([]*entity.ShippingMethod, error)
+	GetAll(ctx context.Context, addressId int64, checkoutItems []entity.CheckoutItem) (*entity.PaginatedItems, error)
 }
 
 type ShippingMethodUseCaseImpl struct {
@@ -28,7 +28,7 @@ func NewShippingMethodUseCaseImpl(shippingMethodRepository repository.ShippingMe
 	return &ShippingMethodUseCaseImpl{shippingMethodRepository: shippingMethodRepository, addressRepository: addressRepository, addressAreaRepository: addressAreaRepository, pharmacyProductRepository: pharmacyProductRepository, ongkirUtil: ongkirUtil}
 }
 
-func (uc *ShippingMethodUseCaseImpl) GetAll(ctx context.Context, addressId int64, checkoutItems []entity.CheckoutItem) ([]*entity.ShippingMethod, error) {
+func (uc *ShippingMethodUseCaseImpl) GetAll(ctx context.Context, addressId int64, checkoutItems []entity.CheckoutItem) (*entity.PaginatedItems, error) {
 	address, err := uc.addressRepository.FindById(ctx, addressId)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
@@ -87,5 +87,13 @@ func (uc *ShippingMethodUseCaseImpl) GetAll(ctx context.Context, addressId int64
 			method.Cost = cost
 		}
 	}
-	return shippingMethods, nil
+
+	paginatedItems := entity.NewPaginationInfo(
+		int64(len(shippingMethods)),
+		1,
+		int64(len(shippingMethods)),
+		1,
+		shippingMethods,
+	)
+	return paginatedItems, nil
 }
