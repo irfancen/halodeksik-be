@@ -135,11 +135,8 @@ func (c *Client) ReadMessage(hub *Hub, consultationMessageUC usecase.Consultatio
 				}
 
 				ctx, cancel := context.WithTimeout(context.Background(), appconstant.DefaultRequestTimeout*time.Second)
-				err2 = appcloud.AppFileUploader.SendToBucketWithFile(
-					ctx,
-					file,
-					fmt.Sprintf("%s/", appconfig.Config.GcloudStorageFolderConsultationSessions),
-					fileName,
+				fileUrl, err2 := appcloud.AppFileUploader.UploadFromFile(
+					ctx, file, appconfig.Config.GcloudStorageFolderConsultationSessions, fileName,
 				)
 				if err != nil {
 					tempFile.Close()
@@ -152,9 +149,7 @@ func (c *Client) ReadMessage(hub *Hub, consultationMessageUC usecase.Consultatio
 				os.Remove(tempFile.Name())
 				cancel()
 
-				msg.Content.Attachment = fmt.Sprintf(
-					"%s/%s/%s", appconfig.Config.GcloudStorageCdn, appconfig.Config.GcloudStorageFolderConsultationSessions, fileName,
-				)
+				msg.Content.Attachment = fileUrl
 			}
 		}
 
