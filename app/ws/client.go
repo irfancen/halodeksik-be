@@ -8,6 +8,7 @@ import (
 	"github.com/vincent-petithory/dataurl"
 	"halodeksik-be/app/appcloud"
 	"halodeksik-be/app/appconstant"
+	"halodeksik-be/app/appencoder"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
 	"log"
@@ -19,15 +20,22 @@ type Client struct {
 	Conn    *websocket.Conn
 	Message chan *Message
 	Id      int64           `json:"id"`
-	RoomId  int64           `json:"roomId"`
+	RoomId  int64           `json:"room_id"`
 	Profile *entity.Profile `json:"profile"`
 }
 
+type ConsultationMessage struct {
+	IsTyping   bool      `json:"is_typing"`
+	Message    string    `json:"message"`
+	Attachment string    `json:"attachment"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
 type Message struct {
-	IsFile  bool   `json:"is_file"`
-	Content string `json:"content"`
-	UserId  int64  `json:"user_id"`
-	RoomId  int64  `json:"roomId"`
+	IsFile  bool                `json:"is_file"`
+	Content ConsultationMessage `json:"content"`
+	UserId  int64               `json:"user_id"`
+	RoomId  int64               `json:"room_id"`
 }
 
 func (c *Client) WriteMessage() {
@@ -61,7 +69,7 @@ func (c *Client) ReadMessage(hub *Hub) {
 	}()
 
 	for {
-		_, message, err := c.Conn.ReadMessage()
+		_, jsonMessage, err := c.Conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
@@ -69,13 +77,20 @@ func (c *Client) ReadMessage(hub *Hub) {
 			break
 		}
 
+		var consultationMessage ConsultationMessage
+		err = appencoder.JsonEncoder.Unmarshal(jsonMessage, &consultationMessage)
+		if err != nil {
+			break
+		}
+		consultationMessage.CreatedAt = time.Now()
+
 		msg := &Message{
-			Content: string(message),
+			Content: consultationMessage,
 			UserId:  c.Id,
 			RoomId:  c.RoomId,
 		}
 
-		decodeString, decodeErr := dataurl.DecodeString(string(message))
+		decodeString, decodeErr := dataurl.DecodeString(string(jsonMessage))
 		if decodeErr == nil && decodeString.Type == appconstant.DataTypeImage && decodeString.Encoding == appconstant.DataEncodingBase64 {
 			msg.IsFile = true
 

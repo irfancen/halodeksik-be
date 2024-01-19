@@ -5,6 +5,7 @@ import (
 	"halodeksik-be/app/api"
 	"halodeksik-be/app/appcloud"
 	"halodeksik-be/app/appdb"
+	"halodeksik-be/app/appencoder"
 	"halodeksik-be/app/applogger"
 	"halodeksik-be/app/appvalidator"
 	"halodeksik-be/app/ws"
@@ -35,6 +36,9 @@ func main() {
 		defer logFile.Close()
 	}
 	applogger.SetLogger(logger)
+
+	jsonEncoder := appencoder.NewAppJsonEncoderImpl()
+	appencoder.SetAppJsonEncoder(jsonEncoder)
 
 	validator := appvalidator.NewAppValidatorImpl()
 	if err := appvalidator.AddCustomValidators(validator); err != nil {

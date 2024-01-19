@@ -1,6 +1,6 @@
 package ws
 
-type Room struct {
+type ConsultationSession struct {
 	Id        int64             `json:"id"`
 	DoctorId  int64             `json:"doctor_id"`
 	PatientId int64             `json:"patient_id"`
@@ -8,18 +8,18 @@ type Room struct {
 }
 
 type Hub struct {
-	Rooms      map[int64]*Room
-	Register   chan *Client
-	Unregister chan *Client
-	Broadcast  chan *Message
+	ConsultationSessions map[int64]*ConsultationSession
+	Register             chan *Client
+	Unregister           chan *Client
+	Broadcast            chan *Message
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		Rooms:      make(map[int64]*Room),
-		Register:   make(chan *Client),
-		Unregister: make(chan *Client),
-		Broadcast:  make(chan *Message, 5),
+		ConsultationSessions: make(map[int64]*ConsultationSession),
+		Register:             make(chan *Client),
+		Unregister:           make(chan *Client),
+		Broadcast:            make(chan *Message, 5),
 	}
 }
 
@@ -27,31 +27,33 @@ func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.Register:
-			if _, isRoomExist := h.Rooms[client.RoomId]; isRoomExist {
-				r := h.Rooms[client.RoomId]
+			if _, isRoomExist := h.ConsultationSessions[client.RoomId]; isRoomExist {
+				r := h.ConsultationSessions[client.RoomId]
 
 				if _, isClientExist := r.Clients[client.Id]; !isClientExist {
 					r.Clients[client.Id] = client
 				}
 			}
 		case client := <-h.Unregister:
-			if _, isRoomExist := h.Rooms[client.RoomId]; isRoomExist {
-				if _, isClientExist := h.Rooms[client.RoomId].Clients[client.Id]; isClientExist {
-					if len(h.Rooms[client.RoomId].Clients) != 0 {
+			if _, isRoomExist := h.ConsultationSessions[client.RoomId]; isRoomExist {
+				if _, isClientExist := h.ConsultationSessions[client.RoomId].Clients[client.Id]; isClientExist {
+					if len(h.ConsultationSessions[client.RoomId].Clients) != 0 {
 						h.Broadcast <- &Message{
-							Content:  "user left the chat",
-							RoomId:   client.RoomId,
+							Content: ConsultationMessage{
+								Message: "A user has left the room chat",
+							},
+							RoomId: client.RoomId,
 						}
 					}
 
-					delete(h.Rooms[client.RoomId].Clients, client.Id)
+					delete(h.ConsultationSessions[client.RoomId].Clients, client.Id)
 					close(client.Message)
 				}
 			}
 		case message := <-h.Broadcast:
-			if _, isRoomExist := h.Rooms[message.RoomId]; isRoomExist {
+			if _, isRoomExist := h.ConsultationSessions[message.RoomId]; isRoomExist {
 
-				for _, client := range h.Rooms[message.RoomId].Clients {
+				for _, client := range h.ConsultationSessions[message.RoomId].Clients {
 					client.Message <- message
 				}
 			}

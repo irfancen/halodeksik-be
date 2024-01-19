@@ -58,9 +58,9 @@ func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
 	addedOrFound, err := h.consultationSessionUC.Add(ctx, req.ToConsultationSessionUseCase())
 	if err != nil && errors.Is(err, apperror.ErrChatStillOngoing) {
 		roomId := addedOrFound.Id
-		_, isRoomExisted := h.hub.Rooms[roomId]
+		_, isRoomExisted := h.hub.ConsultationSessions[roomId]
 		if !isRoomExisted {
-			h.hub.Rooms[roomId] = &ws.Room{
+			h.hub.ConsultationSessions[roomId] = &ws.ConsultationSession{
 				Id:        roomId,
 				DoctorId:  req.DoctorId,
 				PatientId: req.UserId,
@@ -75,7 +75,7 @@ func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
 	}
 
 	roomId := addedOrFound.Id
-	h.hub.Rooms[roomId] = &ws.Room{
+	h.hub.ConsultationSessions[roomId] = &ws.ConsultationSession{
 		Id:        roomId,
 		DoctorId:  req.DoctorId,
 		PatientId: req.UserId,
@@ -105,7 +105,7 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 	}
 
 	roomId := uri.Id
-	room, isRoomExisted := h.hub.Rooms[roomId]
+	room, isRoomExisted := h.hub.ConsultationSessions[roomId]
 	if !isRoomExisted {
 		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"error": []string{"room not found"},
@@ -162,7 +162,7 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 	}
 
 	message := &ws.Message{
-		Content: "A new user has joined the room",
+		Content: ws.ConsultationMessage{Message: "A new user has joined the room"},
 		UserId:  client.Id,
 		RoomId:  roomId,
 	}
@@ -226,12 +226,12 @@ func (h *ChatHandler) GetClients(c *gin.Context) {
 	roomIdQuery := c.Param("roomId")
 	roomId, _ := util.ParseInt64(roomIdQuery)
 
-	if _, ok := h.hub.Rooms[roomId]; !ok {
+	if _, ok := h.hub.ConsultationSessions[roomId]; !ok {
 		clients = make([]ClientRes, 0)
 		c.JSON(http.StatusOK, clients)
 	}
 
-	for _, c := range h.hub.Rooms[roomId].Clients {
+	for _, c := range h.hub.ConsultationSessions[roomId].Clients {
 		clients = append(clients, ClientRes{
 			Id:      c.Id,
 			Profile: c.Profile,
