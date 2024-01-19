@@ -22,6 +22,7 @@ import (
 type ChatHandler struct {
 	hub                   *ws.Hub
 	consultationSessionUC usecase.ConsultationSessionUseCase
+	consultationMessageUC usecase.ConsultationMessageUseCase
 	profileUC             usecase.ProfileUseCase
 	validator             appvalidator.AppValidator
 }
@@ -29,10 +30,17 @@ type ChatHandler struct {
 func NewChatHandler(
 	hub *ws.Hub,
 	consultationSessionUC usecase.ConsultationSessionUseCase,
+	consultationMessageUC usecase.ConsultationMessageUseCase,
 	profileUC usecase.ProfileUseCase,
 	validator appvalidator.AppValidator,
 ) *ChatHandler {
-	return &ChatHandler{hub: hub, consultationSessionUC: consultationSessionUC, profileUC: profileUC, validator: validator}
+	return &ChatHandler{
+		hub:                   hub,
+		consultationSessionUC: consultationSessionUC,
+		consultationMessageUC: consultationMessageUC,
+		profileUC:             profileUC,
+		validator:             validator,
+	}
 }
 
 func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
@@ -171,7 +179,7 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 	h.hub.Broadcast <- message
 
 	go client.WriteMessage()
-	go client.ReadMessage(h.hub)
+	go client.ReadMessage(h.hub, h.consultationMessageUC)
 }
 
 type RoomRes struct {

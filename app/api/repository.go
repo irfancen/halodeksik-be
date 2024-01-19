@@ -8,6 +8,7 @@ import (
 type AllRepositories struct {
 	AddressAreaRepository                 repository.AddressAreaRepository
 	CartItemRepository                    repository.CartItemRepository
+	ConsultationMessageRepository         repository.ConsultationMessageRepository
 	ConsultationSessionRepository         repository.ConsultationSessionRepository
 	DoctorSpecializationRepository        repository.DoctorSpecializationRepository
 	DrugClassificationRepository          repository.DrugClassificationRepository
@@ -29,6 +30,7 @@ func InitializeRepositories(db *sql.DB) *AllRepositories {
 	return &AllRepositories{
 		AddressAreaRepository:                 repository.NewAddressAreaRepositoryImpl(db),
 		CartItemRepository:                    repository.NewCartItemRepositoryImpl(db),
+		ConsultationMessageRepository:         repository.NewConsultationMessageRepositoryImpl(db),
 		ConsultationSessionRepository:         repository.NewConsultationSessionRepositoryImpl(db),
 		DoctorSpecializationRepository:        repository.NewDoctorSpecializationRepositoryImpl(db),
 		DrugClassificationRepository:          repository.NewDrugClassificationRepositoryImpl(db),

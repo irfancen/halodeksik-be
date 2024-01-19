@@ -42,7 +42,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases, hub *ws.Hub) *RouterOpts {
 		AddressAreaHandler:                 handler.NewAddressAreaHandler(allUC.AddressAreaUseCase),
 		AuthHandler:                        handler.NewAuthHandler(allUC.AuthUseCase, appvalidator.Validator),
 		CartItemHandler:                    handler.NewCartItemHandler(allUC.CartItemUseCase, appvalidator.Validator),
-		ChatHandler:                        handler.NewChatHandler(hub, allUC.ConsultationSessionUseCase, allUC.ProfileUseCase, appvalidator.Validator),
+		ChatHandler:                        handler.NewChatHandler(hub, allUC.ConsultationSessionUseCase, allUC.ConsultationMessageUseCase, allUC.ProfileUseCase, appvalidator.Validator),
 		DoctorSpecsHandler:                 handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase, appvalidator.Validator),
 		DrugClassificationHandler:          handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
 		ForgotTokenHandler:                 handler.NewForgotTokenHandler(allUC.ForgotTokenUseCase, appvalidator.Validator),
@@ -154,8 +154,8 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			chats.POST("/ws/createRoom", rOpts.ChatHandler.CreateRoom)
 			chats.GET(
 				"/ws/joinRoom/:id",
-				middleware.LoginMiddleware(),
-				middleware.AllowRoles(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
+				middleware.LoginWsMiddleware(),
+				middleware.AllowRolesWs(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
 				rOpts.ChatHandler.JoinRoom,
 			)
 			chats.GET(

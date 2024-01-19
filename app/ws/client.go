@@ -7,10 +7,13 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/vincent-petithory/dataurl"
 	"halodeksik-be/app/appcloud"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/appencoder"
+	"halodeksik-be/app/applogger"
 	"halodeksik-be/app/entity"
+	"halodeksik-be/app/usecase"
 	"halodeksik-be/app/util"
 	"log"
 	"os"
@@ -82,7 +85,7 @@ func (c *Client) WriteMessage() {
 	}
 }
 
-func (c *Client) ReadMessage(hub *Hub) {
+func (c *Client) ReadMessage(hub *Hub, consultationMessageUC usecase.ConsultationMessageUseCase) {
 	defer func() {
 		hub.Unregister <- c
 		err := c.Conn.Close()
@@ -113,6 +116,8 @@ func (c *Client) ReadMessage(hub *Hub) {
 			SessionId: c.SessionId,
 		}
 
+		hub.Broadcast <- msg
+
 		if !util.IsEmptyString(msg.Content.Attachment) {
 			decodeString, decodeErr := dataurl.DecodeString(msg.Content.Attachment)
 			if decodeErr == nil && decodeString.Type == appconstant.DataTypeImage && decodeString.Encoding == appconstant.DataEncodingBase64 {
@@ -130,7 +135,12 @@ func (c *Client) ReadMessage(hub *Hub) {
 				}
 
 				ctx, cancel := context.WithTimeout(context.Background(), appconstant.DefaultRequestTimeout*time.Second)
-				err2 = appcloud.AppFileUploader.SendToBucketWithFile(ctx, file, "chats/", fileName)
+				err2 = appcloud.AppFileUploader.SendToBucketWithFile(
+					ctx,
+					file,
+					fmt.Sprintf("%s/", appconfig.Config.GcloudStorageFolderConsultationSessions),
+					fileName,
+				)
 				if err != nil {
 					tempFile.Close()
 					file.Close()
@@ -141,9 +151,17 @@ func (c *Client) ReadMessage(hub *Hub) {
 				tempFile.Close()
 				os.Remove(tempFile.Name())
 				cancel()
+
+				msg.Content.Attachment = fmt.Sprintf(
+					"%s/%s/%s", appconfig.Config.GcloudStorageCdn, appconfig.Config.GcloudStorageFolderConsultationSessions, fileName,
+				)
 			}
 		}
 
-		hub.Broadcast <- msg
+		msgToStore := msg.ToEntityConsultationMessage()
+		_, err = consultationMessageUC.Add(context.Background(), *msgToStore)
+		if err != nil {
+			applogger.Log.Error(err)
+		}
 	}
 }

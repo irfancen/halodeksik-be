@@ -9,6 +9,7 @@ type AllUseCases struct {
 	AddressAreaUseCase          usecase.AddressAreaUseCase
 	AuthUseCase                 usecase.AuthUsecase
 	CartItemUseCase             usecase.CartItemUseCase
+	ConsultationMessageUseCase  usecase.ConsultationMessageUseCase
 	ConsultationSessionUseCase  usecase.ConsultationSessionUseCase
 	DrugClassificationUseCase   usecase.DrugClassificationUseCase
 	ManufacturerUseCase         usecase.ManufacturerUseCase
@@ -42,6 +43,7 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 		AddressAreaUseCase:          usecase.NewAddressAreaUseCaseImpl(allRepo.AddressAreaRepository, allUtil.LocUtil),
 		AuthUseCase:                 usecase.NewAuthUsecase(authRepos, allUtil.AuthUtil, appcloud.AppFileUploader, authCases),
 		CartItemUseCase:             usecase.NewCartItemUseCaseImpl(allRepo.CartItemRepository, allRepo.ProductRepository, allRepo.PharmacyProductRepository),
+		ConsultationMessageUseCase:  usecase.NewConsultationMessageUseCaseImpl(allRepo.ConsultationMessageRepository),
 		ConsultationSessionUseCase:  usecase.NewConsultationSessionUseCaseImpl(allRepo.ConsultationSessionRepository),
 		DrugClassificationUseCase:   usecase.NewDrugClassificationUseCaseImpl(allRepo.DrugClassificationRepository),
 		ManufacturerUseCase:         usecase.NewManufacturerUseCaseImpl(allRepo.ManufacturerRepository, appcloud.AppFileUploader),
