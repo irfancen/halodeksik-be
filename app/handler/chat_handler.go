@@ -7,7 +7,10 @@ import (
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/appvalidator"
+	"halodeksik-be/app/dto"
+	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/dto/requestdto"
+	"halodeksik-be/app/dto/responsedto"
 	"halodeksik-be/app/dto/uriparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
@@ -177,18 +180,40 @@ type RoomRes struct {
 	PatientId int64 `json:"patient_id"`
 }
 
-func (h *ChatHandler) GetRooms(ctx *gin.Context) {
-	rooms := make([]RoomRes, 0)
+func (h *ChatHandler) GetAllByUserIdOrDoctorId(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
 
-	for _, room := range h.hub.Rooms {
-		rooms = append(rooms, RoomRes{
-			Id:        room.Id,
-			DoctorId:  room.DoctorId,
-			PatientId: room.PatientId,
-		})
+	query := queryparamdto.GetAllConsultationSessions{}
+	err = ctx.ShouldBindQuery(&query)
+	if err != nil {
+		return
 	}
 
-	ctx.JSON(http.StatusOK, rooms)
+	err = h.validator.Validate(query)
+	if err != nil {
+		return
+	}
+
+	param := query.ToGetAllParams()
+	paginatedItems, err := h.consultationSessionUC.GetAllByUserIdOrDoctorId(ctx, param)
+	if err != nil {
+		return
+	}
+
+	resps := make([]*responsedto.ConsultationSessionResponse, 0)
+	for _, session := range paginatedItems.Items.([]*entity.ConsultationSession) {
+		resps = append(resps, session.ToResponse())
+	}
+	paginatedItems.Items = resps
+
+	resp := dto.ResponseDto{Data: paginatedItems}
+	ctx.JSON(http.StatusOK, resp)
 }
 
 type ClientRes struct {

@@ -293,8 +293,8 @@ CREATE TABLE consultation_session_statuses
 CREATE TABLE consultation_sessions
 (
     id                             BIGSERIAL PRIMARY KEY,
-    user_id                        BIGINT                    NOT NULL REFERENCES users (id),
-    doctor_id                      BIGINT                    NOT NULL REFERENCES users (id),
+    user_id                        BIGINT                    NOT NULL REFERENCES user_profiles (user_id),
+    doctor_id                      BIGINT                    NOT NULL REFERENCES doctor_profiles (user_id),
     consultation_session_status_id BIGINT                    NOT NULL REFERENCES consultation_session_statuses (id),
     created_at                     TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at                     TIMESTAMPTZ DEFAULT now() NOT NULL,
@@ -434,7 +434,8 @@ values ('General Practitioners',
        ('Pediatric Specialist',
         'https://byebyesick-bucket.irfancen.com/doctor_specializations/doctor-specs.jpg');
 
-INSERT INTO doctor_profiles (user_id, name, profile_photo, starting_year, doctor_certificate, doctor_specialization_id, consultation_fee, is_online)
+INSERT INTO doctor_profiles (user_id, name, profile_photo, starting_year, doctor_certificate, doctor_specialization_id,
+                             consultation_fee, is_online)
 VALUES (5, 'dokter wasik', '', 2021, '', 1, 10, false);
 
 INSERT INTO user_profiles(user_id, name, profile_photo, date_of_birth)
@@ -467,10 +468,6 @@ INSERT INTO product_stock_mutation_request_statuses (name)
 values ('Pending'),
        ('Accepted'),
        ('Rejected');
-
-INSERT INTO consultation_session_statuses (name)
-values ('Open'),
-       ('Close');
 
 INSERT INTO order_statuses (name)
 values ('Waiting for Payment'),
@@ -1592,7 +1589,8 @@ VALUES (1, 1),
        (2, 2);
 
 INSERT INTO consultation_session_statuses(name)
-VALUES ('Ongoing'), ('Ended');
+VALUES ('Ongoing'),
+       ('Ended');
 
 
 -- CREATE FUNCTIONS --
@@ -1602,42 +1600,42 @@ VALUES ('Ongoing'), ('Ended');
 
 -- Define the radius of the Earth in kilometers
 CREATE
-OR REPLACE FUNCTION earth_radius()
+    OR REPLACE FUNCTION earth_radius()
     RETURNS DECIMAL AS
 $$
 BEGIN
-RETURN 6371;
+    RETURN 6371;
 END;
 $$
-LANGUAGE plpgsql;
+    LANGUAGE plpgsql;
 
 -- Create a function that takes two pairs of coordinates as input
 -- and returns the distance between them as output
 CREATE
-OR REPLACE FUNCTION distance(lat1 VARCHAR, lon1 VARCHAR, lat2 VARCHAR, lon2 VARCHAR) RETURNS DECIMAL AS
+    OR REPLACE FUNCTION distance(lat1 VARCHAR, lon1 VARCHAR, lat2 VARCHAR, lon2 VARCHAR) RETURNS DECIMAL AS
 $$
 DECLARE
     -- Convert degrees to radians
-radLat1 DECIMAL := RADIANS(lat1::DECIMAL);
+    radLat1 DECIMAL := RADIANS(lat1::DECIMAL);
     radLon1
-DECIMAL := RADIANS(lon1::DECIMAL);
+            DECIMAL := RADIANS(lon1::DECIMAL);
     radLat2
-DECIMAL := RADIANS(lat2::DECIMAL);
+            DECIMAL := RADIANS(lat2::DECIMAL);
     radLon2
-DECIMAL := RADIANS(lon2::DECIMAL);
+            DECIMAL := RADIANS(lon2::DECIMAL);
     -- Calculate the difference between the coordinates
     dLat
-DECIMAL := radLat2 - radLat1;
+            DECIMAL := radLat2 - radLat1;
     dLon
-DECIMAL := radLon2 - radLon1;
+            DECIMAL := radLon2 - radLon1;
     -- Apply the haversine formula
     a
-DECIMAL := SIN(dLat / 2) ^ 2 + COS(radLat1) * COS(radLat2) * SIN(dLon / 2) ^ 2;
+            DECIMAL := SIN(dLat / 2) ^ 2 + COS(radLat1) * COS(radLat2) * SIN(dLon / 2) ^ 2;
     c
-DECIMAL := 2 * ATAN2(SQRT(a), SQRT(1 - a));
+            DECIMAL := 2 * ATAN2(SQRT(a), SQRT(1 - a));
 BEGIN
     -- Calculate the distance in kilometers
-RETURN earth_radius() * c;
+    RETURN earth_radius() * c;
 END
 $$
-LANGUAGE plpgsql;
+    LANGUAGE plpgsql;

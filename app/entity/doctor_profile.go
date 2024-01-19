@@ -39,3 +39,14 @@ func (u *DoctorProfile) GetFieldStructTag(fieldName string, structTag string) st
 func (u *DoctorProfile) GetSqlColumnFromField(fieldName string) string {
 	return fmt.Sprintf("%s.%s", u.GetEntityName(), u.GetFieldStructTag(fieldName, appconstant.JsonStructTag))
 }
+
+func (u *DoctorProfile) GetProfile() *Profile {
+	if u == nil {
+		return nil
+	}
+	return &Profile{
+		UserId:       u.UserId,
+		Name:         u.Name,
+		ProfilePhoto: u.ProfilePhoto,
+	}
+}

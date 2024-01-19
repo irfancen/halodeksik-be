@@ -158,7 +158,12 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				middleware.AllowRoles(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
 				rOpts.ChatHandler.JoinRoom,
 			)
-			chats.GET("/ws/getRooms", rOpts.ChatHandler.GetRooms)
+			chats.GET(
+				"/ws/getRooms",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
+				rOpts.ChatHandler.GetAllByUserIdOrDoctorId,
+			)
 			chats.GET("/ws/getClients/:roomId", rOpts.ChatHandler.GetClients)
 		}
 

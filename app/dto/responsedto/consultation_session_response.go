@@ -12,4 +12,7 @@ type ConsultationSessionResponse struct {
 	CreatedAt                   time.Time                          `json:"created_at"`
 	UpdatedAt                   time.Time                          `json:"updated_at"`
 	ConsultationSessionStatus   *ConsultationSessionStatusResponse `json:"consultation_session_status,omitempty"`
+	UserProfile                 *ProfileResponse                   `json:"user,omitempty"`
+	DoctorProfile               *ProfileResponse                   `json:"doctor,omitempty"`
+	LatestMessage               *ConsultationMessageResponse       `json:"latest_message"`
 }
