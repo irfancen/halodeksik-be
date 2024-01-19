@@ -32,7 +32,6 @@ type ConsultationMessage struct {
 }
 
 type Message struct {
-	IsFile  bool                `json:"is_file"`
 	Content ConsultationMessage `json:"content"`
 	UserId  int64               `json:"user_id"`
 	RoomId  int64               `json:"room_id"`
@@ -90,35 +89,35 @@ func (c *Client) ReadMessage(hub *Hub) {
 			RoomId:  c.RoomId,
 		}
 
-		decodeString, decodeErr := dataurl.DecodeString(string(jsonMessage))
-		if decodeErr == nil && decodeString.Type == appconstant.DataTypeImage && decodeString.Encoding == appconstant.DataEncodingBase64 {
-			msg.IsFile = true
+		if !util.IsEmptyString(msg.Content.Attachment) {
+			decodeString, decodeErr := dataurl.DecodeString(msg.Content.Attachment)
+			if decodeErr == nil && decodeString.Type == appconstant.DataTypeImage && decodeString.Encoding == appconstant.DataEncodingBase64 {
+				myUuid, err2 := uuid.NewRandom()
+				if err2 != nil {
+					return
+				}
 
-			myUuid, err2 := uuid.NewRandom()
-			if err2 != nil {
-				return
-			}
+				fileName := fmt.Sprintf("%s.%s", myUuid.String(), decodeString.Subtype)
+				tempFile, err2 := util.WriteTempFile(decodeString.Data, decodeString.Subtype)
 
-			fileName := fmt.Sprintf("%s.%s", myUuid.String(), decodeString.Subtype)
-			tempFile, err2 := util.WriteTempFile(decodeString.Data, decodeString.Subtype)
+				file, err2 := os.Open(tempFile.Name())
+				if err2 != nil {
+					return
+				}
 
-			file, err2 := os.Open(tempFile.Name())
-			if err2 != nil {
-				return
-			}
+				ctx, cancel := context.WithTimeout(context.Background(), appconstant.DefaultRequestTimeout*time.Second)
+				err2 = appcloud.AppFileUploader.SendToBucketWithFile(ctx, file, "chats/", fileName)
+				if err != nil {
+					tempFile.Close()
+					file.Close()
+					os.Remove(tempFile.Name())
+					cancel()
+				}
 
-			ctx, cancel := context.WithTimeout(context.Background(), appconstant.DefaultRequestTimeout*time.Second)
-			err2 = appcloud.AppFileUploader.SendToBucketWithFile(ctx, file, "chats/", fileName)
-			if err != nil {
 				tempFile.Close()
-				file.Close()
 				os.Remove(tempFile.Name())
 				cancel()
 			}
-
-			tempFile.Close()
-			os.Remove(tempFile.Name())
-			cancel()
 		}
 
 		hub.Broadcast <- msg
