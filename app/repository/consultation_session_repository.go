@@ -39,29 +39,65 @@ func (repo *ConsultationSessionRepositoryImpl) Create(ctx context.Context, sessi
 
 func (repo *ConsultationSessionRepositoryImpl) FindById(ctx context.Context, id int64) (*entity.ConsultationSession, error) {
 	const findById = `
-	SELECT consultation_sessions.id, user_id, doctor_id, consultation_session_status_id, 
-	       consultation_sessions.created_at, consultation_sessions.updated_at,
-	       consultation_session_statuses.name
-	FROM consultation_sessions
-	INNER JOIN consultation_session_statuses ON consultation_sessions.consultation_session_status_id = consultation_session_statuses.id 
-	WHERE consultation_sessions.id = $1`
+	SELECT consultation_sessions.id, consultation_sessions.user_id, doctor_id, consultation_session_status_id,
+       consultation_sessions.created_at, consultation_sessions.updated_at,
+       consultation_session_statuses.name AS session_status,
+       user_profiles.user_id, user_profiles.name, user_profiles.profile_photo,
+       doctor_profiles.user_id, doctor_profiles.name, doctor_profiles.profile_photo,
+       cm.id, cm.session_id, cm.sender_id, cm.message, cm.attachment, cm.created_at AS message_created_at,
+       cm.updated_at AS message_updated_at
+	FROM  consultation_sessions
+          INNER JOIN consultation_session_statuses ON consultation_sessions.consultation_session_status_id = consultation_session_statuses.id
+          INNER JOIN user_profiles ON consultation_sessions.user_id = user_profiles.user_id
+          INNER JOIN doctor_profiles ON consultation_sessions.doctor_id = doctor_profiles.user_id
+          LEFT JOIN LATERAL (
+    SELECT id, session_id, sender_id, message, attachment, created_at, updated_at
+    FROM consultation_messages
+    WHERE session_id = consultation_sessions.id
+    ORDER BY created_at ASC
+    ) cm ON true
+	WHERE consultation_sessions.deleted_at IS NULL AND consultation_sessions.id = $1;`
 
-	row := repo.db.QueryRowContext(ctx, findById, id)
-	var session entity.ConsultationSession
-	var sessionStatus entity.ConsultationSessionStatus
-	err := row.Scan(
-		&session.Id, &session.UserId, &session.DoctorId, &session.ConsultationSessionStatusId,
-		&session.CreatedAt, &session.UpdatedAt,
-		&sessionStatus.Name,
-	)
-	session.ConsultationSessionStatus = &sessionStatus
-
+	rows, err := repo.db.QueryContext(ctx, findById, id)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, apperror.ErrRecordNotFound
-		}
 		return nil, err
 	}
+	defer rows.Close()
+
+	var (
+		session       entity.ConsultationSession
+		sessionStatus entity.ConsultationSessionStatus
+		userProfile   entity.UserProfile
+		doctorProfile entity.DoctorProfile
+	)
+
+	messages := make([]*entity.ConsultationMessage, 0)
+	for rows.Next() {
+		var message entity.ConsultationMessage
+		if err := rows.Scan(
+			&session.Id, &session.UserId, &session.DoctorId, &session.ConsultationSessionStatusId,
+			&session.CreatedAt, &session.UpdatedAt,
+			&sessionStatus.Name,
+			&userProfile.UserId, &userProfile.Name, &userProfile.ProfilePhoto,
+			&doctorProfile.UserId, &doctorProfile.Name, &doctorProfile.ProfilePhoto,
+			&message.Id, &message.SessionId, &message.SenderId, &message.Message, &message.Attachment, &message.CreatedAt, &message.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		session.ConsultationSessionStatus = &sessionStatus
+		session.UserProfile = &userProfile
+		session.DoctorProfile = &doctorProfile
+		messages = append(messages, &message)
+	}
+	session.Message = messages
+
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return &session, err
 }
 

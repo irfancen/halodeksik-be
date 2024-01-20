@@ -94,6 +94,31 @@ func (h *ChatHandler) CreateRoom(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, addedOrFound.ToResponse())
 }
 
+func (h *ChatHandler) GetById(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	sessionId := uri.Id
+	sessionDb, err := h.consultationSessionUC.GetById(ctx, sessionId)
+	if err != nil {
+		return
+	}
+
+	resp := dto.ResponseDto{Data: sessionDb.ToResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,

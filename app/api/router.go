@@ -153,7 +153,13 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		{
 			chats.POST("/ws/createRoom", rOpts.ChatHandler.CreateRoom)
 			chats.GET(
-				"/ws/joinRoom/:id",
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
+				rOpts.ChatHandler.GetById,
+			)
+			chats.GET(
+				"/:id/join",
 				middleware.LoginWsMiddleware(),
 				middleware.AllowRolesWs(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
 				rOpts.ChatHandler.JoinRoom,

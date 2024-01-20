@@ -51,6 +51,24 @@ func (uc *ConsultationSessionUseCaseImpl) GetById(ctx context.Context, id int64)
 		return nil, err
 	}
 
+	clientIdCtx := ctx.Value(appconstant.ContextKeyUserId)
+	clientId := clientIdCtx.(int64)
+
+	roleIdCtx := ctx.Value(appconstant.ContextKeyRoleId)
+	roleId := roleIdCtx.(int64)
+
+	if roleId == appconstant.UserRoleIdDoctor {
+		if sessionDb.DoctorId != clientId {
+			return nil, apperror.ErrForbiddenViewEntity
+		}
+	}
+
+	if roleId == appconstant.UserRoleIdUser {
+		if sessionDb.UserId != clientId {
+			return nil, apperror.ErrForbiddenViewEntity
+		}
+	}
+
 	return sessionDb, nil
 }
 
