@@ -100,7 +100,7 @@ func (repo *ConsultationSessionRepositoryImpl) FindAllByUserIdOrDoctorId(ctx con
     consultation_session_statuses.name AS session_status,
     user_profiles.user_id, user_profiles.name, user_profiles.profile_photo,
     doctor_profiles.user_id, doctor_profiles.name, doctor_profiles.profile_photo,
-    cm.id, cm.sender_id, cm.message, cm.attachment, cm.created_at AS message_created_at,
+    cm.id, cm.session_id, cm.sender_id, cm.message, cm.attachment, cm.created_at AS message_created_at,
     cm.updated_at AS message_updated_at
 	FROM  consultation_sessions
 	INNER JOIN consultation_session_statuses ON consultation_sessions.consultation_session_status_id = consultation_session_statuses.id
@@ -142,7 +142,7 @@ func (repo *ConsultationSessionRepositoryImpl) FindAllByUserIdOrDoctorId(ctx con
 			&sessionStatus.Name,
 			&userProfile.UserId, &userProfile.Name, &userProfile.ProfilePhoto,
 			&doctorProfile.UserId, &doctorProfile.Name, &doctorProfile.ProfilePhoto,
-			&message.Id, &message.SenderId, &message.Message, &message.Attachment, &message.CreatedAt, &message.UpdatedAt,
+			&message.Id, &message.SessionId, &message.SenderId, &message.Message, &message.Attachment, &message.CreatedAt, &message.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
