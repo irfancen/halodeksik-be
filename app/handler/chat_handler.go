@@ -14,7 +14,6 @@ import (
 	"halodeksik-be/app/dto/uriparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
-	"halodeksik-be/app/util"
 	"halodeksik-be/app/ws"
 	"net/http"
 	"time"
@@ -267,29 +266,4 @@ func (h *ChatHandler) GetAllByUserIdOrDoctorId(ctx *gin.Context) {
 
 	resp := dto.ResponseDto{Data: paginatedItems}
 	ctx.JSON(http.StatusOK, resp)
-}
-
-type ClientRes struct {
-	Id      int64           `json:"id"`
-	Profile *entity.Profile `json:"profile"`
-}
-
-func (h *ChatHandler) GetClients(c *gin.Context) {
-	var clients []ClientRes
-	roomIdQuery := c.Param("roomId")
-	roomId, _ := util.ParseInt64(roomIdQuery)
-
-	if _, ok := h.hub.ConsultationSessions[roomId]; !ok {
-		clients = make([]ClientRes, 0)
-		c.JSON(http.StatusOK, clients)
-	}
-
-	for _, c := range h.hub.ConsultationSessions[roomId].Clients {
-		clients = append(clients, ClientRes{
-			Id:      c.SenderId,
-			Profile: c.Profile,
-		})
-	}
-
-	c.JSON(http.StatusOK, clients)
 }

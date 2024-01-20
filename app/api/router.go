@@ -151,7 +151,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 
 		chats := v1.Group("/chats")
 		{
-			chats.POST("/ws/createRoom", rOpts.ChatHandler.CreateRoom)
+			chats.POST("", rOpts.ChatHandler.CreateRoom)
 			chats.GET(
 				"/:id",
 				middleware.LoginMiddleware(),
@@ -170,7 +170,6 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				middleware.AllowRoles(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
 				rOpts.ChatHandler.GetAllByUserIdOrDoctorId,
 			)
-			chats.GET("/ws/getClients/:roomId", rOpts.ChatHandler.GetClients)
 		}
 
 		drugClassifications := v1.Group("/drug-classifications")
