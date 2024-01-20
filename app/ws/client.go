@@ -12,6 +12,8 @@ import (
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/appencoder"
 	"halodeksik-be/app/applogger"
+	"halodeksik-be/app/dto/requestdto"
+	"halodeksik-be/app/dto/responsedto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/usecase"
 	"halodeksik-be/app/util"
@@ -22,46 +24,10 @@ import (
 
 type Client struct {
 	Conn      *websocket.Conn
-	Message   chan *Message
-	Id        int64           `json:"id"`
+	Message   chan *responsedto.WsConsultationMessage
+	SenderId  int64           `json:"id"`
 	SessionId int64           `json:"session_id"`
 	Profile   *entity.Profile `json:"profile"`
-}
-
-type ConsultationMessage struct {
-	IsTyping   bool      `json:"is_typing"`
-	Message    string    `json:"message"`
-	Attachment string    `json:"attachment"`
-	CreatedAt  time.Time `json:"created_at"`
-}
-
-type Message struct {
-	Content   ConsultationMessage `json:"content"`
-	SenderId  int64               `json:"sender_id"`
-	SessionId int64               `json:"session_id"`
-}
-
-func NewMessage(message *entity.ConsultationMessage) *Message {
-	return &Message{
-		Content: ConsultationMessage{
-			Message:    message.Message.String,
-			Attachment: message.Attachment.String,
-			CreatedAt:  message.CreatedAt.Time,
-		},
-		SenderId:  message.SenderId.Int64,
-		SessionId: message.SessionId.Int64,
-	}
-}
-
-func (m *Message) ToEntityConsultationMessage() *entity.ConsultationMessage {
-	return &entity.ConsultationMessage{
-		SessionId:  appdb.NewSqlNullInt64(m.SessionId),
-		SenderId:   appdb.NewSqlNullInt64(m.SenderId),
-		Message:    appdb.NewSqlNullString(m.Content.Message),
-		Attachment: appdb.NewSqlNullString(m.Content.Attachment),
-		CreatedAt:  appdb.NewSqlNullTime(m.Content.CreatedAt),
-		UpdatedAt:  appdb.NewSqlNullTime(m.Content.CreatedAt),
-	}
 }
 
 func (c *Client) WriteMessage() {
@@ -103,23 +69,28 @@ func (c *Client) ReadMessage(hub *Hub, consultationMessageUC usecase.Consultatio
 			break
 		}
 
-		var consultationMessage ConsultationMessage
+		var consultationMessage requestdto.WsConsultationMessage
 		err = appencoder.JsonEncoder.Unmarshal(jsonMessage, &consultationMessage)
 		if err != nil {
 			break
 		}
-		consultationMessage.CreatedAt = time.Now()
+		consultationMessage.SenderId = c.SenderId
+		consultationMessage.SessionId = c.SessionId
 
-		msg := &Message{
-			Content:   consultationMessage,
-			SenderId:  c.Id,
-			SessionId: c.SessionId,
+		msg := &responsedto.WsConsultationMessage{
+			IsTyping:   consultationMessage.IsTyping,
+			Message:    consultationMessage.Message,
+			Attachment: consultationMessage.Attachment,
+			CreatedAt:  time.Now(),
+			SenderId:   c.SenderId,
+			SessionId:  c.SessionId,
 		}
 
 		hub.Broadcast <- msg
+		msgToStoreInDb := consultationMessage.ToConsultationMessage()
 
-		if !util.IsEmptyString(msg.Content.Attachment) {
-			decodeString, decodeErr := dataurl.DecodeString(msg.Content.Attachment)
+		if !util.IsEmptyString(msg.Attachment) {
+			decodeString, decodeErr := dataurl.DecodeString(msg.Attachment)
 			if decodeErr == nil && decodeString.Type == appconstant.DataTypeImage && decodeString.Encoding == appconstant.DataEncodingBase64 {
 				myUuid, err2 := uuid.NewRandom()
 				if err2 != nil {
@@ -149,12 +120,11 @@ func (c *Client) ReadMessage(hub *Hub, consultationMessageUC usecase.Consultatio
 				os.Remove(tempFile.Name())
 				cancel()
 
-				msg.Content.Attachment = fileUrl
+				msgToStoreInDb.Attachment = appdb.NewSqlNullString(fileUrl)
 			}
 		}
 
-		msgToStore := msg.ToEntityConsultationMessage()
-		_, err = consultationMessageUC.Add(context.Background(), *msgToStore)
+		_, err = consultationMessageUC.Add(context.Background(), *msgToStoreInDb)
 		if err != nil {
 			applogger.Log.Error(err)
 		}

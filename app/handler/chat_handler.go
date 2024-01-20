@@ -17,6 +17,7 @@ import (
 	"halodeksik-be/app/util"
 	"halodeksik-be/app/ws"
 	"net/http"
+	"time"
 )
 
 type ChatHandler struct {
@@ -181,16 +182,17 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 
 	client := &ws.Client{
 		Conn:      conn,
-		Message:   make(chan *ws.Message, 10),
-		Id:        clientId,
+		Message:   make(chan *responsedto.WsConsultationMessage, 10),
+		SenderId:  clientId,
 		SessionId: sessionId,
 		Profile:   user.GetProfile(),
 	}
 
-	message := &ws.Message{
-		Content:   ws.ConsultationMessage{Message: "A new user has joined the session"},
-		SenderId:  client.Id,
+	message := &responsedto.WsConsultationMessage{
+		Message:   "A new user has joined the session",
+		SenderId:  client.SenderId,
 		SessionId: sessionId,
+		CreatedAt: time.Now(),
 	}
 
 	h.hub.Register <- client
@@ -259,7 +261,7 @@ func (h *ChatHandler) GetClients(c *gin.Context) {
 
 	for _, c := range h.hub.ConsultationSessions[roomId].Clients {
 		clients = append(clients, ClientRes{
-			Id:      c.Id,
+			Id:      c.SenderId,
 			Profile: c.Profile,
 		})
 	}
