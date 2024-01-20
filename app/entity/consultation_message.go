@@ -30,3 +30,16 @@ func (e *ConsultationMessage) ToResponse() *responsedto.ConsultationMessageRespo
 		UpdatedAt:  e.UpdatedAt.Time,
 	}
 }
+
+func (e *ConsultationMessage) ToWsMessage() *responsedto.WsConsultationMessage {
+	if e == nil {
+		return nil
+	}
+	return &responsedto.WsConsultationMessage{
+		Message:    e.Message.String,
+		Attachment: e.Attachment.String,
+		CreatedAt:  e.CreatedAt.Time,
+		SenderId:   e.SenderId.Int64,
+		SessionId:  e.SessionId.Int64,
+	}
+}

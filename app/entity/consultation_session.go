@@ -44,9 +44,9 @@ func (e *ConsultationSession) ToResponse() *responsedto.ConsultationSessionRespo
 		return nil
 	}
 
-	messageResp := make([]*responsedto.ConsultationMessageResponse, 0)
+	messageResp := make([]*responsedto.WsConsultationMessage, 0)
 	for _, message := range e.Message {
-		messageResp = append(messageResp, message.ToResponse())
+		messageResp = append(messageResp, message.ToWsMessage())
 	}
 
 	return &responsedto.ConsultationSessionResponse{
