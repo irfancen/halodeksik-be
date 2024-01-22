@@ -219,6 +219,8 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin), rOpts.OrderHandler.ConfirmOrder)
 			order.POST("/:id/reject",
 				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin), rOpts.OrderHandler.RejectOrder)
+			order.POST("/:id/ship",
+				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin), rOpts.OrderHandler.ShipOrder)
 		}
 
 		pharmacy := v1.Group(

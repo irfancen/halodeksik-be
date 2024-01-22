@@ -17,6 +17,7 @@ type OrderUseCase interface {
 	GetOrderById(ctx context.Context, id int64) (*entity.Order, error)
 	ConfirmOrder(ctx context.Context, id int64) (*entity.OrderStatusLog, error)
 	RejectOrder(ctx context.Context, id int64) (*entity.OrderStatusLog, error)
+	ShipOrder(ctx context.Context, id int64) (*entity.OrderStatusLog, error)
 }
 
 type OrderUseCaseImpl struct {
@@ -179,6 +180,35 @@ func (uc *OrderUseCaseImpl) RejectOrder(ctx context.Context, id int64) (*entity.
 	newOrder := entity.OrderStatusLog{
 		OrderId:       order.Id,
 		OrderStatusId: appconstant.CanceledByPharmacyOrderStatusId,
+		IsLatest:      true,
+	}
+
+	status, err := uc.repo.UpdateOrderStatus(ctx, order.Id, newOrder)
+	if err != nil {
+		return nil, err
+	}
+
+	return status, nil
+}
+
+func (uc *OrderUseCaseImpl) ShipOrder(ctx context.Context, id int64) (*entity.OrderStatusLog, error) {
+	order, err := uc.GetOrderById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	latestStatus, err := uc.repo.FindLatestOrderStatusByOrderId(ctx, order.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	if latestStatus.OrderStatusId != appconstant.ProcessedPharmacyOrderStatusId {
+		return nil, apperror.ErrBadShipStatus
+	}
+
+	newOrder := entity.OrderStatusLog{
+		OrderId:       order.Id,
+		OrderStatusId: appconstant.SentPharmacyOrderStatusId,
 		IsLatest:      true,
 	}
 

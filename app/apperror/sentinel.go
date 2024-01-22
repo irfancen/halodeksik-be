@@ -54,4 +54,5 @@ var (
 	ErrPaymentNotSent   = errors.New("transaction has not been paid")
 	ErrBadConfirmStatus = errors.New("can only confirm waiting order")
 	ErrBadRejectStatus  = errors.New("can only reject waiting order")
+	ErrBadShipStatus    = errors.New("can only ship processed order")
 )
