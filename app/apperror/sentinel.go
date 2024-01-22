@@ -29,14 +29,14 @@ var (
 
 	ErrInvalidDecimal      = errors.New("invalid decimal")
 	ErrInvalidIntInString  = errors.New("invalid integer in string")
-	ErrInvalidLatLong      = errors.New("invalid lat and long")
+	ErrInvalidLatLong      = errors.New("invalid lat and long, make sure you put the pinpoint near the address")
 	ErrMainAddressNotFound = errors.New("this user does not have main address")
 
 	ErrPharmacyProductUniqueConstraint = errors.New("pharmacy_id and product_id combinations violate unique constraint")
 
-	ErrProductUniqueConstraint           = errors.New("name, generic_name, content, and manufacturer_id combinations violate unique constraint")
-	ErrProductImageDoesNotExistInContext = errors.New("product image does not exist in context")
-	ErrProductCategoryUniqueConstraint   = errors.New("name violates unique constraint")
+	ErrProductUniqueConstraint            = errors.New("name, generic_name, content, and manufacturer_id combinations violate unique constraint")
+	ErrProductImageDoesNotExistInContext  = errors.New("product image does not exist in context")
+	ErrProductCategoryUniqueConstraint    = errors.New("name violates unique constraint")
 	ErrProductCategoryStillUsedByProducts = errors.New("product category still used by products")
 
 	ErrInsufficientProductStock             = errors.New("insufficient product stock")

@@ -2,8 +2,11 @@ package entity
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/shopspring/decimal"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/dto/responsedto"
+	"reflect"
 	"time"
 )
 
@@ -23,7 +26,23 @@ type OrderDetail struct {
 	DeletedAt   sql.NullTime    `json:"deleted_at"`
 }
 
-func (o OrderDetail) ToOrderDetailResponse() responsedto.OrderDetailResponse {
+func (o *OrderDetail) GetEntityName() string {
+	return "order_details"
+}
+
+func (o *OrderDetail) GetFieldStructTag(fieldName string, structTag string) string {
+	field, ok := reflect.TypeOf(o).Elem().FieldByName(fieldName)
+	if !ok {
+		return ""
+	}
+	return field.Tag.Get(structTag)
+}
+
+func (o *OrderDetail) GetSqlColumnFromField(fieldName string) string {
+	return fmt.Sprintf("%s.%s", o.GetEntityName(), o.GetFieldStructTag(fieldName, appconstant.JsonStructTag))
+}
+
+func (o *OrderDetail) ToOrderDetailResponse() responsedto.OrderDetailResponse {
 	return responsedto.OrderDetailResponse{
 		Name:        o.Name,
 		GenericName: o.GenericName,

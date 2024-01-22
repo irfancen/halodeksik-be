@@ -511,7 +511,8 @@ INSERT INTO transaction_statuses (name)
 values ('Unpaid'),
        ('Waiting for Confirmation'),
        ('Payment Rejected'),
-       ('Paid');
+       ('Paid'),
+        ('Canceled');
 
 INSERT INTO provinces (id, name)
 VALUES (1, 'Bali');
