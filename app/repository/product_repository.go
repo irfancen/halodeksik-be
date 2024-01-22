@@ -393,12 +393,42 @@ func (repo *ProductRepositoryImpl) Update(ctx context.Context, product entity.Pr
 }
 
 func (repo *ProductRepositoryImpl) Delete(ctx context.Context, id int64) error {
+	tx, err := repo.db.Begin()
+	defer func(tx *sql.Tx) {
+		err = tx.Rollback()
+		if err != nil {
+			return
+		}
+	}(tx)
+
+	if err != nil {
+		return err
+	}
+
 	const deleteById = `
 		UPDATE products
 		SET deleted_at = now()
-		WHERE id = $1 AND deleted_at IS NULL
-		`
+		WHERE id = $1 AND deleted_at IS NULL`
 
-	_, err := repo.db.ExecContext(ctx, deleteById, id)
+	_, err = tx.ExecContext(ctx, deleteById, id)
+	if err != nil {
+		return err
+	}
+
+	const deletePharmacyProductById = `
+	UPDATE pharmacy_products
+	SET deleted_at = now()
+	WHERE product_id = $1 AND deleted_at IS NULL`
+
+	_, err = tx.ExecContext(ctx, deletePharmacyProductById, id)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
 	return err
 }

@@ -10,7 +10,6 @@ import (
 	"halodeksik-be/app/dto"
 	"halodeksik-be/app/dto/requestdto"
 	"halodeksik-be/app/usecase"
-	"log"
 	"net/http"
 )
 
@@ -144,8 +143,6 @@ func (h *ProfileHandler) EditUserProfile(ctx *gin.Context) {
 		err = apperror.ErrUnauthorized
 		return
 	}
-
-	log.Println(ctx.Request.Header)
 
 	if err = h.bindFile(ctx, appconstant.FormProfilePhoto); err != nil {
 		return

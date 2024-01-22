@@ -36,6 +36,8 @@ var (
 
 	ErrProductUniqueConstraint           = errors.New("name, generic_name, content, and manufacturer_id combinations violate unique constraint")
 	ErrProductImageDoesNotExistInContext = errors.New("product image does not exist in context")
+	ErrProductCategoryUniqueConstraint   = errors.New("name violates unique constraint")
+	ErrProductCategoryStillUsedByProducts = errors.New("product category still used by products")
 
 	ErrInsufficientProductStock             = errors.New("insufficient product stock")
 	ErrProductStockNotEnoughToAddToCart     = errors.New("product stock is not enough to add to cart")

@@ -248,7 +248,7 @@ func (repo *PharmacyProductRepositoryImpl) FindByProductIdJoinPharmacy(ctx conte
          INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
 	WHERE pharmacies.deleted_at IS NULL 
 	  AND pharmacy_products.deleted_at IS NULL 
-	  AND pharmacy_products.is_active 
+	  AND pharmacy_products.is_active = true
 	  AND pharmacy_products.product_id = $1 `
 	indexPreparedStatement := 1
 
@@ -292,7 +292,7 @@ func (repo *PharmacyProductRepositoryImpl) SumTotalStocksByProductsId(ctx contex
 	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
 	WHERE pharmacies.deleted_at IS NULL 
 	  AND pharmacy_products.deleted_at IS NULL 
-	  AND pharmacy_products.is_active
+	  AND pharmacy_products.is_active = true
 	  AND pharmacy_products.product_id = $1 `
 	indexPreparedStatement := 1
 

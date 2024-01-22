@@ -6,7 +6,6 @@ import (
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
-	"log"
 	"strings"
 )
 
@@ -119,6 +118,5 @@ func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamd
 		values = append(values, offset)
 	}
 
-	log.Println(query.String())
 	return query.String(), values
 }

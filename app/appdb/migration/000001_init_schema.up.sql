@@ -175,7 +175,7 @@ CREATE TABLE manufacturers
 CREATE TABLE product_categories
 (
     id         BIGSERIAL PRIMARY KEY,
-    name       VARCHAR                   NOT NULL,
+    name       VARCHAR UNIQUE            NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     deleted_at TIMESTAMPTZ DEFAULT NULL

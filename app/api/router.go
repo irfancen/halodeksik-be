@@ -255,19 +255,19 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			productCategories.POST(
 				"",
 				middleware.LoginMiddleware(),
-				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
 				rOpts.ProductCategoryHandler.Add,
 			)
 			productCategories.PUT(
 				"/:id",
 				middleware.LoginMiddleware(),
-				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
 				rOpts.ProductCategoryHandler.Edit,
 			)
 			productCategories.DELETE(
 				"/:id",
 				middleware.LoginMiddleware(),
-				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
 				rOpts.ProductCategoryHandler.Remove,
 			)
 		}
@@ -277,7 +277,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			products.GET(
 				"/:id/admin",
 				middleware.LoginMiddleware(),
-				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin, appconstant.UserRoleIdPharmacyAdmin),
 				rOpts.ProductHandler.GetById,
 			)
 			products.GET("/:id", rOpts.ProductHandler.GetByIdForUser)
@@ -285,25 +285,25 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			products.GET(
 				"/admin",
 				middleware.LoginMiddleware(),
-				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin, appconstant.UserRoleIdPharmacyAdmin),
 				rOpts.ProductHandler.GetAllForAdmin,
 			)
 			products.POST(
 				"",
 				middleware.LoginMiddleware(),
-				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
 				rOpts.ProductHandler.Add,
 			)
 			products.PUT(
 				"/:id",
 				middleware.LoginMiddleware(),
-				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
 				rOpts.ProductHandler.Edit,
 			)
 			products.DELETE(
 				"/:id",
 				middleware.LoginMiddleware(),
-				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin),
 				rOpts.ProductHandler.Remove,
 			)
 		}
