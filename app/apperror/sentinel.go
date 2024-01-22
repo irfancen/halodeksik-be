@@ -55,4 +55,5 @@ var (
 	ErrBadConfirmStatus = errors.New("can only confirm waiting order")
 	ErrBadRejectStatus  = errors.New("can only reject waiting order")
 	ErrBadShipStatus    = errors.New("can only ship processed order")
+	ErrBadReceiveStatus = errors.New("can only receive shipped order")
 )

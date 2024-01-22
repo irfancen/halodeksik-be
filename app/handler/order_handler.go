@@ -259,3 +259,32 @@ func (h OrderHandler) ShipOrder(ctx *gin.Context) {
 	resp := dto.ResponseDto{Data: order.ToOrderStatusLogResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }
+
+func (h OrderHandler) ReceiveOrder(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	order, err := h.uc.ReceiveOrder(ctx.Request.Context(), uri.Id)
+	if err != nil {
+		return
+	}
+
+	resp := dto.ResponseDto{Data: order.ToOrderStatusLogResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
