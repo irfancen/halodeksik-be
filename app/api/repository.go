@@ -12,6 +12,7 @@ type AllRepositories struct {
 	DrugClassificationRepository          repository.DrugClassificationRepository
 	ForgotTokenRepository                 repository.ForgotTokenRepository
 	ManufacturerRepository                repository.ManufacturerRepository
+	OrderRepository                       repository.OrderRepository
 	PharmacyRepository                    repository.PharmacyRepository
 	PharmacyProductRepository             repository.PharmacyProductRepository
 	ProductCategoryRepository             repository.ProductCategoryRepository
@@ -20,6 +21,7 @@ type AllRepositories struct {
 	ProductStockMutationRequestRepository repository.ProductStockMutationRequestRepository
 	ProfileRepository                     repository.ProfileRepository
 	RegisterTokenRepository               repository.RegisterTokenRepository
+	TransactionRepository                 repository.TransactionRepository
 	ShippingMethodRepository              repository.ShippingMethodRepository
 	UserAddressRepository                 repository.UserAddressRepository
 	UserRepository                        repository.UserRepository
@@ -33,6 +35,7 @@ func InitializeRepositories(db *sql.DB) *AllRepositories {
 		DrugClassificationRepository:          repository.NewDrugClassificationRepositoryImpl(db),
 		ForgotTokenRepository:                 repository.NewForgotTokenRepository(db),
 		ManufacturerRepository:                repository.NewManufacturerRepositoryImpl(db),
+		OrderRepository:                       repository.NewOrderRepositoryImpl(db),
 		PharmacyRepository:                    repository.NewPharmacyRepository(db),
 		PharmacyProductRepository:             repository.NewPharmacyProductRepository(db),
 		ProductCategoryRepository:             repository.NewProductCategoryRepositoryImpl(db),
@@ -41,6 +44,7 @@ func InitializeRepositories(db *sql.DB) *AllRepositories {
 		ProductStockMutationRequestRepository: repository.NewProductStockMutationRequestRepositoryImpl(db),
 		ProfileRepository:                     repository.NewProfileRepository(db),
 		RegisterTokenRepository:               repository.NewRegisterTokenRepository(db),
+		TransactionRepository:                 repository.NewTransactionRepositoryImpl(db),
 		ShippingMethodRepository:              repository.NewShippingMethodRepositoryImpl(db),
 		UserRepository:                        repository.NewUserRepository(db),
 		UserAddressRepository:                 repository.NewUserAddressRepositoryImpl(db),

@@ -19,3 +19,8 @@ type PharmacyResponse struct {
 	OperationalDays       []string `json:"operational_days,omitempty"`
 	PharmacyAdminId       int64    `json:"pharmacy_admin_id,omitempty"`
 }
+
+type PharmacyIdNameResponse struct {
+	Id   int64  `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}

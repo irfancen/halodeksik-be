@@ -61,16 +61,19 @@ func (u *User) ToUserProfileResponse() *responsedto.UserProfileResponse {
 
 func (u *User) ToDoctorProfileResponse() *responsedto.DoctorProfileResponse {
 	return &responsedto.DoctorProfileResponse{
-		Id:                   u.Id,
-		Email:                u.Email,
-		UserRoleID:           u.UserRoleId,
-		IsVerified:           u.IsVerified,
-		Name:                 u.DoctorProfile.Name,
-		ProfilePhoto:         u.DoctorProfile.ProfilePhoto,
-		StartingYear:         u.DoctorProfile.StartingYear,
-		DoctorCertificate:    u.DoctorProfile.DoctorCertificate,
-		DoctorSpecialization: u.DoctorProfile.DoctorSpecialization.Name,
-		ConsultationFee:      u.DoctorProfile.ConsultationFee.String(),
-		IsOnline:             u.DoctorProfile.IsOnline,
+		Id:                u.Id,
+		Email:             u.Email,
+		UserRoleID:        u.UserRoleId,
+		IsVerified:        u.IsVerified,
+		Name:              u.DoctorProfile.Name,
+		ProfilePhoto:      u.DoctorProfile.ProfilePhoto,
+		StartingYear:      u.DoctorProfile.StartingYear,
+		DoctorCertificate: u.DoctorProfile.DoctorCertificate,
+		DoctorSpecialization: &responsedto.DoctorSpecializationResponse{
+			Id:   u.DoctorProfile.DoctorSpecialization.Id,
+			Name: u.DoctorProfile.DoctorSpecialization.Name,
+		},
+		ConsultationFee: u.DoctorProfile.ConsultationFee.String(),
+		IsOnline:        u.DoctorProfile.IsOnline,
 	}
 }

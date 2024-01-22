@@ -60,7 +60,7 @@ func (repo *ProfileRepositoryImpl) FindUserProfileByUserId(ctx context.Context, 
 
 func (repo *ProfileRepositoryImpl) FindDoctorProfileByUserId(ctx context.Context, userId int64) (*entity.User, error) {
 	const getDoctorWithProfile = `
-	SELECT u.id, email, user_role_id, is_verified, user_id, dp.name, profile_photo, starting_year, doctor_certificate, doctor_specialization_id, consultation_fee, is_online, ds.name spec
+	SELECT u.id, email, user_role_id, is_verified, user_id, dp.name, profile_photo, starting_year, doctor_certificate, doctor_specialization_id, consultation_fee, is_online, ds.name spec, ds.id dsId
 	FROM users u INNER JOIN doctor_profiles dp ON u.id = dp.user_id INNER JOIN doctor_specializations ds ON dp.doctor_specialization_id = ds.id WHERE u.id = $1
 	`
 
@@ -88,6 +88,7 @@ func (repo *ProfileRepositoryImpl) FindDoctorProfileByUserId(ctx context.Context
 		&profile.ConsultationFee,
 		&profile.IsOnline,
 		&spec.Name,
+		&spec.Id,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -134,7 +135,7 @@ func (repo *ProfileRepositoryImpl) UpdateDoctorProfileByUserId(ctx context.Conte
 		UPDATE doctor_profiles
 			SET name = $1, profile_photo =  $2, starting_year =  $3, doctor_certificate =  $4, doctor_specialization_id = $5, consultation_fee = $6, is_online = $7, updated_at = now() WHERE user_id = $8
 			RETURNING user_id, name, profile_photo, starting_year, doctor_certificate, doctor_specialization_id, consultation_fee, is_online
-	) SELECT up.*, ds.name AS spec FROM updated_profile up INNER JOIN doctor_specializations ds ON up.doctor_specialization_id = ds.id;
+	) SELECT up.*, ds.name, ds.id FROM updated_profile up INNER JOIN doctor_specializations ds ON up.doctor_specialization_id = ds.id;
 	`
 	row := repo.db.QueryRowContext(ctx, updateDoctorProfileByUserId,
 		profile.Name, profile.ProfilePhoto, profile.StartingYear, profile.DoctorCertificate, profile.DoctorSpecializationId,
@@ -154,6 +155,7 @@ func (repo *ProfileRepositoryImpl) UpdateDoctorProfileByUserId(ctx context.Conte
 		&updatedProfile.ConsultationFee,
 		&updatedProfile.IsOnline,
 		&spec.Name,
+		&spec.Id,
 	)
 
 	updatedProfile.DoctorSpecialization = &spec

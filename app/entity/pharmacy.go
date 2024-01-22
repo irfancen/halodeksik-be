@@ -85,3 +85,10 @@ func (p *Pharmacy) ToPharmacyResponse() *responsedto.PharmacyResponse {
 		PharmacyAdminId:       p.PharmacyAdminId,
 	}
 }
+
+func (p *Pharmacy) ToPharmacyIdNameResponse() responsedto.PharmacyIdNameResponse {
+	return responsedto.PharmacyIdNameResponse{
+		Id:   p.Id,
+		Name: p.Name,
+	}
+}

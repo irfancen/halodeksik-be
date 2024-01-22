@@ -22,6 +22,7 @@ type RouterOpts struct {
 	DrugClassificationHandler          *handler.DrugClassificationHandler
 	ForgotTokenHandler                 *handler.ForgotTokenHandler
 	ManufacturerHandler                *handler.ManufacturerHandler
+	OrderHandler                       *handler.OrderHandler
 	PharmacyHandler                    *handler.PharmacyHandler
 	PharmacyProductsHandler            *handler.PharmacyProductHandler
 	ProductCategoryHandler             *handler.ProductCategoryHandler
@@ -32,6 +33,7 @@ type RouterOpts struct {
 	RegisterTokenHandler               *handler.RegisterTokenHandler
 	ShippingMethodHandler              *handler.ShippingMethodHandler
 	StockReportHandler                 *handler.StockReportHandler
+	TransactionHandler                 *handler.TransactionHandler
 	UserAddressHandler                 *handler.UserAddressHandler
 	UserHandler                        *handler.UserHandler
 }
@@ -45,6 +47,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		DrugClassificationHandler:          handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
 		ForgotTokenHandler:                 handler.NewForgotTokenHandler(allUC.ForgotTokenUseCase, appvalidator.Validator),
 		ManufacturerHandler:                handler.NewManufacturerHandler(allUC.ManufacturerUseCase, appvalidator.Validator),
+		OrderHandler:                       handler.NewOrderHandler(allUC.OrderUseCase, appvalidator.Validator),
 		PharmacyHandler:                    handler.NewPharmacyHandler(allUC.PharmacyUseCase, appvalidator.Validator),
 		PharmacyProductsHandler:            handler.NewPharmacyProductHAndler(allUC.PharmacyProductUseCase, appvalidator.Validator),
 		ProductCategoryHandler:             handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase, appvalidator.Validator),
@@ -55,6 +58,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		RegisterTokenHandler:               handler.NewRegisterTokenHandler(allUC.RegisterTokenUseCase, appvalidator.Validator),
 		ShippingMethodHandler:              handler.NewShippingMethodHandler(allUC.ShippingMethodUseCase, appvalidator.Validator),
 		StockReportHandler:                 handler.NewStockReportHandler(allUC.ProductStockMutation, appvalidator.Validator),
+		TransactionHandler:                 handler.NewTransactionHandler(allUC.TransactionUseCase, appvalidator.Validator),
 		UserAddressHandler:                 handler.NewAddressHandler(allUC.UserAddressUseCase, appvalidator.Validator),
 		UserHandler:                        handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
 	}
@@ -203,6 +207,20 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			)
 		}
 
+		order := v1.Group("/orders", middleware.LoginMiddleware())
+		{
+			order.GET("/pharmacy-admin", middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin), rOpts.OrderHandler.GetAllPharmacyAdminOrders)
+			order.GET("/admin", middleware.AllowRoles(appconstant.UserRoleIdAdmin), rOpts.OrderHandler.GetAllAdminOrders)
+			order.GET("/user", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.OrderHandler.GetAllUserOrders)
+			order.GET("/:id",
+				middleware.AllowRoles(appconstant.UserRoleIdUser, appconstant.UserRoleIdAdmin,
+					appconstant.UserRoleIdPharmacyAdmin), rOpts.OrderHandler.GetById)
+			order.POST("/:id/accept",
+				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin), rOpts.OrderHandler.ConfirmOrder)
+			order.POST("/:id/reject",
+				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin), rOpts.OrderHandler.RejectOrder)
+		}
+
 		pharmacy := v1.Group(
 			"/pharmacies",
 			middleware.LoginMiddleware(),
@@ -323,6 +341,17 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				stockMutationRequest.POST("", rOpts.ProductStockMutationRequestHandler.Add)
 				stockMutationRequest.PATCH("/:id", rOpts.ProductStockMutationRequestHandler.EditStatus)
 			}
+		}
+
+		transaction := v1.Group("/transactions", middleware.LoginMiddleware())
+		{
+			transaction.GET("", middleware.AllowRoles(appconstant.UserRoleIdAdmin, appconstant.UserRoleIdUser), rOpts.TransactionHandler.GetAllUserTransactions)
+			transaction.POST("", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.TransactionHandler.AddTransaction)
+			transaction.GET("/:id", middleware.AllowRoles(appconstant.UserRoleIdAdmin, appconstant.UserRoleIdUser), rOpts.TransactionHandler.GetTransactionById)
+			transaction.GET("/:id/total-payment", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.TransactionHandler.GetPayment)
+			transaction.POST("/:id/proof", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.TransactionHandler.UploadPaymentProof)
+			transaction.POST("/:id/accept", middleware.AllowRoles(appconstant.UserRoleIdAdmin), rOpts.TransactionHandler.AcceptTransaction)
+			transaction.POST("/:id/reject", middleware.AllowRoles(appconstant.UserRoleIdAdmin), rOpts.TransactionHandler.RejectTransaction)
 		}
 
 		users := v1.Group(

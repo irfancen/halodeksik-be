@@ -27,6 +27,13 @@ type ProfileUseCaseImpl struct {
 	cloudFolderCertificate string
 }
 
+func NewProfileUseCaseImpl(repo repository.ProfileRepository, uploader appcloud.FileUploader) *ProfileUseCaseImpl {
+	cloudFolderProfile := env.Get("GCLOUD_STORAGE_FOLDER_PROFILES")
+	cloudFolderCertificate := env.Get("GCLOUD_STORAGE_FOLDER_CERTIFICATES")
+
+	return &ProfileUseCaseImpl{repo: repo, cloudFolderProfile: cloudFolderProfile, cloudFolderCertificate: cloudFolderCertificate, uploader: uploader}
+}
+
 func (uc *ProfileUseCaseImpl) UpdateDoctorIsOnline(ctx context.Context, isOnline bool) (*entity.User, error) {
 	userId := ctx.(*gin.Context).Request.Context().Value(appconstant.ContextKeyUserId)
 	if userId == nil {
@@ -122,13 +129,6 @@ func (uc *ProfileUseCaseImpl) UpdateDoctorProfile(ctx context.Context, profile e
 
 	user.DoctorProfile = updatedProfile
 	return user, nil
-}
-
-func NewProfileUseCaseImpl(repo repository.ProfileRepository, uploader appcloud.FileUploader) *ProfileUseCaseImpl {
-	cloudFolderProfile := env.Get("GCLOUD_STORAGE_FOLDER_PROFILES")
-	cloudFolderCertificate := env.Get("GCLOUD_STORAGE_FOLDER_CERTIFICATES")
-
-	return &ProfileUseCaseImpl{repo: repo, cloudFolderProfile: cloudFolderProfile, cloudFolderCertificate: cloudFolderCertificate, uploader: uploader}
 }
 
 func (uc *ProfileUseCaseImpl) GetUserProfileByUserId(ctx context.Context, userId int64) (*entity.User, error) {
