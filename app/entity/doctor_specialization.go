@@ -18,6 +18,13 @@ type DoctorSpecialization struct {
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
+func (e *DoctorSpecialization) ToDoctorSpecializationResponse() responsedto.DoctorSpecializationResponse {
+	return responsedto.DoctorSpecializationResponse{
+		Id:   e.Id,
+		Name: e.Name,
+	}
+}
+
 func (e *DoctorSpecialization) GetEntityName() string {
 	return "doctor_specializations"
 }

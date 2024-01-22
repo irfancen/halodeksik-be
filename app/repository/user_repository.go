@@ -31,7 +31,7 @@ type UserRepositoryImpl struct {
 
 func (repo *UserRepositoryImpl) FindAllDoctors(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.User, error) {
 	const getAllDoctors = `SELECT users.id, email, user_role_id, is_verified, doctor_profiles.name AS name, 
-	doctor_profiles.profile_photo, doctor_profiles.starting_year, doctor_profiles.doctor_certificate, doctor_specializations.name FROM users
+	doctor_profiles.profile_photo, doctor_profiles.starting_year, doctor_profiles.doctor_certificate,doctor_profiles.is_online, doctor_specializations.id, doctor_specializations.name FROM users
 	INNER JOIN doctor_profiles ON users.id = doctor_profiles.user_id INNER JOIN doctor_specializations ON 
 	doctor_profiles.doctor_specialization_id = doctor_specializations.id WHERE user_role_id = 3 AND users.deleted_at IS NULL `
 
@@ -49,7 +49,7 @@ func (repo *UserRepositoryImpl) FindAllDoctors(ctx context.Context, param *query
 		var profileSpec entity.DoctorSpecialization
 		if err := rows.Scan(
 			&user.Id, &user.Email, &user.UserRoleId, &user.IsVerified, &profile.Name, &profile.ProfilePhoto, &profile.StartingYear,
-			&profile.DoctorCertificate, &profileSpec.Name,
+			&profile.DoctorCertificate, &profile.IsOnline, &profileSpec.Id, &profileSpec.Name,
 		); err != nil {
 			return nil, err
 		}
@@ -89,7 +89,7 @@ func (repo *UserRepositoryImpl) CountFindAllDoctors(ctx context.Context, param *
 }
 
 func (repo *UserRepositoryImpl) FindDoctorById(ctx context.Context, id int64) (*entity.User, error) {
-	const getDoctorById = `SELECT users.id, email, user_role_id, is_verified, doctor_profiles.name AS name, doctor_profiles.profile_photo, doctor_profiles.starting_year, doctor_profiles.doctor_certificate, doctor_specializations.name FROM users
+	const getDoctorById = `SELECT users.id, email, user_role_id, is_verified, doctor_profiles.name AS name, doctor_profiles.profile_photo, doctor_profiles.starting_year, doctor_profiles.doctor_certificate, doctor_profiles.is_online,doctor_specializations.id, doctor_specializations.name FROM users
 	INNER JOIN doctor_profiles ON users.id = doctor_profiles.user_id INNER JOIN doctor_specializations ON doctor_profiles.doctor_specialization_id = doctor_specializations.id
 	WHERE user_role_id = 3 AND users.deleted_at IS NULL AND users.id = $1`
 
@@ -101,7 +101,7 @@ func (repo *UserRepositoryImpl) FindDoctorById(ctx context.Context, id int64) (*
 	var profileSpec entity.DoctorSpecialization
 	err := row.Scan(
 		&user.Id, &user.Email, &user.UserRoleId, &user.IsVerified, &profile.Name, &profile.ProfilePhoto, &profile.StartingYear,
-		&profile.DoctorCertificate, &profileSpec.Name,
+		&profile.DoctorCertificate, &profile.IsOnline, &profileSpec.Id, &profileSpec.Name,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, apperror.ErrRecordNotFound

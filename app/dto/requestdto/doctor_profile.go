@@ -10,7 +10,7 @@ type RequestDoctorProfile struct {
 	Name                   string `json:"name" form:"name" validate:"required"`
 	StartingYear           int32  `json:"starting_year" form:"starting_year"  validate:"required,min=1800"`
 	DoctorSpecializationId int64  `json:"doctor_specialization_id" form:"doctor_specialization_id"  validate:"required"`
-	ConsultationFee        string `json:"consultation_fee" form:"starting_year"  validate:"required,numeric,numericgt=0"`
+	ConsultationFee        string `json:"consultation_fee" form:"consultation_fee"  validate:"required,numeric,numericgt=0"`
 }
 
 type RequestDoctorCertificate struct {

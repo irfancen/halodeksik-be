@@ -366,20 +366,41 @@ CREATE TABLE payment_methods
     deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
+CREATE TABLE transaction_statuses
+(
+    id         BIGSERIAL PRIMARY KEY,
+    name       VARCHAR                   NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+    deleted_at TIMESTAMPTZ DEFAULT NULL
+);
+
+CREATE TABLE transactions
+(
+    id         BIGSERIAL PRIMARY KEY,
+    date TIMESTAMPTZ NOT NULL ,
+    payment_proof VARCHAR NOT NULL ,
+    transaction_status_id  BIGINT                    NOT NULL REFERENCES transaction_statuses (id),
+    payment_method_id  BIGINT                    NOT NULL REFERENCES payment_methods (id),
+    address       VARCHAR                   NOT NULL ,
+    user_id            BIGINT                    NOT NULL REFERENCES users (id),
+    total_payment NUMERIC NOT NULL,
+    created_at         TIMESTAMPTZ DEFAULT now() NOT NULL,
+    updated_at         TIMESTAMPTZ DEFAULT now() NOT NULL,
+    deleted_at         TIMESTAMPTZ DEFAULT NULL
+);
+
 CREATE TABLE orders
 (
     id                 BIGSERIAL PRIMARY KEY,
     date               TIMESTAMPTZ               NOT NULL,
-    user_id            BIGINT                    NOT NULL REFERENCES users (id),
     pharmacy_id        BIGINT                    NOT NULL REFERENCES pharmacies (id),
-    payment_method_id  BIGINT                    NOT NULL REFERENCES payment_methods (id),
     no_of_items        INTEGER                   NOT NULL,
-    total_payment      NUMERIC                   NOT NULL,
-    payment_proof      VARCHAR                   NOT NULL,
-    user_address       VARCHAR                   NOT NULL,
     pharmacy_address   VARCHAR                   NOT NULL,
     shipping_method_id BIGINT                    NOT NULL REFERENCES shipping_methods (id),
     shipping_cost      NUMERIC                   NOT NULL,
+    total_payment      NUMERIC                   NOT NULL,
+    transaction_id  BIGINT                    NOT NULL REFERENCES transactions (id),
     created_at         TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at         TIMESTAMPTZ DEFAULT now() NOT NULL,
     deleted_at         TIMESTAMPTZ DEFAULT NULL
@@ -390,6 +411,8 @@ CREATE TABLE order_status_logs
     id              BIGSERIAL PRIMARY KEY,
     order_id        BIGINT                    NOT NULL REFERENCES orders (id),
     order_status_id BIGINT                    NOT NULL REFERENCES order_statuses (id),
+    is_latest BOOL NOT NULL ,
+    description TEXT NOT NULL ,
     created_at      TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at      TIMESTAMPTZ DEFAULT now() NOT NULL,
     deleted_at      TIMESTAMPTZ DEFAULT NULL
@@ -472,17 +495,23 @@ INSERT INTO consultation_session_statuses (name)
 values ('Open'),
        ('Close');
 
+INSERT INTO payment_methods (name)
+values ('Bank Transfer');
+
 INSERT INTO order_statuses (name)
-values ('Waiting for Payment'),
-       ('Paid'),
-       ('Waiting for Pharmacy'),
-       ('Pharmacy Confirmed'),
-       ('Order Packed'),
-       ('Ready to Pickup'),
-       ('Order Picked'),
-       ('Order Sent'),
-       ('Received'),
-       ('Canceled');
+values ('Waiting for Pharmacy'),
+       ('Processed'),
+       ('Sent'),
+       ('Order Confirmed'),
+        ('Canceled by Pharmacy'),
+        ('Canceled by User');
+
+
+INSERT INTO transaction_statuses (name)
+values ('Unpaid'),
+       ('Waiting for Confirmation'),
+       ('Payment Rejected'),
+       ('Paid');
 
 INSERT INTO provinces (id, name)
 VALUES (1, 'Bali');
@@ -1591,6 +1620,26 @@ VALUES (1, 1),
        (1, 3),
        (2, 2);
 
+INSERT INTO addresses(name, address, sub_district, district, city, province, postal_code, latitude, longitude, status, profile_id)
+values ('rumah', 'jl kripat', 'ciangasna', 'gunung putri', 78,9, '16968', '-6.354846', '106.952082', 1, 6);
+
+INSERT INTO transactions(date, payment_proof, transaction_status_id, payment_method_id, address, user_id, total_payment)
+values (now(), '',1,1,'jl kripat',6,20000);
+
+INSERT INTO orders(date, pharmacy_id, no_of_items, pharmacy_address, shipping_method_id, shipping_cost, total_payment, transaction_id)
+values (now(), 1, 2, 'Jalan Gatau', 1, 5000, 10000, 1),
+       (now(), 2, 1, 'Jalan Jalan', 1, 1000, 10000, 1),
+       (now(), 3, 1, 'Jalan Jaya', 1, 0, 0, 1);
+
+INSERT INTO order_details(order_id, product_id, quantity, name, generic_name, content, description, image, price)
+values (1, 1, 1, 'Panadol 500 mg 10 Kaplet', 'Panadol', 'Paracetamol', 'Obat sakit kepala', '', 2500),
+       (1, 2, 1, 'Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 'Obat sakit kepala', '', 2500),
+       (2, 2, 3, 'Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 'Obat sakit kepala', '', 3000),
+        (3, 2, 3, 'Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 'Obat sakit kepala', '', 0);
+
+
+INSERT INTO order_status_logs(order_id, order_status_id, is_latest, description)
+values (1,1,false,''), (1,2,true,''), (2,1,true,''),(3,1,true,'');
 
 -- CREATE FUNCTIONS --
 

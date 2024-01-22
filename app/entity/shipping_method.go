@@ -23,3 +23,10 @@ func (e *ShippingMethod) ToResponse() *responsedto.ShippingMethodResponse {
 		Cost: e.Cost,
 	}
 }
+
+func (e *ShippingMethod) ToIdNameResponse() *responsedto.ShippingMethodIdNameResponse {
+	return &responsedto.ShippingMethodIdNameResponse{
+		Id:   e.Id,
+		Name: e.Name,
+	}
+}

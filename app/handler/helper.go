@@ -123,6 +123,12 @@ func WrapError(err error, customCode ...int) error {
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrWrongCredentials):
 		fallthrough
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrPaymentSent):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrPaymentConfirmed):
+		fallthrough
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidCityProvinceCombi):
 		fallthrough
 
@@ -130,6 +136,9 @@ func WrapError(err error, customCode ...int) error {
 		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrStartDateAfterEndDate):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrBadConfirmStatus):
 		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInsufficientProductStock):

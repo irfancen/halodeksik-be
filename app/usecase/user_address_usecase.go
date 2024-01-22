@@ -185,7 +185,10 @@ func (uc *AddressUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.Ad
 
 	addressDb, err := uc.userAddressRepo.FindById(ctx, id)
 	if err != nil {
-		return nil, apperror.NewNotFound(addressDb, "Id", id)
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound(addressDb, "Id", id)
+		}
+		return nil, err
 	}
 
 	if addressDb.ProfileId != userId {
