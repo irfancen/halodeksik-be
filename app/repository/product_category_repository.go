@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/jackc/pgx/v5/pgconn"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
@@ -35,6 +36,14 @@ func (repo *ProductCategoryRepositoryImpl) Create(ctx context.Context, category 
 		`
 
 	row := repo.db.QueryRowContext(ctx, create, category.Name)
+	if row.Err() != nil {
+		var errPgConn *pgconn.PgError
+		if errors.As(row.Err(), &errPgConn) && errPgConn.Code == apperror.PgconnErrCodeUniqueConstraintViolation {
+			return nil, apperror.ErrProductCategoryUniqueConstraint
+		}
+		return nil, row.Err()
+	}
+
 	var created entity.ProductCategory
 	err := row.Scan(
 		&created.Id, &created.Name, &created.CreatedAt, &created.UpdatedAt, &created.DeletedAt,
@@ -151,6 +160,14 @@ func (repo *ProductCategoryRepositoryImpl) Update(ctx context.Context, category 
 		RETURNING id, name, created_at, updated_at, deleted_at`
 
 	row := repo.db.QueryRowContext(ctx, update, category.Name, category.Id)
+	if row.Err() != nil {
+		var errPgConn *pgconn.PgError
+		if errors.As(row.Err(), &errPgConn) && errPgConn.Code == apperror.PgconnErrCodeUniqueConstraintViolation {
+			return nil, apperror.ErrProductCategoryUniqueConstraint
+		}
+		return nil, row.Err()
+	}
+
 	var updated entity.ProductCategory
 	err := row.Scan(
 		&updated.Id, &updated.Name, &updated.CreatedAt, &updated.UpdatedAt, &updated.DeletedAt,
@@ -159,7 +176,18 @@ func (repo *ProductCategoryRepositoryImpl) Update(ctx context.Context, category 
 }
 
 func (repo *ProductCategoryRepositoryImpl) Delete(ctx context.Context, id int64) error {
-	const delete = `UPDATE product_categories SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL`
-	_, err := repo.db.ExecContext(ctx, delete, id)
+	const checkProducts = `SELECT count(*) FROM products WHERE product_category_id = $1`
+	row := repo.db.QueryRowContext(ctx, checkProducts, id)
+	var count int64
+	err := row.Scan(&count)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return apperror.ErrProductCategoryStillUsedByProducts
+	}
+
+	const deletePC = `UPDATE product_categories SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL`
+	_, err = repo.db.ExecContext(ctx, deletePC, id)
 	return err
 }

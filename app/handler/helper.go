@@ -108,6 +108,12 @@ func WrapError(err error, customCode ...int) error {
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrPharmacyProductUniqueConstraint):
 		fallthrough
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductCategoryUniqueConstraint):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductCategoryStillUsedByProducts):
+		fallthrough
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrProductUniqueConstraint):
 		fallthrough
 
