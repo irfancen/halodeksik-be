@@ -1612,6 +1612,7 @@ VALUES ('Kimia Farma Kuningan', 'Jalan Gatau', 'Kuningan', 'Setia Budi', 153, 6,
 INSERT INTO pharmacy_products(pharmacy_id, product_id, is_active, price, stock)
 VALUES (1, 1, true, '12000', 100),
        (1, 2, true, '5000', 95),
+       (2, 2, true, '2500', 95),
        (3, 1, true, '15000', 87);
 
 INSERT INTO pharmacy_shipping_methods(pharmacy_id, shipping_method_id)
@@ -1632,10 +1633,10 @@ values (now(), 1, 2, 'Jalan Gatau', 1, 5000, 10000, 1),
        (now(), 3, 1, 'Jalan Jaya', 1, 0, 0, 1);
 
 INSERT INTO order_details(order_id, product_id, quantity, name, generic_name, content, description, image, price)
-values (1, 1, 1, 'Panadol 500 mg 10 Kaplet', 'Panadol', 'Paracetamol', 'Obat sakit kepala', '', 2500),
-       (1, 2, 1, 'Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 'Obat sakit kepala', '', 2500),
-       (2, 2, 3, 'Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 'Obat sakit kepala', '', 3000),
-        (3, 2, 3, 'Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 'Obat sakit kepala', '', 0);
+values (1, 1, 1, 'Panadol 500 mg 10 Kaplet', 'Panadol', 'Paracetamol', 'Obat sakit kepala', '', '12000'),
+       (1, 2, 1, 'Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 'Obat sakit kepala', '', '2500'),
+       (2, 2, 3, 'Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 'Obat sakit kepala', '', '2500'),
+       (3, 2, 3, 'Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 'Obat sakit kepala', '', '0');
 
 
 INSERT INTO order_status_logs(order_id, order_status_id, is_latest, description)
