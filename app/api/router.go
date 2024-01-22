@@ -31,6 +31,7 @@ type RouterOpts struct {
 	ProductStockMutationRequestHandler *handler.ProductStockMutationRequestHandler
 	ProfileHandler                     *handler.ProfileHandler
 	RegisterTokenHandler               *handler.RegisterTokenHandler
+	ReportHandler                      *handler.ReportHandler
 	ShippingMethodHandler              *handler.ShippingMethodHandler
 	StockReportHandler                 *handler.StockReportHandler
 	TransactionHandler                 *handler.TransactionHandler
@@ -56,6 +57,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		ProductStockMutationRequestHandler: handler.NewProductStockMutationRequestHandler(allUC.ProductStockMutationRequest, appvalidator.Validator),
 		ProfileHandler:                     handler.NewProfileHandler(allUC.ProfileUseCase, appvalidator.Validator),
 		RegisterTokenHandler:               handler.NewRegisterTokenHandler(allUC.RegisterTokenUseCase, appvalidator.Validator),
+		ReportHandler:                      handler.NewReportHandler(allUC.ReportUseCase, appvalidator.Validator),
 		ShippingMethodHandler:              handler.NewShippingMethodHandler(allUC.ShippingMethodUseCase, appvalidator.Validator),
 		StockReportHandler:                 handler.NewStockReportHandler(allUC.ProductStockMutation, appvalidator.Validator),
 		TransactionHandler:                 handler.NewTransactionHandler(allUC.TransactionUseCase, appvalidator.Validator),
@@ -315,6 +317,17 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 		)
 		{
 			report.GET("", rOpts.StockReportHandler.FindAll)
+		}
+
+		sellReport := v1.Group(
+			"/reports",
+			middleware.LoginMiddleware(),
+		)
+		{
+			sellReport.GET("/sells", middleware.AllowRoles(appconstant.UserRoleIdAdmin), rOpts.ReportHandler.GetAllSellPharmacy)
+			sellReport.GET("/sells/monthly", middleware.AllowRoles(appconstant.UserRoleIdAdmin), rOpts.ReportHandler.GetAllSellPharmacyMonthly)
+			sellReport.GET("/sells/pharmacy-admin", middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin), rOpts.ReportHandler.GetAllSellsPharmacyAdmin)
+			sellReport.GET("/sells/monthly/pharmacy-admin", middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin), rOpts.ReportHandler.GetAllSellPharmacyAdminMonthly)
 		}
 
 		shippingMethod := v1.Group(

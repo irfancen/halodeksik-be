@@ -22,6 +22,7 @@ type AllUseCases struct {
 	ProductUseCase              usecase.ProductUseCase
 	ProfileUseCase              usecase.ProfileUseCase
 	RegisterTokenUseCase        usecase.RegisterTokenUseCase
+	ReportUseCase               usecase.ReportUseCase
 	TransactionUseCase          usecase.TransactionUseCase
 	ShippingMethodUseCase       usecase.ShippingMethodUseCase
 	UserAddressUseCase          usecase.AddressUseCase
@@ -58,6 +59,7 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 		ProfileUseCase:              usecase.NewProfileUseCaseImpl(allRepo.ProfileRepository, appcloud.AppFileUploader),
 		ShippingMethodUseCase:       usecase.NewShippingMethodUseCaseImpl(allRepo.ShippingMethodRepository, allRepo.UserAddressRepository, allRepo.AddressAreaRepository, allRepo.PharmacyProductRepository, allUtil.OngkirUtil),
 		RegisterTokenUseCase:        registerTokenUseCase,
+		ReportUseCase:               usecase.NewReportUseCaseImpl(allRepo.ReportRepository),
 		TransactionUseCase:          usecase.NewTransactionUseCaseImpl(allRepo.TransactionRepository, allRepo.UserAddressRepository, allRepo.PharmacyProductRepository, appcloud.AppFileUploader),
 		UserUseCase:                 usecase.NewUserUseCaseImpl(allRepo.UserRepository, allRepo.PharmacyRepository, allUtil.AuthUtil),
 		UserAddressUseCase:          usecase.NewAddressUseCaseImpl(allRepo.UserAddressRepository, allRepo.AddressAreaRepository, allUtil.LocUtil),
