@@ -269,7 +269,7 @@ func (repo *OrderRepositoryImpl) FindOrderById(ctx context.Context, id int64) (*
 		INNER JOIN order_status_logs ON orders.id = order_status_logs.order_id
 		INNER JOIN order_statuses ON order_status_logs.order_status_id = order_statuses.id
 		INNER JOIN pharmacies ON orders.pharmacy_id = pharmacies.id
-	WHERE orders.id = $1 AND order_status_logs.is_latest IS TRUE`
+	WHERE transactions.transaction_status_id = 4 AND orders.id = $1 AND order_status_logs.is_latest IS TRUE`
 
 	row := repo.db.QueryRowContext(ctx, findOrderById, id)
 	var order entity.Order
