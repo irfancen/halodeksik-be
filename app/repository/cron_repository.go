@@ -128,7 +128,7 @@ func (repo CronRepoImpl) bulkInsertStatus(tx *sql.Tx, orderIds []int64, isConfir
 		valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d, $%d, $%d)", i*colSize+1, i*colSize+2, i*colSize+3, i*colSize+4))
 		valueArgs = append(valueArgs, id)
 		if isConfirmed {
-			valueArgs = append(valueArgs, appconstant.ConfirmedOrderStatusId)
+			valueArgs = append(valueArgs, appconstant.ConfirmedUserOrderStatusId)
 		} else {
 			valueArgs = append(valueArgs, appconstant.CanceledByPharmacyOrderStatusId)
 		}
