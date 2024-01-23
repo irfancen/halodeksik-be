@@ -225,6 +225,8 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				middleware.AllowRoles(appconstant.UserRoleIdPharmacyAdmin), rOpts.OrderHandler.ShipOrder)
 			order.POST("/:id/receive",
 				middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.OrderHandler.ReceiveOrder)
+			order.GET("/:id/status-history",
+				middleware.AllowRoles(appconstant.UserRoleIdUser, appconstant.UserRoleIdPharmacyAdmin, appconstant.UserRoleIdAdmin), rOpts.OrderHandler.GetOrderLogs)
 		}
 
 		pharmacy := v1.Group(
@@ -369,6 +371,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			transaction.POST("/:id/proof", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.TransactionHandler.UploadPaymentProof)
 			transaction.POST("/:id/accept", middleware.AllowRoles(appconstant.UserRoleIdAdmin), rOpts.TransactionHandler.AcceptTransaction)
 			transaction.POST("/:id/reject", middleware.AllowRoles(appconstant.UserRoleIdAdmin), rOpts.TransactionHandler.RejectTransaction)
+			transaction.POST("/:id/cancel", middleware.AllowRoles(appconstant.UserRoleIdUser), rOpts.TransactionHandler.CancelTransaction)
 		}
 
 		users := v1.Group(

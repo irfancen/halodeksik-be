@@ -19,6 +19,7 @@ type OrderUseCase interface {
 	RejectOrder(ctx context.Context, id int64) (*entity.OrderStatusLog, error)
 	ShipOrder(ctx context.Context, id int64) (*entity.OrderStatusLog, error)
 	ReceiveOrder(ctx context.Context, id int64) (*entity.OrderStatusLog, error)
+	GetAllOrderLogsByOrderId(ctx context.Context, id int64) ([]*entity.OrderStatusLog, error)
 }
 
 type OrderUseCaseImpl struct {
@@ -246,4 +247,17 @@ func (uc *OrderUseCaseImpl) ReceiveOrder(ctx context.Context, id int64) (*entity
 	}
 
 	return status, nil
+}
+
+func (uc *OrderUseCaseImpl) GetAllOrderLogsByOrderId(ctx context.Context, id int64) ([]*entity.OrderStatusLog, error) {
+	order, err := uc.GetOrderById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	logs, err := uc.repo.FindAllOrderStatusLogsByOrderId(ctx, order.Id)
+	if err != nil {
+		return nil, err
+	}
+	return logs, nil
 }

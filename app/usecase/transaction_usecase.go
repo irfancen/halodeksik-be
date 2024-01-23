@@ -19,6 +19,7 @@ type TransactionUseCase interface {
 	GetTransactionById(ctx context.Context, id int64) (*entity.Transaction, error)
 	GetAllTransactions(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	UploadTransactionPayment(ctx context.Context, id int64) (*entity.Transaction, error)
+	CancelTransaction(ctx context.Context, id int64) (*entity.Transaction, error)
 	UpdateTransactionStatus(ctx context.Context, id int64, isAccepted bool) (*entity.Transaction, error)
 	FindTotalPaymentByTransactionId(ctx context.Context, id int64) (*entity.TransactionPaymentAndStatus, error)
 }
@@ -259,6 +260,34 @@ func (uc *TransactionUseCaseImpl) UpdateTransactionStatus(ctx context.Context, i
 		transactionDb.TransactionStatus.Id = appconstant.RejectedTransactionStatusId
 	}
 
+	updatedTransaction, err := uc.transactionRepository.UpdateTransaction(ctx, *transactionDb)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedTransaction, nil
+}
+
+func (uc *TransactionUseCaseImpl) CancelTransaction(ctx context.Context, id int64) (*entity.Transaction, error) {
+	userId := ctx.Value(appconstant.ContextKeyUserId).(int64)
+
+	transactionDb, err := uc.transactionRepository.FindTransactionById(ctx, id)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound(transactionDb, "Id", id)
+		}
+		return nil, err
+	}
+
+	if transactionDb.UserId != userId {
+		return nil, apperror.ErrForbiddenModifyEntity
+	}
+
+	if transactionDb.TransactionStatus.Id != appconstant.UnpaidTransactionStatusId {
+		return nil, apperror.ErrBadTransactionCancelStatus
+	}
+
+	transactionDb.TransactionStatus.Id = appconstant.CanceledTransactionStatusId
 	updatedTransaction, err := uc.transactionRepository.UpdateTransaction(ctx, *transactionDb)
 	if err != nil {
 		return nil, err

@@ -24,6 +24,7 @@ type OrderRepository interface {
 	UpdateOrderStatus(ctx context.Context, orderId int64, orderLog entity.OrderStatusLog) (*entity.OrderStatusLog, error)
 	FindLatestOrderStatusByOrderId(ctx context.Context, id int64) (*entity.OrderStatusLog, error)
 	AcceptOrder(ctx context.Context, orderId int64, orderLog entity.OrderStatusLog) (*entity.OrderStatusLog, error)
+	FindAllOrderStatusLogsByOrderId(ctx context.Context, orderId int64) ([]*entity.OrderStatusLog, error)
 }
 
 type OrderRepositoryImpl struct {
@@ -611,4 +612,35 @@ func (repo *OrderRepositoryImpl) AcceptOrder(ctx context.Context, orderId int64,
 	}
 	return &createdStatus, nil
 
+}
+
+func (repo *OrderRepositoryImpl) FindAllOrderStatusLogsByOrderId(ctx context.Context, orderId int64) ([]*entity.OrderStatusLog, error) {
+	const getAllLogs = `SELECT order_status_logs.id, order_statuses.name, order_status_logs.created_at as date, order_status_logs.is_latest, order_status_logs.description FROM order_status_logs
+	INNER JOIN orders ON order_status_logs.order_id = orders.id
+	INNER JOIN order_statuses ON order_status_logs.order_status_id = order_statuses.id
+	WHERE orders.id = $1 ORDER BY order_status_id `
+
+	rows, err := repo.db.QueryContext(ctx, getAllLogs, orderId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*entity.OrderStatusLog, 0)
+	for rows.Next() {
+		var log entity.OrderStatusLog
+		var status entity.OrderStatus
+
+		if err := rows.Scan(
+			&log.Id, &status.Name, &log.CreatedAt, &log.IsLatest, &log.Description,
+		); err != nil {
+			return nil, err
+		}
+		log.OrderStatus = &status
+		items = append(items, &log)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, err
 }

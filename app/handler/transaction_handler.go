@@ -201,6 +201,35 @@ func (h *TransactionHandler) RejectTransaction(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+func (h *TransactionHandler) CancelTransaction(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	transaction, err := h.uc.CancelTransaction(ctx, uri.Id)
+	if err != nil {
+		return
+	}
+
+	resp := dto.ResponseDto{Data: transaction.ToTransactionResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 func (h *TransactionHandler) GetPayment(ctx *gin.Context) {
 	var err error
 	defer func() {
