@@ -20,7 +20,7 @@ type PharmacyProductRepository interface {
 	CountFindAllJoinPharmacy(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 
 	FindByProductIdJoinPharmacy(ctx context.Context, productId int64, param *queryparamdto.GetAllParams) (*entity.PharmacyProduct, error)
-	SumTotalStocksByProductsId(ctx context.Context, productId int64, param *queryparamdto.GetAllParams) (int32, error)
+	MaxTotalStocksByProductsId(ctx context.Context, productId int64, param *queryparamdto.GetAllParams) (int32, error)
 
 	FindAllJoinProducts(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error)
 	FindAllByProductId(ctx context.Context, productId int64) ([]*entity.PharmacyProduct, error)
@@ -281,13 +281,13 @@ func (repo *PharmacyProductRepositoryImpl) FindByProductIdJoinPharmacy(ctx conte
 	return &pharmacyProduct, nil
 }
 
-func (repo *PharmacyProductRepositoryImpl) SumTotalStocksByProductsId(ctx context.Context, productId int64, param *queryparamdto.GetAllParams) (int32, error) {
+func (repo *PharmacyProductRepositoryImpl) MaxTotalStocksByProductsId(ctx context.Context, productId int64, param *queryparamdto.GetAllParams) (int32, error) {
 	var (
-		stock      int32
-		totalStock int32
+		stock    int32
+		maxStock int32
 	)
 
-	initQuery := `SELECT sum(pharmacy_products.stock) 
+	initQuery := `SELECT max(pharmacy_products.stock) 
 	FROM pharmacy_products
 	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
 	WHERE pharmacies.deleted_at IS NULL 
@@ -301,21 +301,22 @@ func (repo *PharmacyProductRepositoryImpl) SumTotalStocksByProductsId(ctx contex
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
 	if rows.Err() != nil {
-		return totalStock, err
+		return maxStock, err
 	}
-	defer rows.Close()
 
 	for rows.Next() {
 		if err := rows.Scan(&stock); err != nil {
-			return totalStock, err
+			return maxStock, err
 		}
-		totalStock += stock
+		if stock > maxStock {
+			maxStock = stock
+		}
 	}
 	if err := rows.Err(); err != nil {
-		return totalStock, err
+		return maxStock, err
 	}
 
-	return totalStock, nil
+	return maxStock, nil
 }
 
 func (repo *PharmacyProductRepositoryImpl) FindAllJoinProducts(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.PharmacyProduct, error) {
