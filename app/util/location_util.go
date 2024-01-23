@@ -93,13 +93,13 @@ func (l *LocationUtilImpl) ValidateLatLong(city string, province string, lat str
 
 	var data LocationJSONData
 
-	if data.Status != appconstant.GMAPStatusOK {
-		return apperror.ErrInvalidLatLong
-	}
-
 	err = json.Unmarshal(responseData, &data)
 	if err != nil {
 		return err
+	}
+
+	if data.Status != appconstant.GMAPStatusOK {
+		return apperror.ErrInvalidLatLong
 	}
 
 	latLongCity, latLongProvince := l.getCityAndProvince(data)
