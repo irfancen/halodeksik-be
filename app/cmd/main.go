@@ -44,6 +44,12 @@ func main() {
 	allRepositories := api.InitializeRepositories(db)
 	allUtil := api.InitializeUtil()
 	allUseCases := api.InitializeUseCases(allRepositories, allUtil)
+
+	err = allUseCases.CronUseCase.StartCron()
+	if err != nil {
+		applogger.Log.Error(err)
+	}
+
 	routerOpts := api.InitializeAllRouterOpts(allUseCases)
 
 	ginMode := api.GetGinMode()

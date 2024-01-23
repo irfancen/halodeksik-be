@@ -80,7 +80,7 @@ type LocationUtilImpl struct {
 }
 
 func (l *LocationUtilImpl) ValidateLatLong(city string, province string, lat string, long string) error {
-	url := fmt.Sprintf("%s/%s?latlng=%s,%s&key=%s&result_type=%s&language=%s", l.googleUrl, l.responseType, lat, long, l.apiKey, appconstant.AreaCityLevel, "id")
+	url := fmt.Sprintf("%s/%s?latlng=%s,%s&key=%s&result_type=%s&language=%s&region=%s", l.googleUrl, l.responseType, lat, long, l.apiKey, appconstant.AreaCityLevel, "id", "id")
 	response, err := http.Get(url)
 	if err != nil {
 		return err
@@ -96,6 +96,10 @@ func (l *LocationUtilImpl) ValidateLatLong(city string, province string, lat str
 	err = json.Unmarshal(responseData, &data)
 	if err != nil {
 		return err
+	}
+
+	if data.Status != appconstant.GMAPStatusOK {
+		return apperror.ErrInvalidLatLong
 	}
 
 	latLongCity, latLongProvince := l.getCityAndProvince(data)

@@ -30,7 +30,7 @@ func NewUserAddressRepositoryImpl(db *sql.DB) *UserAddressRepositoryImpl {
 
 func (repo *UserAddressRepositoryImpl) FindMainByUserId(ctx context.Context, userId int64) (*entity.Address, error) {
 	const findMainAddress = `
-	SELECT id, name, address, sub_district, district, city, province, postal_code, latitude, longitude, status, profile_id FROM addresses where profile_id = $1 and status = 1
+	SELECT id, name, address, sub_district, district, city, province, postal_code, latitude, longitude, status, profile_id FROM addresses where profile_id = $1 AND status = 1 AND deleted_at IS NULL
 	`
 	row := repo.db.QueryRowContext(ctx, findMainAddress, userId)
 	var address entity.Address

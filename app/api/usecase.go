@@ -9,6 +9,7 @@ type AllUseCases struct {
 	AddressAreaUseCase          usecase.AddressAreaUseCase
 	AuthUseCase                 usecase.AuthUsecase
 	CartItemUseCase             usecase.CartItemUseCase
+	CronUseCase                 usecase.CronUseCase
 	DoctorSpecializationUseCase usecase.DoctorSpecializationUseCase
 	DrugClassificationUseCase   usecase.DrugClassificationUseCase
 	ForgotTokenUseCase          usecase.ForgotTokenUseCase
@@ -22,6 +23,7 @@ type AllUseCases struct {
 	ProductUseCase              usecase.ProductUseCase
 	ProfileUseCase              usecase.ProfileUseCase
 	RegisterTokenUseCase        usecase.RegisterTokenUseCase
+	ReportUseCase               usecase.ReportUseCase
 	TransactionUseCase          usecase.TransactionUseCase
 	ShippingMethodUseCase       usecase.ShippingMethodUseCase
 	UserAddressUseCase          usecase.AddressUseCase
@@ -44,6 +46,7 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 		AddressAreaUseCase:          usecase.NewAddressAreaUseCaseImpl(allRepo.AddressAreaRepository, allUtil.LocUtil),
 		AuthUseCase:                 usecase.NewAuthUsecase(authRepos, allUtil.AuthUtil, appcloud.AppFileUploader, authCases),
 		CartItemUseCase:             usecase.NewCartItemUseCaseImpl(allRepo.CartItemRepository, allRepo.ProductRepository, allRepo.PharmacyProductRepository),
+		CronUseCase:                 usecase.NewCronUseCase(allRepo.CronRepository),
 		DrugClassificationUseCase:   usecase.NewDrugClassificationUseCaseImpl(allRepo.DrugClassificationRepository),
 		DoctorSpecializationUseCase: usecase.NewDoctorSpecializationUseCaseImpl(allRepo.DoctorSpecializationRepository, appcloud.AppFileUploader),
 		ForgotTokenUseCase:          forgotTokenUseCase,
@@ -58,6 +61,7 @@ func InitializeUseCases(allRepo *AllRepositories, allUtil *AllUtil) *AllUseCases
 		ProfileUseCase:              usecase.NewProfileUseCaseImpl(allRepo.ProfileRepository, appcloud.AppFileUploader),
 		ShippingMethodUseCase:       usecase.NewShippingMethodUseCaseImpl(allRepo.ShippingMethodRepository, allRepo.UserAddressRepository, allRepo.AddressAreaRepository, allRepo.PharmacyProductRepository, allUtil.OngkirUtil),
 		RegisterTokenUseCase:        registerTokenUseCase,
+		ReportUseCase:               usecase.NewReportUseCaseImpl(allRepo.ReportRepository),
 		TransactionUseCase:          usecase.NewTransactionUseCaseImpl(allRepo.TransactionRepository, allRepo.UserAddressRepository, allRepo.PharmacyProductRepository, appcloud.AppFileUploader),
 		UserUseCase:                 usecase.NewUserUseCaseImpl(allRepo.UserRepository, allRepo.PharmacyRepository, allUtil.AuthUtil),
 		UserAddressUseCase:          usecase.NewAddressUseCaseImpl(allRepo.UserAddressRepository, allRepo.AddressAreaRepository, allUtil.LocUtil),
