@@ -4,10 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
+	"strings"
 )
 
 type OrderRepository interface {
@@ -20,6 +23,7 @@ type OrderRepository interface {
 	FindOrderById(ctx context.Context, id int64) (*entity.Order, *entity.OrderIds, error)
 	UpdateOrderStatus(ctx context.Context, orderId int64, orderLog entity.OrderStatusLog) (*entity.OrderStatusLog, error)
 	FindLatestOrderStatusByOrderId(ctx context.Context, id int64) (*entity.OrderStatusLog, error)
+	AcceptOrder(ctx context.Context, orderId int64, orderLog entity.OrderStatusLog) (*entity.OrderStatusLog, error)
 }
 
 type OrderRepositoryImpl struct {
@@ -396,4 +400,215 @@ func (repo *OrderRepositoryImpl) FindLatestOrderStatusByOrderId(ctx context.Cont
 	}
 
 	return &orderStatus, nil
+}
+
+func (repo *OrderRepositoryImpl) findAllPharmacyProductsAndOrderDetailsByOrderId(ctx context.Context, orderId int64) ([]*entity.PharmacyProduct, []*entity.OrderDetail, error) {
+	getAllPharmacyProducts := `
+SELECT pp.id, pp.pharmacy_id, pp.product_id, pp.stock, pp.price, pp.is_active,
+       od.id, od.order_id, od.product_id, od.quantity, od.name, od.generic_name, od.content, od.description, od.image, od.price
+FROM orders o
+         INNER JOIN order_details od ON o.id = od.order_id
+         INNER JOIN pharmacy_products pp ON (od.product_id = pp.product_id AND o.pharmacy_id = pp.pharmacy_id)
+WHERE o.id = $1
+`
+
+	rows, err := repo.db.QueryContext(ctx, getAllPharmacyProducts, orderId)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	pharmacyProducts := make([]*entity.PharmacyProduct, 0)
+	orderDetails := make([]*entity.OrderDetail, 0)
+	for rows.Next() {
+		var (
+			pharmacyProduct entity.PharmacyProduct
+			orderDetail     entity.OrderDetail
+		)
+		if err := rows.Scan(
+			&pharmacyProduct.Id, &pharmacyProduct.PharmacyId, &pharmacyProduct.ProductId, &pharmacyProduct.Stock, &pharmacyProduct.Price, &pharmacyProduct.IsActive,
+			&orderDetail.Id, &orderDetail.OrderId, &orderDetail.ProductId, &orderDetail.Quantity, &orderDetail.Name, &orderDetail.GenericName,
+			&orderDetail.Content, &orderDetail.Description, &orderDetail.Image, &orderDetail.Price,
+		); err != nil {
+			return nil, nil, err
+		}
+		pharmacyProducts = append(pharmacyProducts, &pharmacyProduct)
+		orderDetails = append(orderDetails, &orderDetail)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	return pharmacyProducts, orderDetails, nil
+}
+
+func (repo *OrderRepositoryImpl) findNearestPharmacyProductByPharmacyAndProductId(ctx context.Context, pharmacy entity.Pharmacy, productId int64) (*entity.PharmacyProduct, error) {
+	getNearestPharmacyProduct := `SELECT pp.id, pp.pharmacy_id, pp.product_id, pp.stock, pp.price
+FROM pharmacy_products pp
+         INNER JOIN pharmacies p ON pp.pharmacy_id = p.id
+WHERE pp.pharmacy_id != $3 AND pp.product_id = $4 AND distance($1, $2, p.latitude, p.longitude) <= 25
+ORDER BY distance($1, $2, p.latitude, p.longitude);`
+	row := repo.db.QueryRowContext(ctx, getNearestPharmacyProduct, pharmacy.Latitude, pharmacy.Longitude, pharmacy.Id, productId)
+	if row.Err() != nil {
+		if errors.Is(row.Err(), sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+	}
+	var pharmacyProduct entity.PharmacyProduct
+	if err := row.Scan(
+		&pharmacyProduct.Id, &pharmacyProduct.PharmacyId, &pharmacyProduct.ProductId, &pharmacyProduct.Stock, &pharmacyProduct.Price,
+	); err != nil {
+		return nil, err
+	}
+
+	return &pharmacyProduct, nil
+}
+
+func (repo *OrderRepositoryImpl) getPharmacyIdAndLocationFromOrderId(ctx context.Context, orderId int64) (*entity.Pharmacy, error) {
+	query := `SELECT p.id, p.latitude, p.longitude
+			  FROM orders o 
+    			INNER JOIN pharmacies p ON p.id = o.pharmacy_id
+			  WHERE o.id = $1
+`
+	row1 := repo.db.QueryRowContext(ctx, query, orderId)
+	if row1.Err() != nil {
+		if errors.Is(row1.Err(), sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, row1.Err()
+	}
+
+	var pharmacy entity.Pharmacy
+	if err := row1.Scan(
+		&pharmacy.Id, &pharmacy.Latitude, &pharmacy.Longitude,
+	); err != nil {
+		return nil, err
+	}
+	return &pharmacy, nil
+}
+
+func (repo *OrderRepositoryImpl) AcceptOrder(ctx context.Context, orderId int64, orderLog entity.OrderStatusLog) (*entity.OrderStatusLog, error) {
+	tx, err := repo.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	pharmacyProducts, orderDetails, err := repo.findAllPharmacyProductsAndOrderDetailsByOrderId(ctx, orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	needStockTransfer := make(map[*entity.OrderDetail]*entity.PharmacyProduct)
+	doableOrders := make(map[*entity.OrderDetail]*entity.PharmacyProduct)
+	for i := 0; i < len(pharmacyProducts); i++ {
+		if pharmacyProducts[i].Stock < orderDetails[i].Quantity {
+			needStockTransfer[orderDetails[i]] = pharmacyProducts[i]
+			continue
+		}
+		doableOrders[orderDetails[i]] = pharmacyProducts[i]
+	}
+
+	pharmacyDest, err := repo.getPharmacyIdAndLocationFromOrderId(ctx, orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	stockMutationRequestQuery := `INSERT INTO product_stock_mutation_requests(pharmacy_product_origin_id, pharmacy_product_dest_id, stock, product_stock_mutation_request_status_id) VALUES `
+	stockMutationQuery := `INSERT INTO product_stock_mutations(pharmacy_product_id, product_stock_mutation_type_id, stock) VALUES `
+	updateStock := `UPDATE pharmacy_products SET stock = stock + $1 WHERE id = $2`
+
+	for orderDetail, pharmacyProductDest := range needStockTransfer {
+		pharmacyProductOrigin, err := repo.findNearestPharmacyProductByPharmacyAndProductId(ctx, *pharmacyDest, orderDetail.ProductId)
+		if err != nil {
+			if errors.Is(err, apperror.ErrRecordNotFound) {
+				return nil, errors.New("there are no nearby pharmacies")
+			}
+			return nil, err
+		}
+		requiredStock := orderDetail.Quantity - pharmacyProductDest.Stock
+		stockMutationRequestQuery += fmt.Sprintf(
+			"(%d, %d, %d, %d),",
+			pharmacyProductOrigin.Id, pharmacyProductDest.Id, requiredStock,
+			appconstant.StockMutationRequestStatusAccepted,
+		)
+		stockMutationQuery += fmt.Sprintf(
+			"(%d, %d, %d), (%d, %d, %d), (%d, %d, %d),",
+			pharmacyProductOrigin.Id, appconstant.StockMutationTypeReduction, requiredStock,
+			pharmacyProductDest.Id, appconstant.StockMutationTypeAddition, requiredStock,
+			pharmacyProductDest.Id, appconstant.StockMutationTypeReduction, orderDetail.Quantity,
+		)
+
+		if _, err := tx.ExecContext(ctx, updateStock,
+			0-requiredStock,
+			pharmacyProductOrigin.Id,
+		); err != nil {
+			return nil, err
+		}
+		if _, err := tx.ExecContext(ctx, updateStock,
+			requiredStock,
+			pharmacyProductDest.Id,
+		); err != nil {
+			return nil, err
+		}
+		if _, err := tx.ExecContext(ctx, updateStock,
+			0-orderDetail.Quantity,
+			pharmacyProductDest.Id,
+		); err != nil {
+			return nil, err
+		}
+	}
+
+	if len(needStockTransfer) > 0 {
+		stockMutationRequestQuery = strings.TrimSuffix(stockMutationRequestQuery, ",")
+		if _, err := tx.ExecContext(ctx, stockMutationRequestQuery); err != nil {
+			return nil, err
+		}
+	}
+
+	for orderDetail, pharmacyProduct := range doableOrders {
+		stockMutationQuery += fmt.Sprintf(
+			"(%d, %d, %d),", pharmacyProduct.Id, appconstant.StockMutationTypeReduction, orderDetail.Quantity,
+		)
+		reducedStock := 0 - orderDetail.Quantity
+		if _, err := tx.ExecContext(ctx, updateStock,
+			reducedStock,
+			pharmacyProduct.Id,
+		); err != nil {
+			return nil, err
+		}
+	}
+
+	stockMutationQuery = strings.TrimSuffix(stockMutationQuery, ",")
+	if _, err := tx.ExecContext(ctx, stockMutationQuery); err != nil {
+		return nil, err
+	}
+
+	const updateOldStatus = `UPDATE order_status_logs SET is_latest = FALSE WHERE order_id = $1 AND is_latest = true`
+	_, err = tx.ExecContext(ctx, updateOldStatus, orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	const addStatus = `INSERT INTO order_status_logs(order_id, order_status_id, is_latest, description)
+	values ($1, $2, $3, $4) RETURNING id, order_id, order_status_id, is_latest, description`
+
+	row2 := tx.QueryRowContext(ctx, addStatus, orderId, orderLog.OrderStatusId, orderLog.IsLatest, orderLog.Description)
+	var createdStatus entity.OrderStatusLog
+	err = row2.Scan(
+		&createdStatus.Id,
+		&createdStatus.OrderId,
+		&createdStatus.OrderStatusId,
+		&createdStatus.IsLatest,
+		&createdStatus.Description,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return &createdStatus, nil
+
 }

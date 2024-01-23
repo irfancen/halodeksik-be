@@ -151,12 +151,10 @@ func (uc *OrderUseCaseImpl) ConfirmOrder(ctx context.Context, id int64) (*entity
 		IsLatest:      true,
 	}
 
-	status, err := uc.repo.UpdateOrderStatus(ctx, order.Id, newOrder)
+	status, err := uc.repo.AcceptOrder(ctx, order.Id, newOrder)
 	if err != nil {
 		return nil, err
 	}
-
-	// todo: do stock transfer after this
 
 	return status, nil
 }
