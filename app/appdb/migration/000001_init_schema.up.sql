@@ -269,18 +269,6 @@ CREATE TABLE product_stock_mutations
     deleted_at                     TIMESTAMPTZ DEFAULT NULL
 );
 
-CREATE TABLE product_stock_mutation_requests
-(
-    id                                       BIGSERIAL PRIMARY KEY,
-    pharmacy_product_origin_id               BIGINT                    NOT NULL REFERENCES pharmacy_products (id),
-    pharmacy_product_dest_id                 BIGINT                    NOT NULL REFERENCES pharmacy_products (id),
-    stock                                    INT                       NOT NULL,
-    product_stock_mutation_request_status_id BIGINT                    NOT NULL REFERENCES product_stock_mutation_request_statuses (id),
-    created_at                               TIMESTAMPTZ DEFAULT now() NOT NULL,
-    updated_at                               TIMESTAMPTZ DEFAULT now() NOT NULL,
-    deleted_at                               TIMESTAMPTZ DEFAULT NULL
-);
-
 CREATE TABLE consultation_session_statuses
 (
     id         BIGSERIAL PRIMARY KEY,
@@ -420,19 +408,32 @@ CREATE TABLE order_status_logs
 
 CREATE TABLE order_details
 (
-    id           BIGSERIAL PRIMARY KEY,
-    order_id     BIGINT                    NOT NULL REFERENCES orders (id),
-    product_id   BIGINT                    NOT NULL REFERENCES products (id),
-    quantity     INTEGER                   NOT NULL,
-    name         VARCHAR                   NOT NULL,
-    generic_name VARCHAR                   NOT NULL,
-    content      VARCHAR                   NOT NULL,
-    description  VARCHAR                   NOT NULL,
-    image        VARCHAR                   NOT NULL,
-    price        NUMERIC                   NOT NULL,
-    created_at   TIMESTAMPTZ DEFAULT now() NOT NULL,
-    updated_at   TIMESTAMPTZ DEFAULT now() NOT NULL,
-    deleted_at   TIMESTAMPTZ DEFAULT NULL
+    id                                BIGSERIAL PRIMARY KEY,
+    order_id                          BIGINT                    NOT NULL REFERENCES orders (id),
+    product_id                        BIGINT                    NOT NULL REFERENCES products (id),
+    quantity                          INTEGER                   NOT NULL,
+    name                              VARCHAR                   NOT NULL,
+    generic_name                      VARCHAR                   NOT NULL,
+    content                           VARCHAR                   NOT NULL,
+    description                       VARCHAR                   NOT NULL,
+    image                             VARCHAR                   NOT NULL,
+    price                             NUMERIC                   NOT NULL,
+    created_at                        TIMESTAMPTZ DEFAULT now() NOT NULL,
+    updated_at                        TIMESTAMPTZ DEFAULT now() NOT NULL,
+    deleted_at                        TIMESTAMPTZ DEFAULT NULL
+);
+
+CREATE TABLE product_stock_mutation_requests
+(
+    id                                       BIGSERIAL PRIMARY KEY,
+    pharmacy_product_origin_id               BIGINT                    NOT NULL REFERENCES pharmacy_products (id),
+    pharmacy_product_dest_id                 BIGINT                    NOT NULL REFERENCES pharmacy_products (id),
+    stock                                    INT                       NOT NULL,
+    product_stock_mutation_request_status_id BIGINT                    NOT NULL REFERENCES product_stock_mutation_request_statuses (id),
+    order_detail_id                          BIGINT                    NULL REFERENCES order_details (id),
+    created_at                               TIMESTAMPTZ DEFAULT now() NOT NULL,
+    updated_at                               TIMESTAMPTZ DEFAULT now() NOT NULL,
+    deleted_at                               TIMESTAMPTZ DEFAULT NULL
 );
 
 

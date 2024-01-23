@@ -19,6 +19,7 @@ type OrderUseCase interface {
 	RejectOrder(ctx context.Context, id int64) (*entity.OrderStatusLog, error)
 	ShipOrder(ctx context.Context, id int64) (*entity.OrderStatusLog, error)
 	ReceiveOrder(ctx context.Context, id int64) (*entity.OrderStatusLog, error)
+	CancelOrder(ctx context.Context, id int64) (*entity.OrderStatusLog, error)
 	GetAllOrderLogsByOrderId(ctx context.Context, id int64) ([]*entity.OrderStatusLog, error)
 }
 
@@ -156,6 +157,15 @@ func (uc *OrderUseCaseImpl) ConfirmOrder(ctx context.Context, id int64) (*entity
 
 	status, err := uc.repo.AcceptOrder(ctx, order.Id, newOrder)
 	if err != nil {
+		if errors.Is(err, apperror.ErrNoPharmacyToStockTransfer) {
+			newOrder.OrderStatusId = appconstant.CanceledByPharmacyOrderStatusId
+			newOrder.Description = "There are no pharmacies available with the requested stock"
+			status, err := uc.repo.UpdateOrderStatus(ctx, order.Id, newOrder)
+			if err != nil {
+				return nil, err
+			}
+			return status, nil
+		}
 		return nil, err
 	}
 
@@ -242,6 +252,35 @@ func (uc *OrderUseCaseImpl) ReceiveOrder(ctx context.Context, id int64) (*entity
 	}
 
 	status, err := uc.repo.UpdateOrderStatus(ctx, order.Id, newOrder)
+	if err != nil {
+		return nil, err
+	}
+
+	return status, nil
+}
+
+func (uc *OrderUseCaseImpl) CancelOrder(ctx context.Context, id int64) (*entity.OrderStatusLog, error) {
+	order, err := uc.GetOrderById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	latestStatus, err := uc.repo.FindLatestOrderStatusByOrderId(ctx, order.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	if latestStatus.OrderStatusId != appconstant.ProcessedPharmacyOrderStatusId {
+		return nil, apperror.ErrBadConfirmStatus
+	}
+
+	newOrder := entity.OrderStatusLog{
+		OrderId:       order.Id,
+		OrderStatusId: appconstant.CanceledByPharmacyOrderStatusId,
+		IsLatest:      true,
+	}
+
+	status, err := uc.repo.CancelOrder(ctx, order.Id, newOrder)
 	if err != nil {
 		return nil, err
 	}

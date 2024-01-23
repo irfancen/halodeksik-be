@@ -1,6 +1,7 @@
 -- Put your ddl queries here.
 -- NO NEED TO PUT CREATE DATABASE statement here (assuming we already create the database when
 
+DROP TABLE IF EXISTS product_stock_mutation_requests;
 DROP TABLE IF EXISTS order_details;
 DROP TABLE IF EXISTS order_status_logs;
 DROP TABLE IF EXISTS orders;
@@ -12,7 +13,6 @@ DROP TABLE IF EXISTS prescriptions;
 DROP TABLE IF EXISTS consultation_messages;
 DROP TABLE IF EXISTS consultation_sessions;
 DROP TABLE IF EXISTS consultation_session_statuses;
-DROP TABLE IF EXISTS product_stock_mutation_requests;
 DROP TABLE IF EXISTS product_stock_mutations;
 DROP TABLE IF EXISTS product_stock_mutation_request_statuses;
 DROP TABLE IF EXISTS product_stock_mutation_types;
