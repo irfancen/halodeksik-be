@@ -393,7 +393,7 @@ func (repo *ProductRepositoryImpl) Update(ctx context.Context, product entity.Pr
 }
 
 func (repo *ProductRepositoryImpl) Delete(ctx context.Context, id int64) error {
-	tx, err := repo.db.Begin()
+	tx, err := repo.db.BeginTx(ctx, nil)
 	defer func(tx *sql.Tx) {
 		err = tx.Rollback()
 		if err != nil {
