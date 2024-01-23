@@ -21,7 +21,7 @@ func NewOrderHandler(uc usecase.OrderUseCase, validator appvalidator.AppValidato
 	return &OrderHandler{uc: uc, validator: validator}
 }
 
-func (h OrderHandler) GetAllPharmacyAdminOrders(ctx *gin.Context) {
+func (h *OrderHandler) GetAllPharmacyAdminOrders(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -62,7 +62,7 @@ func (h OrderHandler) GetAllPharmacyAdminOrders(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h OrderHandler) GetAllUserOrders(ctx *gin.Context) {
+func (h *OrderHandler) GetAllUserOrders(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -103,7 +103,7 @@ func (h OrderHandler) GetAllUserOrders(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h OrderHandler) GetAllAdminOrders(ctx *gin.Context) {
+func (h *OrderHandler) GetAllAdminOrders(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -144,7 +144,7 @@ func (h OrderHandler) GetAllAdminOrders(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h OrderHandler) GetById(ctx *gin.Context) {
+func (h *OrderHandler) GetById(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -173,7 +173,7 @@ func (h OrderHandler) GetById(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h OrderHandler) ConfirmOrder(ctx *gin.Context) {
+func (h *OrderHandler) ConfirmOrder(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -202,7 +202,7 @@ func (h OrderHandler) ConfirmOrder(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h OrderHandler) RejectOrder(ctx *gin.Context) {
+func (h *OrderHandler) RejectOrder(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -231,7 +231,7 @@ func (h OrderHandler) RejectOrder(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h OrderHandler) ShipOrder(ctx *gin.Context) {
+func (h *OrderHandler) ShipOrder(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -260,7 +260,7 @@ func (h OrderHandler) ShipOrder(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (h OrderHandler) ReceiveOrder(ctx *gin.Context) {
+func (h *OrderHandler) ReceiveOrder(ctx *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -281,6 +281,35 @@ func (h OrderHandler) ReceiveOrder(ctx *gin.Context) {
 	}
 
 	order, err := h.uc.ReceiveOrder(ctx.Request.Context(), uri.Id)
+	if err != nil {
+		return
+	}
+
+	resp := dto.ResponseDto{Data: order.ToOrderStatusLogResponse()}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *OrderHandler) CancelOrder(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	order, err := h.uc.CancelOrder(ctx.Request.Context(), uri.Id)
 	if err != nil {
 		return
 	}
