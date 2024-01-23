@@ -288,3 +288,38 @@ func (h OrderHandler) ReceiveOrder(ctx *gin.Context) {
 	resp := dto.ResponseDto{Data: order.ToOrderStatusLogResponse()}
 	ctx.JSON(http.StatusOK, resp)
 }
+
+func (h OrderHandler) GetOrderLogs(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			err = WrapError(err)
+			_ = ctx.Error(err)
+		}
+	}()
+
+	uri := uriparamdto.ResourceById{}
+	err = ctx.ShouldBindUri(&uri)
+	if err != nil {
+		return
+	}
+
+	err = h.validator.Validate(uri)
+	if err != nil {
+		return
+	}
+
+	logs, err := h.uc.GetAllOrderLogsByOrderId(ctx.Request.Context(), uri.Id)
+	if err != nil {
+		return
+	}
+	var resps []*responsedto.OrderHistoryResponse
+	for _, log := range logs {
+		res := log.ToOrderStatusHistoryResponse()
+		resps = append(resps, &res)
+	}
+
+	resp := dto.ResponseDto{Data: resps}
+	ctx.JSON(http.StatusOK, resp)
+
+}

@@ -51,9 +51,11 @@ var (
 	ErrGetShipmentMethodDifferentPharmacy = errors.New("cannot get shipment method for different pharmacy")
 	ErrGetShipmentCost                    = errors.New("failed to retrieve shipment cost")
 
-	ErrPaymentSent      = errors.New("payment has already been sent")
-	ErrPaymentConfirmed = errors.New("transaction has already been paid")
-	ErrPaymentNotSent   = errors.New("transaction has not been paid")
+	ErrPaymentSent                = errors.New("payment has already been sent")
+	ErrPaymentConfirmed           = errors.New("transaction has already been paid")
+	ErrPaymentNotSent             = errors.New("transaction has not been paid")
+	ErrBadTransactionCancelStatus = errors.New("can only cancel unpaid transaction")
+
 	ErrBadConfirmStatus = errors.New("can only confirm waiting order")
 	ErrBadRejectStatus  = errors.New("can only reject waiting order")
 	ErrBadShipStatus    = errors.New("can only ship processed order")

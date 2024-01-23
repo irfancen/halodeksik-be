@@ -177,6 +177,9 @@ func WrapError(err error, customCode ...int) error {
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrGetShipmentMethodDifferentPharmacy):
 		fallthrough
 
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrBadTransactionCancelStatus):
+		fallthrough
+
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidIntInString):
 		errWrapper.Code = http.StatusBadRequest
 

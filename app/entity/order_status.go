@@ -50,6 +50,7 @@ type OrderStatusLog struct {
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
 	DeletedAt     sql.NullTime `json:"deleted_at"`
+	OrderStatus   *OrderStatus
 }
 
 func (l *OrderStatusLog) ToOrderStatusLogResponse() responsedto.OrderLogResponse {
@@ -59,5 +60,15 @@ func (l *OrderStatusLog) ToOrderStatusLogResponse() responsedto.OrderLogResponse
 		OrderStatusId: l.OrderStatusId,
 		IsLatest:      l.IsLatest,
 		Description:   l.Description,
+	}
+}
+
+func (l *OrderStatusLog) ToOrderStatusHistoryResponse() responsedto.OrderHistoryResponse {
+	return responsedto.OrderHistoryResponse{
+		Id:              l.Id,
+		OrderStatusName: l.OrderStatus.Name,
+		Date:            l.CreatedAt,
+		IsLatest:        l.IsLatest,
+		Description:     l.Description,
 	}
 }

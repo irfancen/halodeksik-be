@@ -23,6 +23,14 @@ type OrderLogResponse struct {
 	Description   string `json:"description,omitempty"`
 }
 
+type OrderHistoryResponse struct {
+	Id              int64     `json:"id,omitempty"`
+	OrderStatusName string    `json:"order_status_name"`
+	Date            time.Time `json:"date"`
+	IsLatest        bool      `json:"is_latest"`
+	Description     string    `json:"description"`
+}
+
 type OrderListResponse struct {
 	Id            int64 `json:"id"`
 	Pharmacy      *PharmacyIdNameResponse
