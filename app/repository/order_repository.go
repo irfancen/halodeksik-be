@@ -443,13 +443,13 @@ WHERE o.id = $1
 	return pharmacyProducts, orderDetails, nil
 }
 
-func (repo *OrderRepositoryImpl) findNearestPharmacyProductByPharmacyAndProductId(ctx context.Context, pharmacy entity.Pharmacy, productId int64) (*entity.PharmacyProduct, error) {
+func (repo *OrderRepositoryImpl) findNearestPharmacyProductByPharmacyAndProductIdWithSufficientStock(ctx context.Context, pharmacy entity.Pharmacy, productId int64, stockNeeded int32) (*entity.PharmacyProduct, error) {
 	getNearestPharmacyProduct := `SELECT pp.id, pp.pharmacy_id, pp.product_id, pp.stock, pp.price
 FROM pharmacy_products pp
          INNER JOIN pharmacies p ON pp.pharmacy_id = p.id
-WHERE pp.pharmacy_id != $3 AND pp.product_id = $4 AND distance($1, $2, p.latitude, p.longitude) <= 25
+WHERE pp.pharmacy_id != $3 AND pp.product_id = $4 AND pp.stock >= $5 AND distance($1, $2, p.latitude, p.longitude) <= 25
 ORDER BY distance($1, $2, p.latitude, p.longitude)`
-	row := repo.db.QueryRowContext(ctx, getNearestPharmacyProduct, pharmacy.Latitude, pharmacy.Longitude, pharmacy.Id, productId)
+	row := repo.db.QueryRowContext(ctx, getNearestPharmacyProduct, pharmacy.Latitude, pharmacy.Longitude, pharmacy.Id, productId, stockNeeded)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -521,14 +521,16 @@ func (repo *OrderRepositoryImpl) AcceptOrder(ctx context.Context, orderId int64,
 	updateStock := `UPDATE pharmacy_products SET stock = stock + $1 WHERE id = $2`
 
 	for orderDetail, pharmacyProductDest := range needStockTransfer {
-		pharmacyProductOrigin, err := repo.findNearestPharmacyProductByPharmacyAndProductId(ctx, *pharmacyDest, orderDetail.ProductId)
+		requiredStock := orderDetail.Quantity - pharmacyProductDest.Stock
+		pharmacyProductOrigin, err := repo.findNearestPharmacyProductByPharmacyAndProductIdWithSufficientStock(ctx,
+			*pharmacyDest, orderDetail.ProductId, requiredStock,
+		)
 		if err != nil {
 			if errors.Is(err, apperror.ErrRecordNotFound) {
 				return nil, apperror.ErrNoPharmacyToStockTransfer
 			}
 			return nil, err
 		}
-		requiredStock := orderDetail.Quantity - pharmacyProductDest.Stock
 		stockMutationRequestQuery += fmt.Sprintf(
 			"(%d, %d, %d, %d, %d),",
 			pharmacyProductOrigin.Id, pharmacyProductDest.Id, requiredStock,
