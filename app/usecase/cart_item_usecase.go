@@ -162,7 +162,7 @@ func (uc *CartItemUseCaseImpl) Checkout(ctx context.Context, param *queryparamdt
 			cartItem.PharmacyProduct = &entity.PharmacyProduct{}
 		}
 
-		stock, err := uc.pharmacyProductRepo.SumTotalStocksByProductsId(ctx, cartItem.ProductId, param)
+		stock, err := uc.pharmacyProductRepo.MaxTotalStocksByProductsId(ctx, cartItem.ProductId, param)
 		if err != nil {
 			return nil, err
 		}
