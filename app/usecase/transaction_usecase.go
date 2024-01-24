@@ -171,7 +171,7 @@ func (uc *TransactionUseCaseImpl) AddTransaction(ctx context.Context, transactio
 
 		decShippingCost, _ := decimal.NewFromString(order.ShippingCost)
 		argOrder := entity.Order{
-			PharmacyId:       firstPharProd.Id,
+			PharmacyId:       firstPharProd.PharmacyId,
 			NoOfItems:        int32(len(order.OrderDetails)),
 			PharmacyAddress:  firstPharProd.Pharmacy.Address,
 			ShippingMethodId: order.ShippingMethodId,
