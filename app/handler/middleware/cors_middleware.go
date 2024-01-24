@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"halodeksik-be/app/env"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/util"
 )
 
@@ -10,7 +10,7 @@ var appClients string
 
 func CORSMiddleware(ctx *gin.Context) {
 	if util.IsEmptyString(appClients) {
-		appClients = env.Get("APP_CLIENT")
+		appClients = appconfig.Config.AppClient
 	}
 
 	ctx.Writer.Header().Set("Access-Control-Allow-Origin", appClients)

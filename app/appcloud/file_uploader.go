@@ -8,7 +8,6 @@ import (
 	"google.golang.org/api/option"
 	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/applogger"
-	"halodeksik-be/app/env"
 	"io"
 	"mime/multipart"
 	"os"
@@ -35,15 +34,15 @@ type FileUploaderImpl struct {
 }
 
 func NewFileUploaderImpl() *FileUploaderImpl {
-	credentialFile := env.Get("GCLOUD_CREDENTIAL_FILE")
+	credentialFile := appconfig.Config.GcloudCredentialFile
 	client, err := storage.NewClient(context.Background(), option.WithCredentialsFile(credentialFile))
 	if err != nil {
 		applogger.Log.Errorf("failed to create file uploader client: %v", err)
 	}
 
-	projectId := env.Get("GCLOUD_STORAGE_PROJECT_ID")
-	bucketName := env.Get("GCLOUD_STORAGE_BUCKET_NAME")
-	cloudUrl := env.Get("GCLOUD_STORAGE_CDN")
+	projectId := appconfig.Config.GcloudStorageProjectId
+	bucketName := appconfig.Config.GcloudStorageBucketName
+	cloudUrl := appconfig.Config.GcloudStorageCdn
 
 	return &FileUploaderImpl{
 		client:     client,

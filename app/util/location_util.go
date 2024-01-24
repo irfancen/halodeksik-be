@@ -3,11 +3,11 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -60,10 +60,10 @@ type LocationUtil interface {
 func NewLocationUtil(region string) LocationUtil {
 
 	return &LocationUtilImpl{
-		googleUrl:    os.Getenv("GMAP_URL"),
+		googleUrl:    appconfig.Config.GmapUrl,
 		region:       region,
 		responseType: "json",
-		apiKey:       os.Getenv("GMAP_KEY"),
+		apiKey:       appconfig.Config.GmapKey,
 		shortenedArea: map[string]string{
 			"DKI Jakarta":   "Daerah Khusus Ibukota Jakarta",
 			"DI Yogyakarta": "Daerah Istimewa Yogyakarta",

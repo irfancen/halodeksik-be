@@ -2,12 +2,11 @@ package util
 
 import (
 	"errors"
-	"halodeksik-be/app/apperror"
-	"os"
-
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"halodeksik-be/app/appconfig"
+	"halodeksik-be/app/apperror"
 )
 
 type AuthUtil interface {
@@ -42,7 +41,7 @@ func (u *AuthUtilImpl) GenerateSecureToken() (string, error) {
 }
 
 func (u *AuthUtilImpl) SignToken(token *jwt.Token) (string, error) {
-	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
+	tokenString, err := token.SignedString([]byte(appconfig.Config.JwtSecret))
 	if err != nil {
 		return "", err
 	}

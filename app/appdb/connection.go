@@ -3,7 +3,7 @@ package appdb
 import (
 	"database/sql"
 	"fmt"
-	"halodeksik-be/app/env"
+	"halodeksik-be/app/appconfig"
 	"strconv"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -25,11 +25,11 @@ func Connect() (*sql.DB, error) {
 
 func getDataSourceName() (string, error) {
 	var (
-		host     = env.Get("DB_HOST")
-		port     = env.Get("DB_PORT")
-		user     = env.Get("DB_USER")
-		password = env.Get("DB_PASSWORD")
-		dbname   = env.Get("DB_NAME")
+		host     = appconfig.Config.DbHost
+		port     = appconfig.Config.DbPort
+		user     = appconfig.Config.DbUser
+		password = appconfig.Config.DbPassword
+		dbname   = appconfig.Config.DbName
 	)
 
 	portAsInt, err := strconv.Atoi(port)

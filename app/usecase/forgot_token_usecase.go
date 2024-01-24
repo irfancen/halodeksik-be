@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"halodeksik-be/app/appconfig"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
+	"halodeksik-be/app/applogger"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
 	"halodeksik-be/app/util"
-	"os"
+	"io/ioutil"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -24,11 +28,12 @@ type ForgotTokenUseCaseImpl struct {
 	authUtil              util.AuthUtil
 	mailUtil              util.EmailUtil
 	forgotTokenExpired    int
+	frontEndUrl           string
 }
 
 func NewForgotTokenUsecase(uRepo repository.UserRepository, tForgotRepo repository.ForgotTokenRepository, aUtil util.AuthUtil, eUtil util.EmailUtil) ForgotTokenUseCase {
 
-	expiryForgot, err := strconv.Atoi(os.Getenv("FORGOT_TOKEN_EXPIRED_MINUTE"))
+	expiryForgot, err := strconv.Atoi(appconfig.Config.ForgotTokenExpired)
 	if err != nil {
 		return nil
 	}
@@ -39,6 +44,7 @@ func NewForgotTokenUsecase(uRepo repository.UserRepository, tForgotRepo reposito
 		authUtil:              aUtil,
 		mailUtil:              eUtil,
 		forgotTokenExpired:    expiryForgot,
+		frontEndUrl:           appconfig.Config.FrontendUrl,
 	}
 }
 
@@ -90,12 +96,18 @@ func (uc *ForgotTokenUseCaseImpl) SendForgotToken(ctx context.Context, email str
 
 	to := []string{email}
 	subject := "Password Reset"
-	message := fmt.Sprintf("Reset link:\n%s/reset-password?token=%s", os.Getenv("FRONTEND_URL"), uid)
 
-	err = uc.mailUtil.SendEmail(to, []string{}, subject, message)
+	message, err := uc.composeEmail(token)
 	if err != nil {
 		return "", err
 	}
+
+	go func() {
+		err := uc.mailUtil.SendEmail(to, []string{}, subject, message)
+		if err != nil {
+			applogger.Log.Error(err.Error())
+		}
+	}()
 
 	return uid, nil
 
@@ -118,4 +130,23 @@ func (uc *ForgotTokenUseCaseImpl) VerifyForgetToken(ctx context.Context, token s
 		return nil, apperror.ErrRegisterTokenExpired
 	}
 	return existedToken, nil
+}
+
+func (uc *ForgotTokenUseCaseImpl) composeEmail(token entity.ForgotPasswordToken) (string, error) {
+	htmlFilePath := "app/asset/auth/reset_password.html"
+
+	message := fmt.Sprintf("%s/reset-password?token=%s", uc.frontEndUrl, token.Token)
+
+	content, err := ioutil.ReadFile(htmlFilePath)
+	if err != nil {
+		return "", err
+	}
+
+	formattedExpiredAt := token.ExpiredAt.Format(appconstant.TimeHourFormatQueryParam)
+
+	htmlString := string(content)
+	htmlString = strings.Replace(htmlString, "{{link}}", message, 1)
+	htmlString = strings.Replace(htmlString, "{{tokenExpired}}", formattedExpiredAt, 1)
+
+	return htmlString, nil
 }

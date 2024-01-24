@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
@@ -113,6 +114,14 @@ func (repo ReportRepositoryImpl) FindSalesAllPharmacyMonthly(ctx context.Context
 	defer rows.Close()
 
 	items := make([]*entity.SellReportMonthly, 0)
+
+	for i := 1; i <= appconstant.MonthInAYear; i++ {
+		items = append(items, &entity.SellReportMonthly{
+			Month:     int32(i),
+			TotalSell: 0,
+		})
+	}
+
 	for rows.Next() {
 		var sellReport entity.SellReportMonthly
 
@@ -121,7 +130,7 @@ func (repo ReportRepositoryImpl) FindSalesAllPharmacyMonthly(ctx context.Context
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, &sellReport)
+		items[sellReport.Month-1] = &sellReport
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

@@ -5,12 +5,12 @@ import (
 	"errors"
 	"github.com/shopspring/decimal"
 	"halodeksik-be/app/appcloud"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/dto/requestdto"
 	"halodeksik-be/app/entity"
-	"halodeksik-be/app/env"
 	"halodeksik-be/app/repository"
 )
 
@@ -33,14 +33,13 @@ type TransactionUseCaseImpl struct {
 }
 
 func NewTransactionUseCaseImpl(transRepo repository.TransactionRepository, addressRepo repository.UserAddressRepository, pharmacyProdRepo repository.PharmacyProductRepository, uploader appcloud.FileUploader) *TransactionUseCaseImpl {
-	proof := env.Get("GCLOUD_STORAGE_FOLDER_PAYMENT_PROOFS")
 
 	return &TransactionUseCaseImpl{
 		transactionRepository:     transRepo,
 		addressRepository:         addressRepo,
 		pharmacyProductRepository: pharmacyProdRepo,
 		uploader:                  uploader,
-		cloudFolderPaymentProof:   proof,
+		cloudFolderPaymentProof:   appconfig.Config.GcloudStoragePaymentProofs,
 	}
 }
 

@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"context"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/appconstant"
-	"halodeksik-be/app/env"
 	"strconv"
 	"time"
 
@@ -13,7 +13,7 @@ import (
 var duration time.Duration
 
 func initDuration() {
-	seconds, err := strconv.Atoi(env.Get("REQUEST_TIMEOUT"))
+	seconds, err := strconv.Atoi(appconfig.Config.RequestTimeout)
 	if err != nil {
 		seconds = appconstant.DefaultRequestTimeout
 	}

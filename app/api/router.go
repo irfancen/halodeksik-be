@@ -1,6 +1,8 @@
 package api
 
 import (
+	"github.com/gin-gonic/gin"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/applogger"
 	"halodeksik-be/app/appvalidator"
@@ -10,9 +12,6 @@ import (
 	"halodeksik-be/app/ws"
 	"net/http"
 	"net/http/pprof"
-	"os"
-
-	"github.com/gin-gonic/gin"
 )
 
 type RouterOpts struct {
@@ -74,7 +73,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases, hub *ws.Hub) *RouterOpts {
 }
 
 func GetGinMode() string {
-	ginMode := os.Getenv("APP_MODE")
+	ginMode := appconfig.Config.AppMode
 	if ginMode == "" {
 		return gin.DebugMode
 	}

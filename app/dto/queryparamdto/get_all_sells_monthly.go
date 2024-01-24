@@ -5,11 +5,10 @@ import (
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/util"
-	"strings"
 )
 
 type GetAllPharmacySellsMonthlyForAdminQuery struct {
-	Search            string `form:"search"`
+	ProductId         string `form:"product_id"`
 	ProductCategoryId string `form:"product_category_id"`
 	Year              int64  `form:"year"`
 }
@@ -17,18 +16,6 @@ type GetAllPharmacySellsMonthlyForAdminQuery struct {
 func (q GetAllPharmacySellsMonthlyForAdminQuery) ToGetAllParams() (*GetAllParams, error) {
 	param := NewGetAllParams()
 	product := new(entity.Product)
-
-	if q.Search != "" {
-		words := strings.Split(q.Search, " ")
-		wordToSearch := ""
-		for _, word := range words {
-			wordToSearch += "%" + word + "%"
-		}
-		param.WhereClauses = append(
-			param.WhereClauses,
-			appdb.NewWhere(product.GetSqlColumnFromField("Name"), appdb.ILike, wordToSearch),
-		)
-	}
 
 	param.GroupClauses = append(
 		param.GroupClauses,
@@ -39,6 +26,11 @@ func (q GetAllPharmacySellsMonthlyForAdminQuery) ToGetAllParams() (*GetAllParams
 	sortClause.Order = appdb.OrderAsc
 
 	param.SortClauses = append(param.SortClauses, sortClause)
+
+	if !util.IsEmptyString(q.ProductId) {
+		column := product.GetSqlColumnFromField("Id")
+		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.EqualTo, q.ProductId))
+	}
 
 	if !util.IsEmptyString(q.ProductCategoryId) {
 		column := product.GetSqlColumnFromField("ProductCategoryId")
