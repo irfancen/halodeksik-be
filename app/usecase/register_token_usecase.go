@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"halodeksik-be/app/appconfig"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
+	"halodeksik-be/app/applogger"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
 	"halodeksik-be/app/util"
-	"os"
+	"io/ioutil"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -25,11 +29,12 @@ type RegisterTokenUseCaseImpl struct {
 	mailUtil                util.EmailUtil
 	registerTokenExpired    int
 	loginTokenExpired       int
+	frontEndUrl             string
 }
 
 func NewRegisterTokenUseCase(uRepo repository.UserRepository, tRegisterRepo repository.RegisterTokenRepository, aUtil util.AuthUtil, eUtil util.EmailUtil) RegisterTokenUseCase {
 
-	expiryRegister, err := strconv.Atoi(os.Getenv("REGISTER_TOKEN_EXPIRED_MINUTE"))
+	expiryRegister, err := strconv.Atoi(appconfig.Config.RegisterTokenExpired)
 	if err != nil {
 		return nil
 	}
@@ -40,6 +45,7 @@ func NewRegisterTokenUseCase(uRepo repository.UserRepository, tRegisterRepo repo
 		authUtil:                aUtil,
 		mailUtil:                eUtil,
 		registerTokenExpired:    expiryRegister,
+		frontEndUrl:             appconfig.Config.FrontendUrl,
 	}
 }
 
@@ -110,12 +116,37 @@ func (uc *RegisterTokenUseCaseImpl) SendRegisterToken(ctx context.Context, email
 
 	to := []string{email}
 	subject := "Email Verification"
-	message := fmt.Sprintf("Verification link:\n%s/verify-register?token=%s", os.Getenv("FRONTEND_URL"), uid)
-
-	err = uc.mailUtil.SendEmail(to, []string{}, subject, message)
+	message, err := uc.composeEmail(userVerify)
 	if err != nil {
 		return "", err
 	}
 
+	go func() {
+		err := uc.mailUtil.SendEmail(to, []string{}, subject, message)
+		if err != nil {
+			applogger.Log.Error(err.Error())
+		}
+	}()
+
 	return uid, nil
+}
+
+func (uc *RegisterTokenUseCaseImpl) composeEmail(token entity.VerificationToken) (string, error) {
+	htmlFilePath := "app/asset/auth/register_token.html"
+
+	message := fmt.Sprintf("%s/verify-register?token=%s", uc.frontEndUrl, token.Token)
+
+	content, err := ioutil.ReadFile(htmlFilePath)
+	if err != nil {
+		return "", err
+	}
+
+	formattedExpiredAt := token.ExpiredAt.Format(appconstant.TimeHourFormatQueryParam)
+
+	htmlString := string(content)
+	htmlString = strings.Replace(htmlString, "{{link}}", message, 1)
+	htmlString = strings.Replace(htmlString, "{{tokenExpired}}", formattedExpiredAt, 1)
+	htmlString = strings.Replace(htmlString, "{{recipient}}", token.Email, 1)
+
+	return htmlString, nil
 }

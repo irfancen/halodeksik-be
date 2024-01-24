@@ -5,11 +5,11 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/handler"
-	"os"
 )
 
 func doAuthWs(ctx *gin.Context) (*entity.Claims, error) {
@@ -22,7 +22,7 @@ func doAuthWs(ctx *gin.Context) (*entity.Claims, error) {
 	claims := &entity.Claims{}
 
 	tkn, err := jwt.ParseWithClaims(c, claims, func(token *jwt.Token) (any, error) {
-		return []byte(os.Getenv("SECRET")), nil
+		return []byte(appconfig.Config.JwtSecret), nil
 	})
 
 	if err != nil {

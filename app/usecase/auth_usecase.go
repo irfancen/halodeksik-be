@@ -4,15 +4,14 @@ import (
 	"context"
 	"github.com/golang-jwt/jwt/v5"
 	"halodeksik-be/app/appcloud"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/requestdto"
 	"halodeksik-be/app/dto/responsedto"
 	"halodeksik-be/app/entity"
-	"halodeksik-be/app/env"
 	"halodeksik-be/app/repository"
 	"halodeksik-be/app/util"
-	"os"
 	"strconv"
 	"time"
 )
@@ -50,10 +49,8 @@ type AuthUseCases struct {
 }
 
 func NewAuthUsecase(authRepos AuthRepos, aUtil util.AuthUtil, uploader appcloud.FileUploader, cases AuthUseCases) AuthUsecase {
-	cloudUrl := env.Get("GCLOUD_STORAGE_CDN")
-	cloudFolder := env.Get("GCLOUD_STORAGE_FOLDER_CERTIFICATES")
 
-	expiryLogin, err := strconv.Atoi(os.Getenv("LOGIN_TOKEN_EXPIRED_MINUTE"))
+	expiryLogin, err := strconv.Atoi(appconfig.Config.LoginTokenExpired)
 	if err != nil {
 		return nil
 	}
@@ -65,8 +62,8 @@ func NewAuthUsecase(authRepos AuthRepos, aUtil util.AuthUtil, uploader appcloud.
 		profileRepository:       authRepos.ProfileRepo,
 		authUtil:                aUtil,
 		uploader:                uploader,
-		cloudUrl:                cloudUrl,
-		cloudFolder:             cloudFolder,
+		cloudUrl:                appconfig.Config.GcloudStorageCdn,
+		cloudFolder:             appconfig.Config.GcloudStorageFolderCertificates,
 		loginExpired:            expiryLogin,
 		forgotTokenUseCase:      cases.TForgotUseCase,
 		registerTokenUseCase:    cases.TRegisterUseCase,

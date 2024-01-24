@@ -179,23 +179,28 @@ func (h *ProfileHandler) bindFile(ctx *gin.Context, fileFieldName string) error 
 	}
 
 	if file != nil {
-		var req interface{}
+		req1 := requestdto.RequestProfilePhoto{}
+		req2 := requestdto.RequestDoctorCertificate{}
 		if fileFieldName == appconstant.FormProfilePhoto {
-			req = requestdto.RequestProfilePhoto{}
+			err = ctx.ShouldBind(&req1)
+			if err != nil {
+				return err
+			}
+			err = h.validator.Validate(req1)
+			if err != nil {
+				return err
+			}
 		} else if fileFieldName == appconstant.FormCertificate {
-			req = requestdto.RequestDoctorCertificate{}
+			err = ctx.ShouldBind(&req2)
+			if err != nil {
+				return err
+			}
+			err = h.validator.Validate(req2)
+			if err != nil {
+				return err
+			}
 		} else {
 			return apperror.ErrUnauthorized
-		}
-
-		err = ctx.ShouldBind(&req)
-		if err != nil {
-			return err
-		}
-
-		err = h.validator.Validate(req)
-		if err != nil {
-			return err
 		}
 
 		reqCtx1 := ctx.Request.Context()

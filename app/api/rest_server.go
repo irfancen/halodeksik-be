@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/applogger"
-	"halodeksik-be/app/env"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,8 +18,8 @@ import (
 )
 
 func NewServer(router *gin.Engine) *http.Server {
-	uri := env.Get("APP_URI")
-	port := env.Get("APP_REST_PORT")
+	uri := appconfig.Config.AppUri
+	port := appconfig.Config.AppRestPort
 	addr := fmt.Sprintf("%s:%s", uri, port)
 
 	return &http.Server{
@@ -40,7 +40,7 @@ func StartAndSetupGracefulShutdown(server *http.Server) {
 	<-quit
 	applogger.Log.Info("Shutting down server...")
 
-	serverTimeout, err := strconv.Atoi(env.Get("SERVER_SHUTDOWN_TIMEOUT"))
+	serverTimeout, err := strconv.Atoi(appconfig.Config.ServerShutdownTimeout)
 	if err != nil {
 		serverTimeout = appconstant.DefaultServerShutdownTimeout
 	}

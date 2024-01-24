@@ -7,4 +7,6 @@ const (
 	StockMutationRequestStatusPending  = 1
 	StockMutationRequestStatusAccepted = 2
 	StockMutationRequestStatusRejected = 3
+
+	MonthInAYear = 12
 )

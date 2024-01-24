@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"halodeksik-be/app/appcloud"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
-	"halodeksik-be/app/env"
 	"halodeksik-be/app/repository"
 	"mime/multipart"
 	"path/filepath"
@@ -36,14 +36,12 @@ type ProductUseCaseImpl struct {
 }
 
 func NewProductUseCaseImpl(productRepo repository.ProductRepository, pharmacyRepo repository.PharmacyRepository, uploader appcloud.FileUploader) *ProductUseCaseImpl {
-	cloudUrl := env.Get("GCLOUD_STORAGE_CDN")
-	cloudFolder := env.Get("GCLOUD_STORAGE_FOLDER_PRODUCTS")
 	return &ProductUseCaseImpl{
 		productRepo:  productRepo,
 		pharmacyRepo: pharmacyRepo,
 		uploader:     uploader,
-		cloudUrl:     cloudUrl,
-		cloudFolder:  cloudFolder,
+		cloudUrl:     appconfig.Config.GcloudStorageCdn,
+		cloudFolder:  appconfig.Config.GcloudStorageFolderProducts,
 	}
 }
 

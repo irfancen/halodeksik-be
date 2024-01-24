@@ -5,10 +5,10 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"halodeksik-be/app/appcloud"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/entity"
-	"halodeksik-be/app/env"
 	"halodeksik-be/app/repository"
 )
 
@@ -28,10 +28,7 @@ type ProfileUseCaseImpl struct {
 }
 
 func NewProfileUseCaseImpl(repo repository.ProfileRepository, uploader appcloud.FileUploader) *ProfileUseCaseImpl {
-	cloudFolderProfile := env.Get("GCLOUD_STORAGE_FOLDER_PROFILES")
-	cloudFolderCertificate := env.Get("GCLOUD_STORAGE_FOLDER_CERTIFICATES")
-
-	return &ProfileUseCaseImpl{repo: repo, cloudFolderProfile: cloudFolderProfile, cloudFolderCertificate: cloudFolderCertificate, uploader: uploader}
+	return &ProfileUseCaseImpl{repo: repo, cloudFolderProfile: appconfig.Config.GcloudStorageFolderProfiles, cloudFolderCertificate: appconfig.Config.GcloudStorageFolderCertificates, uploader: uploader}
 }
 
 func (uc *ProfileUseCaseImpl) UpdateDoctorIsOnline(ctx context.Context, isOnline bool) (*entity.User, error) {

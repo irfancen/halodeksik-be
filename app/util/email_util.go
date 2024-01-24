@@ -2,8 +2,8 @@ package util
 
 import (
 	"fmt"
+	"halodeksik-be/app/appconfig"
 	"net/smtp"
-	"os"
 	"strings"
 )
 
@@ -18,15 +18,17 @@ func NewEmailUtil() EmailUtil {
 type EmailUtilImpl struct{}
 
 func (a EmailUtilImpl) SendEmail(to []string, cc []string, subject, message string) error {
-	body := "From: " + os.Getenv("MAIL_SENDER") + "\n" +
+	body := "From: " + appconfig.Config.MailSender + "\n" +
 		"To: " + strings.Join(to, ",") + "\n" +
 		"Cc: " + strings.Join(cc, ",") + "\n" +
-		"Subject: " + subject + "\n\n" +
+		"Subject: " + subject + "\n" +
+		"MIME-version: 1.0;\n" +
+		"Content-Type: text/html; charset=\"UTF-8\";\n\n" +
 		message
 
-	auth := smtp.PlainAuth("", os.Getenv("MAIL_EMAIL"), os.Getenv("MAIL_PASSWORD"), os.Getenv("MAIL_SMTP_HOST"))
-	smtpAddr := fmt.Sprintf("%s:%s", os.Getenv("MAIL_SMTP_HOST"), os.Getenv("MAIL_SMTP_PORT"))
-	err := smtp.SendMail(smtpAddr, auth, os.Getenv("MAIL_EMAIL"), append(to, cc...), []byte(body))
+	auth := smtp.PlainAuth("", appconfig.Config.MailAddress, appconfig.Config.MailPassword, appconfig.Config.MailSmtpHost)
+	smtpAddr := fmt.Sprintf("%s:%s", appconfig.Config.MailSmtpHost, appconfig.Config.MailSmtpPort)
+	err := smtp.SendMail(smtpAddr, auth, appconfig.Config.MailAddress, append(to, cc...), []byte(body))
 	if err != nil {
 		return err
 	}

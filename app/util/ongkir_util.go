@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/shopspring/decimal"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/apperror"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -49,9 +49,9 @@ type RajaOngkirUtil struct {
 
 func NewRajaOngkirUtil() *RajaOngkirUtil {
 	return &RajaOngkirUtil{
-		url:         os.Getenv("RAJAONGKIR_URL"),
+		url:         appconfig.Config.RajaongkirUrl,
 		contentType: "application/x-www-form-urlencoded",
-		apiKey:      os.Getenv("RAJAONGKIR_API_KEY"),
+		apiKey:      appconfig.Config.RajaongkirKey,
 	}
 }
 

@@ -14,11 +14,11 @@ type RequestDoctorProfile struct {
 }
 
 type RequestDoctorCertificate struct {
-	Certificate *multipart.FileHeader `json:"certificate" form:"certificate" validate:"omitempty,filetype=pdf png jpg jpeg,filesize=500"`
+	Certificate *multipart.FileHeader `json:"certificate" form:"certificate" validate:"omitempty,filetype=pdf png jpg jpeg JPG PNG JPEG PDF,filesize=500"`
 }
 
 type RequestProfilePhoto struct {
-	ProfilePhoto *multipart.FileHeader `json:"profile_photo" form:"profile_photo" validate:"omitempty,filetype=png jpg jpeg,filesize=500"`
+	ProfilePhoto *multipart.FileHeader `json:"profile_photo" form:"profile_photo" validate:"omitempty,filetype=png jpg jpeg JPG PNG JPEG,filesize=500"`
 }
 
 type RequestDoctorIsOnline struct {
