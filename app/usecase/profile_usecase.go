@@ -72,7 +72,7 @@ func (uc *ProfileUseCaseImpl) UpdateUserProfile(ctx context.Context, profile ent
 	profile.ProfilePhoto = user.UserProfile.ProfilePhoto
 	photo := ctx.Value(appconstant.FormProfilePhoto)
 	if photo != nil {
-		url, err2 := uc.uploader.Upload(ctx, photo, uc.cloudFolderProfile)
+		url, err2 := uc.uploader.UploadFromFileHeader(ctx, photo, uc.cloudFolderProfile)
 		if err2 != nil {
 			return nil, err2
 		}
@@ -105,7 +105,7 @@ func (uc *ProfileUseCaseImpl) UpdateDoctorProfile(ctx context.Context, profile e
 	profile.IsOnline = user.DoctorProfile.IsOnline
 	photo := ctx.Value(appconstant.FormProfilePhoto)
 	if photo != nil {
-		url, err2 := uc.uploader.Upload(ctx, photo, uc.cloudFolderProfile)
+		url, err2 := uc.uploader.UploadFromFileHeader(ctx, photo, uc.cloudFolderProfile)
 		if err2 != nil {
 			return nil, err2
 		}
@@ -115,7 +115,7 @@ func (uc *ProfileUseCaseImpl) UpdateDoctorProfile(ctx context.Context, profile e
 	profile.DoctorCertificate = user.DoctorProfile.DoctorCertificate
 	cert := ctx.Value(appconstant.FormCertificate)
 	if cert != nil {
-		url, err2 := uc.uploader.Upload(ctx, cert, uc.cloudFolderCertificate)
+		url, err2 := uc.uploader.UploadFromFileHeader(ctx, cert, uc.cloudFolderCertificate)
 		if err2 != nil {
 			return nil, err2
 		}

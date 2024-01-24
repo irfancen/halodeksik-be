@@ -7,6 +7,7 @@ import (
 	"halodeksik-be/app/dto"
 	"halodeksik-be/app/handler"
 	"halodeksik-be/app/handler/middleware"
+	"halodeksik-be/app/ws"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -18,6 +19,7 @@ type RouterOpts struct {
 	AddressAreaHandler                 *handler.AddressAreaHandler
 	AuthHandler                        *handler.AuthHandler
 	CartItemHandler                    *handler.CartItemHandler
+	ChatHandler                        *handler.ChatHandler
 	DoctorSpecsHandler                 *handler.DoctorSpecializationHandler
 	DrugClassificationHandler          *handler.DrugClassificationHandler
 	ForgotTokenHandler                 *handler.ForgotTokenHandler
@@ -25,6 +27,7 @@ type RouterOpts struct {
 	OrderHandler                       *handler.OrderHandler
 	PharmacyHandler                    *handler.PharmacyHandler
 	PharmacyProductsHandler            *handler.PharmacyProductHandler
+	PrescriptionHandler                *handler.PrescriptionHandler
 	ProductCategoryHandler             *handler.ProductCategoryHandler
 	ProductHandler                     *handler.ProductHandler
 	ProductStockMutationHandler        *handler.ProductStockMutationHandler
@@ -37,13 +40,15 @@ type RouterOpts struct {
 	TransactionHandler                 *handler.TransactionHandler
 	UserAddressHandler                 *handler.UserAddressHandler
 	UserHandler                        *handler.UserHandler
+	SickLeaveFormHandler               *handler.SickLeaveFormHandler
 }
 
-func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
+func InitializeAllRouterOpts(allUC *AllUseCases, hub *ws.Hub) *RouterOpts {
 	return &RouterOpts{
 		AddressAreaHandler:                 handler.NewAddressAreaHandler(allUC.AddressAreaUseCase),
 		AuthHandler:                        handler.NewAuthHandler(allUC.AuthUseCase, appvalidator.Validator),
 		CartItemHandler:                    handler.NewCartItemHandler(allUC.CartItemUseCase, appvalidator.Validator),
+		ChatHandler:                        handler.NewChatHandler(hub, allUC.ConsultationSessionUseCase, allUC.ConsultationMessageUseCase, allUC.ProfileUseCase, appvalidator.Validator),
 		DoctorSpecsHandler:                 handler.NewDoctorSpecializationHandler(allUC.DoctorSpecializationUseCase, appvalidator.Validator),
 		DrugClassificationHandler:          handler.NewDrugClassificationHandler(allUC.DrugClassificationUseCase),
 		ForgotTokenHandler:                 handler.NewForgotTokenHandler(allUC.ForgotTokenUseCase, appvalidator.Validator),
@@ -51,6 +56,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		OrderHandler:                       handler.NewOrderHandler(allUC.OrderUseCase, appvalidator.Validator),
 		PharmacyHandler:                    handler.NewPharmacyHandler(allUC.PharmacyUseCase, appvalidator.Validator),
 		PharmacyProductsHandler:            handler.NewPharmacyProductHAndler(allUC.PharmacyProductUseCase, appvalidator.Validator),
+		PrescriptionHandler:                handler.NewPrescriptionHandler(allUC.PrescriptionUseCase, appvalidator.Validator),
 		ProductCategoryHandler:             handler.NewProductCategoryHandler(allUC.ProductCategoryUseCase, appvalidator.Validator),
 		ProductHandler:                     handler.NewProductHandler(allUC.ProductUseCase, appvalidator.Validator),
 		ProductStockMutationHandler:        handler.NewProductStockMutationHandler(allUC.ProductStockMutation, appvalidator.Validator),
@@ -63,6 +69,7 @@ func InitializeAllRouterOpts(allUC *AllUseCases) *RouterOpts {
 		TransactionHandler:                 handler.NewTransactionHandler(allUC.TransactionUseCase, appvalidator.Validator),
 		UserAddressHandler:                 handler.NewAddressHandler(allUC.UserAddressUseCase, appvalidator.Validator),
 		UserHandler:                        handler.NewUserHandler(allUC.UserUseCase, appvalidator.Validator),
+		SickLeaveFormHandler:               handler.NewSickLeaveFormHandler(allUC.SickLeaveFormUseCase, appvalidator.Validator),
 	}
 }
 
@@ -151,6 +158,40 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 				middleware.LoginMiddleware(),
 				middleware.AllowRoles(appconstant.UserRoleIdUser),
 				rOpts.CartItemHandler.Remove,
+			)
+		}
+
+		chats := v1.Group("/chats")
+		{
+			chats.POST(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdUser),
+				rOpts.ChatHandler.CreateRoom,
+			)
+			chats.GET(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
+				rOpts.ChatHandler.GetById,
+			)
+			chats.GET(
+				"/:id/join",
+				middleware.LoginWsMiddleware(),
+				middleware.AllowRolesWs(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
+				rOpts.ChatHandler.JoinRoom,
+			)
+			chats.GET(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
+				rOpts.ChatHandler.GetAllByUserIdOrDoctorId,
+			)
+			chats.PUT(
+				"/:id",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
+				rOpts.ChatHandler.EditStatusAsEnded,
 			)
 		}
 
@@ -257,6 +298,28 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			pharmacyProducts.GET("/:id/request", rOpts.PharmacyProductsHandler.GetAllByProductId)
 		}
 
+		prescriptions := v1.Group("/prescriptions")
+		{
+			prescriptions.GET(
+				"/:sessionId",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
+				rOpts.PrescriptionHandler.GetBySessionId,
+			)
+			prescriptions.POST(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor),
+				rOpts.PrescriptionHandler.Add,
+			)
+			prescriptions.PUT(
+				"/:sessionId",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor),
+				rOpts.PrescriptionHandler.EditBySessionId,
+			)
+		}
+
 		productCategories := v1.Group("/product-categories")
 		{
 			productCategories.GET("/:id", rOpts.ProductCategoryHandler.GetById)
@@ -287,7 +350,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			products.GET(
 				"/:id/admin",
 				middleware.LoginMiddleware(),
-				middleware.AllowRoles(appconstant.UserRoleIdAdmin, appconstant.UserRoleIdPharmacyAdmin),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin, appconstant.UserRoleIdPharmacyAdmin, appconstant.UserRoleIdDoctor),
 				rOpts.ProductHandler.GetById,
 			)
 			products.GET("/:id", rOpts.ProductHandler.GetByIdForUser)
@@ -295,7 +358,7 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			products.GET(
 				"/admin",
 				middleware.LoginMiddleware(),
-				middleware.AllowRoles(appconstant.UserRoleIdAdmin, appconstant.UserRoleIdPharmacyAdmin),
+				middleware.AllowRoles(appconstant.UserRoleIdAdmin, appconstant.UserRoleIdPharmacyAdmin, appconstant.UserRoleIdDoctor),
 				rOpts.ProductHandler.GetAllForAdmin,
 			)
 			products.POST(
@@ -433,6 +496,27 @@ func NewRouter(rOpts *RouterOpts, ginMode string) *gin.Engine {
 			}
 		}
 
+		sickLeave := v1.Group("/sick-leave-forms")
+		{
+			sickLeave.GET(
+				"/:sessionId",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor, appconstant.UserRoleIdUser),
+				rOpts.SickLeaveFormHandler.GetBySessionId,
+			)
+			sickLeave.POST(
+				"",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor),
+				rOpts.SickLeaveFormHandler.Add,
+			)
+			sickLeave.PUT(
+				"/:sessionId",
+				middleware.LoginMiddleware(),
+				middleware.AllowRoles(appconstant.UserRoleIdDoctor),
+				rOpts.SickLeaveFormHandler.EditBySessionId,
+			)
+		}
 	}
 
 	return router

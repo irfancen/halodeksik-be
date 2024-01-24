@@ -193,6 +193,24 @@ func WrapError(err error, customCode ...int) error {
 		fallthrough
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrInvalidIntInString):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrChatStillOngoing):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrConsultationSessionAlreadyHasPrescription):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrConsultationSessionPrescriptionMustExistBeforeIssuingSickLeave):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrSickLeaveStartingDateShouldBeBeforeEndingDate):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrConsultationSessionAlreadyHasSickLeaveForm):
+		fallthrough
+
+	case errors.Is(errWrapper.ErrorStored, apperror.ErrChatAlreadyEnded):
 		errWrapper.Code = http.StatusBadRequest
 
 	case errors.Is(errWrapper.ErrorStored, apperror.ErrNoPharmacyToStockTransfer):

@@ -38,7 +38,7 @@ func (uc *DoctorSpecializationUseCaseImpl) Add(ctx context.Context, specializati
 	fileHeader := ctx.Value(appconstant.FormImage)
 
 	if fileHeader != nil {
-		fileName, err = uc.uploader.Upload(ctx, fileHeader, specialization.GetEntityName())
+		fileName, err = uc.uploader.UploadFromFileHeader(ctx, fileHeader, specialization.GetEntityName())
 		if err != nil {
 			return nil, err
 		}
@@ -120,7 +120,7 @@ func (uc *DoctorSpecializationUseCaseImpl) Edit(ctx context.Context, id int64, s
 	fileHeader := ctx.Value(appconstant.FormImage)
 
 	if fileHeader != nil {
-		fileName, err = uc.uploader.Upload(ctx, fileHeader, specialization.GetEntityName())
+		fileName, err = uc.uploader.UploadFromFileHeader(ctx, fileHeader, specialization.GetEntityName())
 		if err != nil {
 			return nil, err
 		}

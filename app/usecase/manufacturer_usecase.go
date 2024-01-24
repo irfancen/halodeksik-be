@@ -38,7 +38,7 @@ func (uc *ManufacturerUseCaseImpl) Add(ctx context.Context, manufacturer entity.
 	fileHeader := ctx.Value(appconstant.FormImage)
 
 	if fileHeader != nil {
-		fileName, err = uc.uploader.Upload(ctx, fileHeader, manufacturer.GetEntityName())
+		fileName, err = uc.uploader.UploadFromFileHeader(ctx, fileHeader, manufacturer.GetEntityName())
 		if err != nil {
 			return nil, err
 		}
@@ -120,7 +120,7 @@ func (uc *ManufacturerUseCaseImpl) Edit(ctx context.Context, id int64, manufactu
 	fileHeader := ctx.Value(appconstant.FormImage)
 
 	if fileHeader != nil {
-		fileName, err = uc.uploader.Upload(ctx, fileHeader, manufacturer.GetEntityName())
+		fileName, err = uc.uploader.UploadFromFileHeader(ctx, fileHeader, manufacturer.GetEntityName())
 		if err != nil {
 			return nil, err
 		}

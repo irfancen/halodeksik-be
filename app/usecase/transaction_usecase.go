@@ -80,7 +80,7 @@ func (uc *TransactionUseCaseImpl) UploadTransactionPayment(ctx context.Context, 
 
 	proof := ctx.Value(appconstant.FormPaymentProof)
 	if proof != nil {
-		url, err2 := uc.uploader.Upload(ctx, proof, uc.cloudFolderPaymentProof)
+		url, err2 := uc.uploader.UploadFromFileHeader(ctx, proof, uc.cloudFolderPaymentProof)
 		if err2 != nil {
 			return nil, err2
 		}

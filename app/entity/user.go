@@ -77,3 +77,48 @@ func (u *User) ToDoctorProfileResponse() *responsedto.DoctorProfileResponse {
 		IsOnline:        u.DoctorProfile.IsOnline,
 	}
 }
+
+func (u *User) ToPrescriptionSickLeaveUserProfileResponse() *responsedto.PrescriptionSickLeaveUserProfileResponse {
+	if u == nil {
+		return nil
+	}
+	if u.UserProfile != nil {
+		var dateOfBirth string
+
+		if !u.UserProfile.DateOfBirth.IsZero() {
+			dateOfBirth = u.UserProfile.DateOfBirth.Format(time.RFC3339)
+		}
+
+		return &responsedto.PrescriptionSickLeaveUserProfileResponse{
+			Email:       u.Email,
+			Name:        u.UserProfile.Name,
+			DateOfBirth: dateOfBirth,
+		}
+	}
+	if u.DoctorProfile != nil {
+		return &responsedto.PrescriptionSickLeaveUserProfileResponse{
+			Email:                u.Email,
+			Name:                 u.DoctorProfile.Name,
+			DoctorSpecialization: u.DoctorProfile.DoctorSpecialization.Name,
+		}
+	}
+	return nil
+}
+
+func (u *User) GetProfile() *Profile {
+	if u.UserProfile != nil {
+		return &Profile{
+			UserId:       u.Id,
+			Name:         u.UserProfile.Name,
+			ProfilePhoto: u.UserProfile.ProfilePhoto,
+		}
+	}
+	if u.DoctorProfile != nil {
+		return &Profile{
+			UserId:       u.Id,
+			Name:         u.DoctorProfile.Name,
+			ProfilePhoto: u.DoctorProfile.ProfilePhoto,
+		}
+	}
+	return nil
+}

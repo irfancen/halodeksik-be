@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"google.golang.org/api/option"
+	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/applogger"
 	"halodeksik-be/app/env"
 	"io"
 	"mime/multipart"
+	"os"
 	"path/filepath"
 )
 
@@ -17,7 +19,8 @@ var AppFileUploader FileUploader
 
 type FileUploader interface {
 	SendToBucket(ctx context.Context, file multipart.File, object, path string) error
-	Upload(ctx context.Context, fileHeader any, folderName string) (string, error)
+	UploadFromFile(ctx context.Context, file *os.File, path, name string) (string, error)
+	UploadFromFileHeader(ctx context.Context, fileHeader any, folderName string) (string, error)
 }
 
 func SetAppFileUploader(uploader FileUploader) {
@@ -69,7 +72,30 @@ func (f *FileUploaderImpl) SendToBucket(ctx context.Context, file multipart.File
 	return nil
 }
 
-func (f *FileUploaderImpl) Upload(ctx context.Context, fileHeader any, folderName string) (string, error) {
+func (f *FileUploaderImpl) UploadFromFile(ctx context.Context, file *os.File, folderName, fileName string) (string, error) {
+	bucketObject := f.client.Bucket(f.bucketName).Object(
+		fmt.Sprintf("%s/%s", folderName, fileName),
+	)
+	wc := bucketObject.NewWriter(ctx)
+	wc.ACL = []storage.ACLRule{
+		{
+			Entity: storage.AllUsers,
+			Role:   storage.RoleReader,
+		},
+	}
+
+	if _, err := io.Copy(wc, file); err != nil {
+		return "", fmt.Errorf("io.Copy: %v", err)
+	}
+	if err := wc.Close(); err != nil {
+		return "", fmt.Errorf("Writer.Close: %v", err)
+	}
+
+	url := fmt.Sprintf("%s/%s/%s", appconfig.Config.GcloudStorageCdn, folderName, fileName)
+	return url, nil
+}
+
+func (f *FileUploaderImpl) UploadFromFileHeader(ctx context.Context, fileHeader any, folderName string) (string, error) {
 	parsedFileHeader := fileHeader.(*multipart.FileHeader)
 	file, err := parsedFileHeader.Open()
 	if err != nil {

@@ -124,7 +124,7 @@ func (uc *AuthUseCaseImpl) Register(ctx context.Context, user entity.User, token
 
 	fileHeaderAny := ctx.Value(appconstant.FormCertificate)
 	if user.UserRoleId == appconstant.UserRoleIdDoctor && fileHeaderAny != nil {
-		url, err2 := uc.uploader.Upload(ctx, fileHeaderAny, uc.cloudFolder)
+		url, err2 := uc.uploader.UploadFromFileHeader(ctx, fileHeaderAny, uc.cloudFolder)
 		if err2 != nil {
 			return nil, err2
 		}
