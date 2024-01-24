@@ -114,7 +114,7 @@ func (repo *ProductRepositoryImpl) FindByIdForUser(ctx context.Context, id int64
     INNER JOIN drug_classifications ON products.drug_classification_id = drug_classifications.id 
 	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id 
 	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
-	WHERE products.id = $1 AND products.deleted_at IS NULL `
+	WHERE products.id = $1 AND products.deleted_at IS NULL AND pharmacy_products.is_active = true `
 	indexPreparedStatement := 1
 
 	query, values := buildQuery(initQuery, &entity.Product{}, param, false, false, indexPreparedStatement)
@@ -220,7 +220,7 @@ func (repo *ProductRepositoryImpl) FindAllForUser(ctx context.Context, param *qu
 	FROM products 
 	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id
 	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
-	WHERE products.deleted_at IS NULL `
+	WHERE products.deleted_at IS NULL AND pharmacy_products.is_active = true `
 	query, values := buildQuery(initQuery, &entity.Product{}, param, true, true)
 
 	rows, err := repo.db.QueryContext(ctx, query, values...)
@@ -253,7 +253,7 @@ func (repo *ProductRepositoryImpl) CountFindAllForUser(ctx context.Context, para
 	FROM products 
 	INNER JOIN pharmacy_products ON products.id = pharmacy_products.product_id
 	INNER JOIN pharmacies ON pharmacy_products.pharmacy_id = pharmacies.id
-	WHERE products.deleted_at IS NULL `
+	WHERE products.deleted_at IS NULL AND pharmacy_products.is_active = true `
 	query, values := buildQuery(initQuery, &entity.Product{}, param, false, false)
 
 	var (
