@@ -107,7 +107,7 @@ func (uc *TransactionUseCaseImpl) GetAllTransactions(ctx context.Context, param 
 		if err != nil {
 			return nil, err
 		}
-		totalItems, err = uc.transactionRepository.CountFindAllTransactions(ctx)
+		totalItems, err = uc.transactionRepository.CountFindAllTransactions(ctx, param)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +116,7 @@ func (uc *TransactionUseCaseImpl) GetAllTransactions(ctx context.Context, param 
 		if err != nil {
 			return nil, err
 		}
-		totalItems, err = uc.transactionRepository.CountFindAllTransactionsByUserId(ctx, userId)
+		totalItems, err = uc.transactionRepository.CountFindAllTransactionsByUserId(ctx, userId, param)
 		if err != nil {
 			return nil, err
 		}
