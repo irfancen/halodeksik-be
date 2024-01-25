@@ -50,7 +50,11 @@ func (c *Client) WriteMessage() {
 	}
 }
 
-func (c *Client) ReadMessage(hub *Hub, consultationMessageUC usecase.ConsultationMessageUseCase) {
+func (c *Client) ReadMessage(
+	hub *Hub,
+	consultationMessageUC usecase.ConsultationMessageUseCase,
+	consultationSessionUC usecase.ConsultationSessionUseCase,
+) {
 	defer func() {
 		hub.Unregister <- c
 		err := c.Conn.Close()
@@ -58,6 +62,9 @@ func (c *Client) ReadMessage(hub *Hub, consultationMessageUC usecase.Consultatio
 			return
 		}
 	}()
+
+	ctx := context.WithValue(context.Background(), appconstant.ContextKeyUserId, c.Profile.UserId)
+	ctx2 := context.WithValue(ctx, appconstant.ContextKeyRoleId, c.Profile.RoleId)
 
 	for {
 		_, jsonMessage, err := c.Conn.ReadMessage()
@@ -128,9 +135,14 @@ func (c *Client) ReadMessage(hub *Hub, consultationMessageUC usecase.Consultatio
 		}
 
 		if !msg.IsTyping && (!util.IsEmptyString(msg.Message) || !util.IsEmptyString(msg.Attachment)) {
-			_, err = consultationMessageUC.Add(context.Background(), *msgToStoreInDb)
+			_, err = consultationMessageUC.Add(ctx2, *msgToStoreInDb)
 			if err != nil {
-				applogger.Log.Error(err)
+				applogger.Log.Errorf("error storing message: %v", err)
+			}
+
+			_, err = consultationSessionUC.EditTime(ctx2, msg.SessionId)
+			if err != nil {
+				applogger.Log.Errorf("error updating time: %v", err)
 			}
 		}
 	}

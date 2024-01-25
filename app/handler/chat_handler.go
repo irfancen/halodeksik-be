@@ -202,7 +202,7 @@ func (h *ChatHandler) JoinRoom(ctx *gin.Context) {
 	h.hub.Register <- client
 
 	go client.WriteMessage()
-	go client.ReadMessage(h.hub, h.consultationMessageUC)
+	go client.ReadMessage(h.hub, h.consultationMessageUC, h.consultationSessionUC)
 }
 
 func (h *ChatHandler) GetAllByUserIdOrDoctorId(ctx *gin.Context) {
