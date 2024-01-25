@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"halodeksik-be/app/appconstant"
 	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
@@ -103,6 +104,9 @@ func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamd
 
 	if setLimit && param.PageSize != nil {
 		size := *param.PageSize
+		if size > appconstant.MaxGetAllPageSize {
+			size = appconstant.MaxGetAllPageSize
+		}
 		query.WriteString(fmt.Sprintf(" LIMIT $%d ", indexPreparedStatement+1))
 
 		indexPreparedStatement += 1
