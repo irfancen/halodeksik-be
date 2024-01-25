@@ -8,12 +8,16 @@ import (
 	"halodeksik-be/app/appcloud"
 	"halodeksik-be/app/appconfig"
 	"halodeksik-be/app/appconstant"
+	"halodeksik-be/app/appdb"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
+	"halodeksik-be/app/util"
 	"mime/multipart"
 	"path/filepath"
+	"strconv"
+	"strings"
 )
 
 type ProductUseCase interface {
@@ -21,7 +25,7 @@ type ProductUseCase interface {
 	GetById(ctx context.Context, id int64) (*entity.Product, error)
 	GetByIdForUser(ctx context.Context, id int64, params *queryparamdto.GetAllParams) (*entity.Product, error)
 	GetAll(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
-	GetAllForUser(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	GetAllForUser(ctx context.Context, lat, long string, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	GetAllForAdminByPharmacyId(ctx context.Context, pharmacyId int64, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
 	Edit(ctx context.Context, id int64, product entity.Product) (*entity.Product, error)
 	Remove(ctx context.Context, id int64) error
@@ -123,7 +127,38 @@ func (uc *ProductUseCaseImpl) GetAll(ctx context.Context, param *queryparamdto.G
 	return paginatedItems, nil
 }
 
-func (uc *ProductUseCaseImpl) GetAllForUser(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+func (uc *ProductUseCaseImpl) GetAllForUser(ctx context.Context, lat, long string, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error) {
+	pharmacyParam := queryparamdto.NewGetAllParams()
+	pharmacy := new(entity.Pharmacy)
+	latColName := pharmacy.GetSqlColumnFromField("Latitude")
+	lonColName := pharmacy.GetSqlColumnFromField("Longitude")
+
+	pharmacyParam.WhereClauses = append(
+		pharmacyParam.WhereClauses,
+		appdb.NewWhere(
+			fmt.Sprintf("distance(%s, %s, '%s', '%s')", latColName, lonColName, lat, long),
+			appdb.LessOrEqualTo,
+			appconstant.ClosestPharmacyRangeRadius,
+		),
+	)
+	pharmacies, err := uc.pharmacyRepo.FindAll(ctx, pharmacyParam)
+	if err != nil {
+		return nil, err
+	}
+
+	pharmacyIds := ""
+	for _, p := range pharmacies {
+		pharmacyIds += strconv.Itoa(int(p.Id)) + ","
+	}
+	if !util.IsEmptyString(pharmacyIds) {
+		pp := entity.PharmacyProduct{}
+		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(pp.GetSqlColumnFromField("PharmacyId"), appdb.In, strings.TrimSuffix(pharmacyIds, ",")))
+	}
+	if util.IsEmptyString(pharmacyIds) {
+		pp := entity.PharmacyProduct{}
+		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(pp.GetSqlColumnFromField("PharmacyId"), appdb.In, appconstant.EmptyIdInString))
+	}
+
 	products, err := uc.productRepo.FindAllForUser(ctx, param)
 	if err != nil {
 		return nil, err

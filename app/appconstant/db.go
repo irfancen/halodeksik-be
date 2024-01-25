@@ -9,4 +9,6 @@ const (
 	StockMutationRequestStatusRejected = 3
 
 	MonthInAYear = 12
+
+	EmptyIdInString = "0"
 )
