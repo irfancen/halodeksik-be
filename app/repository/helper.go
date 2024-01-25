@@ -102,6 +102,12 @@ func buildQuery(initQuery string, resourcer entity.Resourcer, param *queryparamd
 		}
 	}
 
+	if param.PageSize != nil {
+		if *param.PageSize > appconstant.MaxGetAllPageSize {
+			*param.PageSize = appconstant.MaxGetAllPageSize
+		}
+	}
+
 	if setLimit && param.PageSize != nil {
 		size := *param.PageSize
 		if size > appconstant.MaxGetAllPageSize {

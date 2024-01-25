@@ -21,7 +21,7 @@ type GetAllProductsQuery struct {
 	Page                string `form:"page"`
 }
 
-func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
+func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, string, string, error) {
 	const (
 		sortByName = "name"
 		sortByDate = "date"
@@ -29,7 +29,6 @@ func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 
 	param := NewGetAllParams()
 	product := new(entity.Product)
-	pharmacy := new(entity.Pharmacy)
 
 	if q.Search != "" {
 		words := strings.Split(q.Search, " ")
@@ -70,20 +69,6 @@ func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 		param.WhereClauses = append(param.WhereClauses, appdb.NewWhere(column, appdb.In, q.DrugClassifications))
 	}
 
-	if !util.IsEmptyString(q.Latitude) && !util.IsEmptyString(q.Longitude) {
-		latColName := pharmacy.GetSqlColumnFromField("Latitude")
-		lonColName := pharmacy.GetSqlColumnFromField("Longitude")
-
-		param.WhereClauses = append(
-			param.WhereClauses,
-			appdb.NewWhere(
-				fmt.Sprintf("distance(%s, %s, '%s', '%s')", latColName, lonColName, q.Latitude, q.Longitude),
-				appdb.LessOrEqualTo,
-				appconstant.ClosestPharmacyRangeRadius,
-			),
-		)
-	}
-
 	param.GroupClauses = append(
 		param.GroupClauses,
 		appdb.NewGroupClause(product.GetSqlColumnFromField("Id")),
@@ -107,7 +92,7 @@ func (q *GetAllProductsQuery) ToGetAllParams() (*GetAllParams, error) {
 	}
 	param.PageId = &pageId
 
-	return param, nil
+	return param, q.Latitude, q.Longitude, nil
 }
 
 func (q *GetAllProductsQuery) GetCurrentLocation() (string, string) {

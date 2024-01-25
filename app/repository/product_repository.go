@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgx/v5/pgconn"
 	"halodeksik-be/app/apperror"
 	"halodeksik-be/app/dto/queryparamdto"
@@ -188,12 +189,11 @@ func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *quer
 	WHERE products.deleted_at IS NULL `
 	query, values := buildQuery(initQuery, &entity.Product{}, param, false, false)
 
-	var (
-		totalItems int64
-		temp       int64
-	)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM (%s) as c", query)
 
-	rows, err := repo.db.QueryContext(ctx, query, values...)
+	var totalItems int64
+
+	rows, err := repo.db.QueryContext(ctx, countQuery, values...)
 	if err != nil {
 		return totalItems, err
 	}
@@ -201,14 +201,13 @@ func (repo *ProductRepositoryImpl) CountFindAll(ctx context.Context, param *quer
 
 	for rows.Next() {
 		if err := rows.Scan(
-			&temp,
+			&totalItems,
 		); err != nil {
 			return totalItems, err
 		}
-		totalItems++
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return totalItems, err
 	}
 	return totalItems, nil
@@ -256,12 +255,11 @@ func (repo *ProductRepositoryImpl) CountFindAllForUser(ctx context.Context, para
 	WHERE products.deleted_at IS NULL AND pharmacy_products.is_active = true `
 	query, values := buildQuery(initQuery, &entity.Product{}, param, false, false)
 
-	var (
-		totalItems int64
-		temp       int64
-	)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM (%s) as c", query)
 
-	rows, err := repo.db.QueryContext(ctx, query, values...)
+	var totalItems int64
+
+	rows, err := repo.db.QueryContext(ctx, countQuery, values...)
 	if err != nil {
 		return totalItems, err
 	}
@@ -269,14 +267,13 @@ func (repo *ProductRepositoryImpl) CountFindAllForUser(ctx context.Context, para
 
 	for rows.Next() {
 		if err := rows.Scan(
-			&temp,
+			&totalItems,
 		); err != nil {
 			return totalItems, err
 		}
-		totalItems++
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return totalItems, err
 	}
 	return totalItems, nil
@@ -337,12 +334,11 @@ func (repo *ProductRepositoryImpl) CountFindAllForAdmin(ctx context.Context, pha
 	query, values := buildQuery(initQuery, &entity.Product{}, param, false, false, indexPreparedStatement)
 	values = util.AppendAtIndex(values, 0, interface{}(pharmacyId))
 
-	var (
-		totalItems int64
-		temp       int64
-	)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM (%s) as c", query)
 
-	rows, err := repo.db.QueryContext(ctx, query, values...)
+	var totalItems int64
+
+	rows, err := repo.db.QueryContext(ctx, countQuery, values...)
 	if err != nil {
 		return totalItems, err
 	}
@@ -350,14 +346,13 @@ func (repo *ProductRepositoryImpl) CountFindAllForAdmin(ctx context.Context, pha
 
 	for rows.Next() {
 		if err := rows.Scan(
-			&temp,
+			&totalItems,
 		); err != nil {
 			return totalItems, err
 		}
-		totalItems++
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return totalItems, err
 	}
 	return totalItems, nil

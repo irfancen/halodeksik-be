@@ -10,4 +10,5 @@
 *.txt
 seeding-data.md
 /app/cmd/cmd
+k6/
 main
