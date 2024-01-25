@@ -15,9 +15,9 @@ type TransactionRepository interface {
 	Create(ctx context.Context, transaction entity.Transaction) (*entity.Transaction, error)
 	FindTransactionById(ctx context.Context, id int64) (*entity.Transaction, error)
 	FindAllTransactionsByUserId(ctx context.Context, param *queryparamdto.GetAllParams, userId int64) ([]*entity.Transaction, error)
-	CountFindAllTransactionsByUserId(ctx context.Context, userId int64) (int64, error)
+	CountFindAllTransactionsByUserId(ctx context.Context, userId int64, param *queryparamdto.GetAllParams) (int64, error)
 	FindAllTransactions(ctx context.Context, param *queryparamdto.GetAllParams) ([]*entity.Transaction, error)
-	CountFindAllTransactions(ctx context.Context) (int64, error)
+	CountFindAllTransactions(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error)
 	UpdateTransaction(ctx context.Context, transaction entity.Transaction) (*entity.Transaction, error)
 	FindTotalPaymentAndStatusByTransactionId(ctx context.Context, id int64) (*entity.TransactionPaymentAndStatus, *int64, error)
 }
@@ -157,7 +157,7 @@ func (repo *TransactionRepositoryImpl) FindAllTransactionsByUserId(ctx context.C
 	return items, nil
 }
 
-func (repo *TransactionRepositoryImpl) CountFindAllTransactionsByUserId(ctx context.Context, userId int64) (int64, error) {
+func (repo *TransactionRepositoryImpl) CountFindAllTransactionsByUserId(ctx context.Context, userId int64, param *queryparamdto.GetAllParams) (int64, error) {
 	const viewTransactions = `
 	SELECT count(transactions.id)
 	FROM transactions
@@ -166,8 +166,11 @@ func (repo *TransactionRepositoryImpl) CountFindAllTransactionsByUserId(ctx cont
 	WHERE user_id = $1 AND transactions.deleted_at IS NULL `
 
 	var totalItems int64
+	indexPreparedStatement := 1
+	query, values := buildQuery(viewTransactions, &entity.Transaction{}, param, false, false, indexPreparedStatement)
+	values = util.AppendAtIndex(values, 0, interface{}(userId))
 
-	row := repo.db.QueryRowContext(ctx, viewTransactions, userId)
+	row := repo.db.QueryRowContext(ctx, query, values...)
 	if row.Err() != nil {
 		return totalItems, row.Err()
 	}
@@ -226,7 +229,7 @@ func (repo *TransactionRepositoryImpl) FindAllTransactions(ctx context.Context, 
 	return items, nil
 }
 
-func (repo *TransactionRepositoryImpl) CountFindAllTransactions(ctx context.Context) (int64, error) {
+func (repo *TransactionRepositoryImpl) CountFindAllTransactions(ctx context.Context, param *queryparamdto.GetAllParams) (int64, error) {
 	const viewTransactions = `
 	SELECT count(transactions.id)
 	FROM transactions
@@ -235,7 +238,8 @@ func (repo *TransactionRepositoryImpl) CountFindAllTransactions(ctx context.Cont
 		WHERE transactions.deleted_at IS NULL `
 
 	var totalItems int64
-	row := repo.db.QueryRowContext(ctx, viewTransactions)
+	query, _ := buildQuery(viewTransactions, &entity.Transaction{}, param, false, false)
+	row := repo.db.QueryRowContext(ctx, query)
 	if row.Err() != nil {
 		return totalItems, row.Err()
 	}

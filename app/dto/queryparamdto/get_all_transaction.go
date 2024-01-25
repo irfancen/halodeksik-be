@@ -32,6 +32,10 @@ func (q *GetAllTransactionsQuery) ToGetAllParams() *GetAllParams {
 	}
 	param.PageSize = &pageSize
 
+	sortClause := appdb.NewSort(transaction.GetSqlColumnFromField("Date"))
+	sortClause.Order = appdb.OrderDesc
+	param.SortClauses = append(param.SortClauses, sortClause)
+
 	pageId := 1
 	if !util.IsEmptyString(q.Page) {
 		noPageId, err := strconv.Atoi(q.Page)
