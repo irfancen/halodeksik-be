@@ -48,7 +48,7 @@ func (uc *ConsultationSessionUseCaseImpl) Add(ctx context.Context, session entit
 	userId := ctx.Value(appconstant.ContextKeyUserId).(int64)
 	session.UserId = userId
 
-	sessionDb, err := uc.sessionRepo.FindByUserIdOrDoctorId(ctx, session.UserId, session.DoctorId)
+	sessionDb, err := uc.sessionRepo.FindByUserIdAndDoctorId(ctx, session.UserId, session.DoctorId)
 	if err != nil && !errors.Is(err, apperror.ErrRecordNotFound) {
 		return nil, err
 	}
