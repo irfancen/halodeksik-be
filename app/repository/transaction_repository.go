@@ -238,8 +238,8 @@ func (repo *TransactionRepositoryImpl) CountFindAllTransactions(ctx context.Cont
 		WHERE transactions.deleted_at IS NULL `
 
 	var totalItems int64
-	query, _ := buildQuery(viewTransactions, &entity.Transaction{}, param, false, false)
-	row := repo.db.QueryRowContext(ctx, query)
+	query, values := buildQuery(viewTransactions, &entity.Transaction{}, param, false, false)
+	row := repo.db.QueryRowContext(ctx, query, values...)
 	if row.Err() != nil {
 		return totalItems, row.Err()
 	}
