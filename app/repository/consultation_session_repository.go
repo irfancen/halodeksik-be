@@ -13,6 +13,7 @@ import (
 type ConsultationSessionRepository interface {
 	Create(ctx context.Context, session entity.ConsultationSession) (*entity.ConsultationSession, error)
 	FindById(ctx context.Context, id int64) (*entity.ConsultationSession, error)
+	FindByIdJoinAll(ctx context.Context, id int64) (*entity.ConsultationSession, error)
 	FindByUserIdOrDoctorId(ctx context.Context, userId, doctorId int64) (*entity.ConsultationSession, error)
 	FindAllByUserIdOrDoctorId(ctx context.Context, userIdOrDoctorId int64, param *queryparamdto.GetAllParams) ([]*entity.ConsultationSession, error)
 	CountFindAllByUserIdOrDoctorId(ctx context.Context, userIdOrDoctorId int64, param *queryparamdto.GetAllParams) (int64, error)
@@ -40,6 +41,34 @@ func (repo *ConsultationSessionRepositoryImpl) Create(ctx context.Context, sessi
 }
 
 func (repo *ConsultationSessionRepositoryImpl) FindById(ctx context.Context, id int64) (*entity.ConsultationSession, error) {
+	const findById = `
+	SELECT consultation_sessions.id, consultation_sessions.user_id, doctor_id, consultation_session_status_id,
+       consultation_sessions.created_at, consultation_sessions.updated_at
+	FROM  consultation_sessions
+	WHERE consultation_sessions.deleted_at IS NULL AND consultation_sessions.id = $1;`
+
+	row := repo.db.QueryRowContext(ctx, findById, id)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	var session entity.ConsultationSession
+	err := row.Scan(
+		&session.Id, &session.UserId, &session.DoctorId, &session.ConsultationSessionStatusId,
+		&session.CreatedAt, &session.UpdatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+
+	return &session, nil
+}
+
+func (repo *ConsultationSessionRepositoryImpl) FindByIdJoinAll(ctx context.Context, id int64) (*entity.ConsultationSession, error) {
 	const findById = `
 	SELECT consultation_sessions.id, consultation_sessions.user_id, doctor_id, consultation_session_status_id,
        consultation_sessions.created_at, consultation_sessions.updated_at,

@@ -461,10 +461,10 @@ values ('General Practitioners',
 
 INSERT INTO doctor_profiles (user_id, name, profile_photo, starting_year, doctor_certificate, doctor_specialization_id,
                              consultation_fee, is_online)
-VALUES (5, 'dokter wasik', '', 2021, '', 1, 10, false);
+VALUES (5, 'dr. Wasik Amin', '', 2021, '', 1, 10, false);
 
 INSERT INTO user_profiles(user_id, name, profile_photo, date_of_birth)
-VALUES (6, 'lumban boy', '', '2000-11-25');
+VALUES (6, 'Benedict Boy', '', '2000-11-25');
 
 INSERT INTO manufacturers (name, image)
 values ('Soho Industri Pharmasi', 'https://byebyesick-bucket.irfancen.com/doctor_specializations/soho.png'),
@@ -1060,7 +1060,63 @@ VALUES ('Panadol 500 mg 10 Kaplet', 'Panadol', 'Paracetamol', 1, 'Obat sakit kep
        ('Saridon 4 Tablet', 'Saridon', 'Paracetamol 250 mg, propyphenazone 150 mg, caffeine 50 mg', 1,
         'Obat sakit kepala', 1,
         1, 'Tablet', 4, 'Strip', 0.05, 50, 50, 50,
-        'https://byebyesick-bucket.irfancen.com/products/saridon.jpg');
+        'https://byebyesick-bucket.irfancen.com/prx`oducts/saridon.jpg'),
+       ('Ultraflu 200 mg 10 Kaplet', 'Paracetamol', 'Paracetamol 200 mg', 1, 'Obat demam dan sakit kepala', 1,
+        1, 'Kaplet', 10, 'Strip', 0.05, 50, 50, 50,
+        'https://byebyesick-bucket.irfancen.com/products/ultraflu.jpg'),
+       ('Amoxan 500 mg 10 Kaplet', 'Amoxicillin', 'Amoxicillin 500 mg', 1, 'Obat infeksi bakteri', 4,
+        1, 'Kaplet', 10, 'Strip', 0.05, 50, 50, 50,
+        'https://byebyesick-bucket.irfancen.com/products/amoxan.jpg'),
+       ('Infacol 100 mg/ml Sirup 60 ml', 'Simeticon', 'Simeticon 100 mg/ml', 1, 'Obat kolik dan kembung untuk bayi', 1,
+        1, 'Sirup', 60, 'Botol', 0.2, 100, 50, 50,
+        'https://byebyesick-bucket.irfancen.com/products/infacol.jpeg'),
+       ('Neozep 60 mg/ml Sirup 60 ml', 'Paracetamol', 'Paracetamol 60 mg/ml', 1,
+        'Obat demam dan sakit kepala untuk anak-anak', 1,
+        1, 'Sirup', 60, 'Botol', 0.2, 100, 50, 50,
+        'https://byebyesick-bucket.irfancen.com/products/neozep.jpg'),
+       ('Oskadon 650 mg 10 Kaplet', 'Paracetamol', 'Paracetamol 650 mg, caffeine 40 mg', 1,
+        'Obat sakit kepala, demam, dan nyeri', 1,
+        1, 'Kaplet', 10, 'Strip', 0.05, 50, 50, 50,
+        'https://byebyesick-bucket.irfancen.com/products/oskadon.jpg'),
+       ('Advil 200 mg 10 Tablet', 'Ibuprofen', 'Ibuprofen 200 mg', 1, 'Obat pereda nyeri dan demam', 1,
+        1, 'Tablet', 10, 'Strip', 0.05, 50, 50, 50,
+        'https://byebyesick-bucket.irfancen.com/products/advil.jpeg'),
+       ('Otrivin 0,05% 10 ml', 'Xylometazoline', 'Xylometazoline 0,05%', 1,
+        'Obat semprot hidung untuk meredakan hidung tersumbat', 2,
+        1, 'Botol', 10, 'Botol', 0.05, 100, 50, 50,
+        'https://byebyesick-bucket.irfancen.com/products/otrivin.jpeg'),
+       ('Mylanta 400 mg/5 ml Sirup 60 ml', 'Magnesium hidroksida, aluminium hidroksida',
+        'Magnesium hidroksida 400 mg/5 ml, aluminium hidroksida 500 mg/5 ml', 1, 'Obat gangguan pencernaan', 2,
+        1, 'Sirup', 60, 'Botol', 0.2, 100, 50, 50,
+        'https://byebyesick-bucket.irfancen.com/products/mylanta.jpg'),
+       ('Combiflam 500 mg/500 mg 10 Kaplet', 'Paracetamol, ibuprofen', 'Paracetamol 500 mg, ibuprofen 500 mg', 1,
+        'Obat pereda nyeri dan demam', 1,
+        1, 'Kaplet', 10, 'Strip', 0.05, 50, 50, 50,
+        'https://byebyesick-bucket.irfancen.com/products/combiflam.jpeg'),
+       ('Promag 400 mg/50 mg 12 Tablet', 'Antasida, simeticon', 'Antasida 400 mg, simeticon 50 mg', 1,
+        'Obat sakit maag dan gangguan pencernaan', 2,
+        1, 'Tablet', 12, 'Strip', 0.05, 50, 50, 50,
+        'https://byebyesick-bucket.irfancen.com/products/promag.jpg'),
+       ('Dulcolactol Sirup 60 ml', 'Dulcolactol', 'Per 15 ml : Lactulose 10 gram', 1,
+        'DULCOLACTOL merupakan obat konstipasi (sulit buang air besar) yang mengandung Laktulosa yang bekerja menaikkan tekanan osmosa dan suasana asam sehingga feses menjadi lunak. Obat ini dalam penggunaannya dapat dicampur dengan sari buah, air, dan susu.',
+        1, 1, 'Liquid', 'Bottle', 'Bottle', 1000, 60, 10, 100,
+        'https://byebyesick-bucket.irfancen.com/products/0588003c-bb7c-11ee-bcc7-9d6e84ac2af9.png'),
+       ('OBH Combi Plus Batuk Flu Menthol 100 ml', 'OBH',
+        'Every 5 ml contain: Succus Liquiritiae 167 mg, Paracetmaol 150 mg, Ammonium Chloride 50 mg, Pseudoephedrin HCl 10 mg, Chlorpheniramin Maleate 1.33 mg.',
+        2,
+        'OBH COMBI PLUS BATUK FLU merupakan obat batuk dengan kandungan OBH, Paracetamol, Ephedrine HCl, dan Chlorphenamine maleat yang digunakan untuk meredakan batuk disertai gejala-gejala flu seperti demam, sakit kepala, hidung tersumbat, dan bersin-bersin. OBH bekerja sebagai ekspektoran atau peluruh dahak, Paracetamol digunakan sebagai pereda demam dan sakit kepala, Chlorpheniramine maleate bekerja sebagai antihistamin atau anti alergi untuk meredakan gejala alergi, dan Ephedrine HCl sebagai dekongestan hidung atau melonggarkan saluran pernafasan.',
+        3, 1, 'Liquid', 'Bottle', 'Bottle', 167, 150, 150, 150,
+        'https://byebyesick-bucket.irfancen.com/products/85f5d4e6-bb7d-11ee-bcc7-9d6e84ac2af9.png'),
+       ('Panadol Flu Batuk 10 Kaplet', 'Panadol',
+        'Paracetamol 500 mg, Phenylephrine HCL 5 mg, dan Dextromethorphan HBr 15 mg.', 1,
+        'PANADOL FLU & BATUK merupakan obat batuk dan pereda flu dengan kandungan Paracetamol, Phenylephrine HCI, dan Dextromethorphan HBr. Bekerja sebagai analgesik-antipiretik, masal dekongestan, dan antitusif. Obat ini dapat digunakan untuk meredakan gejala flu seperti: demam, sakit kepala, hidung tersumbat dan batuk tidak berdahak.',
+        3, 1, 'tablet', 'strip', 'strip', 100, 40, 10, 10,
+        'https://byebyesick-bucket.irfancen.com/products/14bd52fd-bb7e-11ee-bcc7-9d6e84ac2af9.png'),
+       ('Sanmol Sirup 60 ml', 'Paracetamol', 'Every 5 ml contain : Paracetamol 120 mg', 1,
+        'SANMOL SIRUP merupakan obat dengan kandungan Paracetamol. Obat ini digunakan untuk meringankan rasa sakit pada keadaan sakit kepala, sakit gigi dan menurunkan demam. Sanmol bekerja pada pusat pengatur suhu di hipotalamus untuk menurunkan suhu tubuh (antipiretik) serta menghambat sintesis prostaglandin sehingga dapat mengurangi nyeri ringan sampai sedang',
+        1, 1, 'Liquid', 'Bottle', 'Bottle', 120, 30, 60, 30,
+        'https://byebyesick-bucket.irfancen.com/products/8008dc3d-bb7e-11ee-bcc7-9d6e84ac2af9.png');
+
 
 INSERT INTO pharmacies(name, address, sub_district, district, city, province, postal_code, latitude, longitude,
                        pharmacist_name, pharmacist_license_no, pharmacist_phone_no, operational_hours, operational_days,
@@ -1078,8 +1134,16 @@ VALUES ('Kimia Farma Kuningan', 'Jalan Gatau', 'Kuningan', 'Setia Budi', 153, 6,
 
 INSERT INTO pharmacy_products(pharmacy_id, product_id, is_active, price, stock)
 VALUES (1, 1, true, '12000', 100),
-       (1, 2, true, '5000', 95),
-       (2, 2, true, '2500', 95),
+       (1, 2, true, '2500', 95),
+       (2, 3, true, '5000', 87),
+       (2, 4, true, '15000', 95),
+       (3, 5, true, '20000', 65),
+       (2, 6, true, '10000', 34),
+       (3, 7, true, '10000', 273),
+       (3, 8, true, '10000', 22),
+       (1, 9, true, '10000', 93),
+       (2, 10, true, '10000', 77),
+       (2, 2, true, '5000', 95),
        (3, 1, true, '15000', 87);
 
 INSERT INTO pharmacy_shipping_methods(pharmacy_id, shipping_method_id)

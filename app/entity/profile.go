@@ -4,6 +4,7 @@ import "halodeksik-be/app/dto/responsedto"
 
 type Profile struct {
 	UserId       int64
+	RoleId       int64
 	Name         string
 	ProfilePhoto string
 }

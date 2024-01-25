@@ -109,6 +109,7 @@ func (u *User) GetProfile() *Profile {
 	if u.UserProfile != nil {
 		return &Profile{
 			UserId:       u.Id,
+			RoleId:       u.UserRoleId,
 			Name:         u.UserProfile.Name,
 			ProfilePhoto: u.UserProfile.ProfilePhoto,
 		}
@@ -116,6 +117,7 @@ func (u *User) GetProfile() *Profile {
 	if u.DoctorProfile != nil {
 		return &Profile{
 			UserId:       u.Id,
+			RoleId:       u.UserRoleId,
 			Name:         u.DoctorProfile.Name,
 			ProfilePhoto: u.DoctorProfile.ProfilePhoto,
 		}

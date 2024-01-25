@@ -8,12 +8,14 @@ import (
 	"halodeksik-be/app/dto/queryparamdto"
 	"halodeksik-be/app/entity"
 	"halodeksik-be/app/repository"
+	"time"
 )
 
 type ConsultationSessionUseCase interface {
 	Add(ctx context.Context, session entity.ConsultationSession) (*entity.ConsultationSession, error)
 	GetById(ctx context.Context, id int64) (*entity.ConsultationSession, error)
 	GetAllByUserIdOrDoctorId(ctx context.Context, param *queryparamdto.GetAllParams) (*entity.PaginatedItems, error)
+	EditTime(ctx context.Context, id int64) (*entity.ConsultationSession, error)
 	EditStatusAsEnded(ctx context.Context, id int64) (*entity.ConsultationSession, error)
 }
 
@@ -52,7 +54,7 @@ func (uc *ConsultationSessionUseCaseImpl) Add(ctx context.Context, session entit
 	}
 
 	if !errors.Is(err, apperror.ErrRecordNotFound) && sessionDb.ConsultationSessionStatusId == appconstant.ConsultationSessionStatusOngoing {
-		return nil, apperror.ErrChatStillOngoing
+		return sessionDb, apperror.ErrChatStillOngoing
 	}
 
 	session.ConsultationSessionStatusId = appconstant.ConsultationSessionStatusOngoing
@@ -64,7 +66,7 @@ func (uc *ConsultationSessionUseCaseImpl) Add(ctx context.Context, session entit
 }
 
 func (uc *ConsultationSessionUseCaseImpl) GetById(ctx context.Context, id int64) (*entity.ConsultationSession, error) {
-	sessionDb, err := uc.sessionRepo.FindById(ctx, id)
+	sessionDb, err := uc.sessionRepo.FindByIdJoinAll(ctx, id)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFound(sessionDb, "Id", id)
@@ -130,6 +132,36 @@ func (uc *ConsultationSessionUseCaseImpl) GetAllByUserIdOrDoctorId(ctx context.C
 
 	paginatedItems := entity.NewPaginationInfo(totalItems, totalPages, int64(len(sessions)), int64(*param.PageId), sessions)
 	return paginatedItems, nil
+}
+
+func (uc *ConsultationSessionUseCaseImpl) getById(ctx context.Context, id int64) (*entity.ConsultationSession, error) {
+	sessionDb, err := uc.sessionRepo.FindByIdJoinAll(ctx, id)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFound(sessionDb, "Id", id)
+		}
+		return nil, err
+	}
+	return sessionDb, nil
+}
+
+func (uc *ConsultationSessionUseCaseImpl) EditTime(ctx context.Context, id int64) (*entity.ConsultationSession, error) {
+	sessionDb, err := uc.getById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if sessionDb.ConsultationSessionStatusId == appconstant.ConsultationSessionStatusEnded {
+		return nil, apperror.ErrChatAlreadyEnded
+	}
+
+	sessionDb.UpdatedAt = time.Now()
+
+	updated, err := uc.sessionRepo.Update(ctx, *sessionDb)
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (uc *ConsultationSessionUseCaseImpl) EditStatusAsEnded(ctx context.Context, id int64) (*entity.ConsultationSession, error) {
