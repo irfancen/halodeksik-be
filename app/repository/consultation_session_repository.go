@@ -14,7 +14,7 @@ type ConsultationSessionRepository interface {
 	Create(ctx context.Context, session entity.ConsultationSession) (*entity.ConsultationSession, error)
 	FindById(ctx context.Context, id int64) (*entity.ConsultationSession, error)
 	FindByIdJoinAll(ctx context.Context, id int64) (*entity.ConsultationSession, error)
-	FindByUserIdOrDoctorId(ctx context.Context, userId, doctorId int64) (*entity.ConsultationSession, error)
+	FindByUserIdAndDoctorId(ctx context.Context, userId, doctorId int64) (*entity.ConsultationSession, error)
 	FindAllByUserIdOrDoctorId(ctx context.Context, userIdOrDoctorId int64, param *queryparamdto.GetAllParams) ([]*entity.ConsultationSession, error)
 	CountFindAllByUserIdOrDoctorId(ctx context.Context, userIdOrDoctorId int64, param *queryparamdto.GetAllParams) (int64, error)
 	Update(ctx context.Context, session entity.ConsultationSession) (*entity.ConsultationSession, error)
@@ -138,14 +138,15 @@ func (repo *ConsultationSessionRepositoryImpl) FindByIdJoinAll(ctx context.Conte
 	return &session, err
 }
 
-func (repo *ConsultationSessionRepositoryImpl) FindByUserIdOrDoctorId(ctx context.Context, userId, doctorId int64) (*entity.ConsultationSession, error) {
+func (repo *ConsultationSessionRepositoryImpl) FindByUserIdAndDoctorId(ctx context.Context, userId, doctorId int64) (*entity.ConsultationSession, error) {
 	const findByUserIdAndDoctorId = `
 	SELECT consultation_sessions.id, user_id, doctor_id, consultation_session_status_id, 
 	       consultation_sessions.created_at, consultation_sessions.updated_at,
 	       consultation_session_statuses.name
 	FROM consultation_sessions
 	INNER JOIN consultation_session_statuses ON consultation_sessions.consultation_session_status_id = consultation_session_statuses.id 
-	WHERE consultation_sessions.user_id = $1 OR consultation_sessions.doctor_id = $2`
+	WHERE consultation_sessions.user_id = $1 AND consultation_sessions.doctor_id = $2
+	ORDER BY created_at DESC LIMIT 1`
 
 	row := repo.db.QueryRowContext(ctx, findByUserIdAndDoctorId, userId, doctorId)
 	var session entity.ConsultationSession
